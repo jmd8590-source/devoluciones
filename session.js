@@ -92,32 +92,34 @@
 
 
   // ── Logout ────────────────────────────────────────────────────
-  document.getElementById('btn-logout')?.addEventListener('click', () => {
+  function doLogout() {
     sessionStorage.removeItem(SESSION_KEY);
     window.location.replace('auth.html');
-  });
+  }
+
+  document.getElementById('btn-logout')?.addEventListener('click', doLogout);
+  document.getElementById('nav-logout')?.addEventListener('click', doLogout);
 
   // ── Add logout key to i18n (extend TRANSLATIONS if available) ─
   if (typeof TRANSLATIONS !== 'undefined') {
     if (TRANSLATIONS.es) TRANSLATIONS.es['btn.logout'] = 'Salir';
     if (TRANSLATIONS.en) TRANSLATIONS.en['btn.logout'] = 'Sign out';
   }
-  // Also update the span directly to be safe
-  const logoutSpan = document.querySelector('#btn-logout span[data-i18n]');
-  if (logoutSpan) {
+
+  function refreshLogoutLabels() {
     const lang = localStorage.getItem('gp_lang') || 'es';
-    logoutSpan.textContent = lang === 'en' ? 'Sign out' : 'Salir';
+    const text = lang === 'en' ? 'Sign out' : 'Salir';
+    document.querySelectorAll('[data-i18n="btn.logout"]').forEach(el => {
+      el.textContent = text;
+    });
   }
+  refreshLogoutLabels();
 
   // ── Update logout label on language change ────────────────────
-  // (app.js lang toggle calls applyTranslations; we hook into it via MutationObserver)
   const langBtn = document.getElementById('lang-toggle');
   if (langBtn) {
     langBtn.addEventListener('click', () => {
-      setTimeout(() => {
-        const lang = localStorage.getItem('gp_lang') || 'es';
-        if (logoutSpan) logoutSpan.textContent = lang === 'en' ? 'Sign out' : 'Salir';
-      }, 50);
+      setTimeout(refreshLogoutLabels, 50);
     });
   }
 
