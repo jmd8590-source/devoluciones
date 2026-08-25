@@ -243,22 +243,39 @@ ul, ol { list-style: none; }
 
 /* Logout button */
 .btn-logout {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
-  border-radius: var(--r-sm);
-  background: rgba(255,79,110,0.1);
-  border: 1px solid rgba(255,79,110,0.2);
+  padding: 7px 14px;
+  border-radius: var(--r-full);
+  background: rgba(255, 79, 110, 0.16);
+  border: 1.5px solid rgba(255, 79, 110, 0.35);
   color: #ff8fa8;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
   transition: all var(--dur-normal) var(--ease-out);
 }
 .btn-logout:hover {
-  background: rgba(255,79,110,0.2);
-  border-color: rgba(255,79,110,0.35);
-  color: #ffb0c1;
+  background: rgba(255, 79, 110, 0.28);
+  border-color: rgba(255, 79, 110, 0.6);
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(255, 79, 110, 0.4);
+}
+.btn-logout:active {
+  transform: scale(0.95);
+}
+.btn-logout svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+.btn-logout span {
+  display: inline-block;
+  line-height: 1;
 }
 
 /* Add button */
@@ -1162,27 +1179,22 @@ ul, ol { list-style: none; }
     color: #fff;
   }
 
-  /* Logout: icon only, always visible, big enough to tap */
-  .btn-logout span { display: none; }
+  /* Logout: compact pill button with text always visible */
   .btn-logout {
-    padding: 0;
-    width: 38px;
-    height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: rgba(255,79,110,0.12);
-    border: 1.5px solid rgba(255,79,110,0.25);
+    padding: 6px 12px;
+    font-size: 12.5px;
+    gap: 5px;
     flex-shrink: 0;
+    border-radius: var(--r-full);
   }
-  .btn-logout svg { width: 17px; height: 17px; }
+  .btn-logout svg { width: 14px; height: 14px; }
+  .btn-logout span { display: inline-block !important; }
 
   /* Add button: hide from header on mobile — FAB replaces it */
   .btn-add-main { display: none; }
 
   /* Lang toggle compact */
-  .lang-toggle { padding: 7px 9px; }
+  .lang-toggle { padding: 6px 9px; }
   .lang-code { display: none; }
 
   /* Views */
@@ -1259,7 +1271,20 @@ ul, ol { list-style: none; }
   :root { --header-h: 54px; }
 
   .app-main { padding: calc(var(--header-h) + 16px) 12px 90px; }
-  .header-inner { padding: 0 12px; gap: 6px; }
+  .header-inner { padding: 0 10px; gap: 6px; justify-content: space-between; }
+
+  /* Header action group — simplified & always visible */
+  .header-actions { gap: 6px; flex-shrink: 0; }
+  .btn-logout {
+    padding: 5px 10px;
+    font-size: 12px;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .btn-logout svg { width: 13px; height: 13px; }
+  .btn-logout span { display: inline-block !important; }
+  .lang-toggle { padding: 5px 8px; }
+  .lang-flag { font-size: 14px; }
 
   /* Stats: 1 column */
   .stats-grid { grid-template-columns: 1fr; gap: 10px; }
@@ -1277,13 +1302,6 @@ ul, ol { list-style: none; }
   /* Nav: even more compact */
   .nav-btn { padding: 7px 8px; }
   .nav-btn svg { width: 16px; height: 16px; }
-
-  /* Header action group — simplified */
-  .header-inner { padding: 0 12px; gap: 6px; }
-  .btn-logout { width: 36px; height: 36px; }
-  .btn-logout svg { width: 16px; height: 16px; }
-  .lang-toggle { padding: 5px 7px; }
-  .lang-flag { font-size: 13px; }
 
   /* Modal form inputs: prevent iOS zoom */
   .form-field input,
@@ -1315,9 +1333,19 @@ ul, ol { list-style: none; }
 
 /* ── 360px — VERY SMALL MOBILE ───────────────────────────── */
 @media (max-width: 360px) {
-  .header-inner { gap: 4px; }
+  .header-inner { padding: 0 8px; gap: 4px; }
   .logo-icon { font-size: 18px; }
-  .header-actions { gap: 4px; }
+  .header-actions { gap: 4px; flex-shrink: 0; }
+  .btn-logout {
+    padding: 4px 8px;
+    font-size: 11px;
+    gap: 3px;
+    flex-shrink: 0;
+  }
+  .btn-logout svg { width: 12px; height: 12px; }
+  .btn-logout span { display: inline-block !important; }
+  .lang-toggle { padding: 4px 6px; }
+  .lang-flag { font-size: 13px; }
   .stat-num { font-size: 22px; }
   .view-title { font-size: 19px; }
 }
