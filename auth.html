@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="GarantíasPro — Accede a tu cuenta para gestionar garantías y devoluciones." />
+  <meta name="theme-color" content="#0a0f1e" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self';
+                 style-src 'self' https://fonts.googleapis.com;
+                 font-src 'self' https://fonts.gstatic.com;
+                 img-src 'self' data: blob:;
+                 connect-src 'none';
+                 object-src 'none';
+                 base-uri 'self';
+                 form-action 'self';" />
+  <title>GarantíasPro — Acceso</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="auth.css" />
+</head>
+<body>
+
+<!-- Orbs de fondo -->
+<div class="bg-orb bg-orb-1" aria-hidden="true"></div>
+<div class="bg-orb bg-orb-2" aria-hidden="true"></div>
+<div class="bg-orb bg-orb-3" aria-hidden="true"></div>
+
+<div class="auth-wrapper">
+
+  <!-- ── LOGO ── -->
+  <div class="auth-logo" aria-label="GarantíasPro">
+    <span class="logo-symbol" aria-hidden="true">✦</span>
+    <span class="logo-name">GarantíasPro</span>
+  </div>
+
+  <!-- ══════════════════════════════
+       PANEL LOGIN
+  ══════════════════════════════ -->
+  <div class="auth-card" id="card-login" role="main">
+    <div class="auth-card-inner">
+      <div class="auth-header">
+        <h1 class="auth-title" id="login-title">Bienvenido de nuevo</h1>
+        <p class="auth-sub" id="login-sub">Inicia sesión en tu cuenta</p>
+      </div>
+
+      <form class="auth-form" id="login-form" novalidate autocomplete="on">
+        <div class="field-group">
+          <label for="login-email" id="label-email-login">Correo electrónico</label>
+          <div class="field-wrap">
+            <span class="field-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+            </span>
+            <input type="email" id="login-email" name="email"
+                   placeholder="tu@email.com"
+                   autocomplete="email" required
+                   maxlength="120" spellcheck="false" />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="login-password" id="label-pwd-login">Contraseña</label>
+          <div class="field-wrap">
+            <span class="field-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              </svg>
+            </span>
+            <input type="password" id="login-password" name="password"
+                   placeholder="••••••••"
+                   autocomplete="current-password" required
+                   maxlength="128" />
+            <button type="button" class="toggle-pwd" aria-label="Mostrar contraseña"
+                    data-target="login-password">
+              <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="error-msg" id="login-error" role="alert" aria-live="polite" hidden></div>
+
+        <button type="submit" class="btn-auth" id="btn-login">
+          <span class="btn-text" id="btn-login-text">Iniciar sesión</span>
+          <span class="btn-spinner" hidden aria-hidden="true"></span>
+        </button>
+      </form>
+
+      <p class="auth-switch">
+        <span id="no-account-text">¿No tienes cuenta?</span>
+        <button class="link-btn" id="go-register" type="button">Regístrate</button>
+      </p>
+
+      <!-- Lang toggle -->
+      <div class="lang-row">
+        <button class="lang-pill" id="auth-lang-toggle" aria-label="Cambiar idioma">
+          <span id="auth-lang-flag">🇪🇸</span>
+          <span id="auth-lang-code">ES</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       PANEL REGISTRO
+  ══════════════════════════════ -->
+  <div class="auth-card auth-card-hidden" id="card-register" role="main" aria-hidden="true">
+    <div class="auth-card-inner">
+      <div class="auth-header">
+        <h1 class="auth-title" id="register-title">Crear cuenta</h1>
+        <p class="auth-sub" id="register-sub">Empieza a controlar tus garantías</p>
+      </div>
+
+      <form class="auth-form" id="register-form" novalidate autocomplete="off">
+
+        <div class="field-group">
+          <label for="reg-name" id="label-name">Nombre</label>
+          <div class="field-wrap">
+            <span class="field-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <input type="text" id="reg-name" name="name"
+                   placeholder="Tu nombre"
+                   autocomplete="name" required
+                   maxlength="60" spellcheck="true" />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="reg-email" id="label-email-reg">Correo electrónico</label>
+          <div class="field-wrap">
+            <span class="field-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+            </span>
+            <input type="email" id="reg-email" name="email"
+                   placeholder="tu@email.com"
+                   autocomplete="email" required
+                   maxlength="120" spellcheck="false" />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="reg-password" id="label-pwd-reg">Contraseña</label>
+          <div class="field-wrap">
+            <span class="field-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              </svg>
+            </span>
+            <input type="password" id="reg-password" name="password"
+                   placeholder="Mínimo 8 caracteres"
+                   autocomplete="new-password" required
+                   maxlength="128" />
+            <button type="button" class="toggle-pwd" aria-label="Mostrar contraseña"
+                    data-target="reg-password">
+              <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+          <!-- Password strength -->
+          <div class="pwd-strength" id="pwd-strength" aria-live="polite">
+            <div class="strength-bars">
+              <div class="s-bar" id="sb1"></div>
+              <div class="s-bar" id="sb2"></div>
+              <div class="s-bar" id="sb3"></div>
+              <div class="s-bar" id="sb4"></div>
+            </div>
+            <span class="strength-label" id="strength-label"></span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="reg-password2" id="label-pwd2">Confirmar contraseña</label>
+          <div class="field-wrap">
+            <span class="field-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12l2 2 4-4"/><rect x="3" y="11" width="18" height="11" rx="2"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              </svg>
+            </span>
+            <input type="password" id="reg-password2" name="password2"
+                   placeholder="Repite la contraseña"
+                   autocomplete="new-password" required
+                   maxlength="128" />
+            <button type="button" class="toggle-pwd" aria-label="Mostrar contraseña"
+                    data-target="reg-password2">
+              <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="error-msg" id="register-error" role="alert" aria-live="polite" hidden></div>
+
+        <button type="submit" class="btn-auth" id="btn-register">
+          <span class="btn-text" id="btn-register-text">Crear cuenta</span>
+          <span class="btn-spinner" hidden aria-hidden="true"></span>
+        </button>
+      </form>
+
+      <p class="auth-switch">
+        <span id="have-account-text">¿Ya tienes cuenta?</span>
+        <button class="link-btn" id="go-login" type="button">Iniciar sesión</button>
+      </p>
+
+      <div class="lang-row">
+        <button class="lang-pill" id="auth-lang-toggle2" aria-label="Cambiar idioma">
+          <span id="auth-lang-flag2">🇪🇸</span>
+          <span id="auth-lang-code2">ES</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="auth.js"></script>
+</body>
+</html>

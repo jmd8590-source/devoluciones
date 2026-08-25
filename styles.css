@@ -220,6 +220,47 @@ ul, ol { list-style: none; }
 .lang-flag { font-size: 16px; }
 .lang-code { letter-spacing: 0.5px; }
 
+/* User greeting */
+.user-greeting {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  background: var(--c-glass);
+  border: 1px solid var(--c-border);
+}
+.user-avatar { font-size: 15px; }
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--t-secondary);
+  max-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Logout button */
+.btn-logout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--r-sm);
+  background: rgba(255,79,110,0.1);
+  border: 1px solid rgba(255,79,110,0.2);
+  color: #ff8fa8;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all var(--dur-normal) var(--ease-out);
+}
+.btn-logout:hover {
+  background: rgba(255,79,110,0.2);
+  border-color: rgba(255,79,110,0.35);
+  color: #ffb0c1;
+}
+
 /* Add button */
 .btn-add-main {
   display: flex;

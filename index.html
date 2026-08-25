@@ -16,6 +16,8 @@
                  base-uri 'self';
                  form-action 'self';" />
   <title>GarantíasPro — Devoluciones &amp; Garantías</title>
+  <!-- Session guard loaded FIRST — redirects to auth if no valid session -->
+  <script src="session-guard.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -63,11 +65,27 @@
     </nav>
 
     <div class="header-actions">
+      <!-- User greeting -->
+      <div class="user-greeting" id="user-greeting" aria-live="polite">
+        <span class="user-avatar" id="user-avatar" aria-hidden="true">👤</span>
+        <span class="user-name" id="user-name"></span>
+      </div>
+
       <!-- Language Toggle -->
       <button class="lang-toggle" id="lang-toggle" aria-label="Cambiar idioma / Change language"
               title="ES / EN">
         <span class="lang-flag" id="lang-flag">🇪🇸</span>
         <span class="lang-code" id="lang-code">ES</span>
+      </button>
+
+      <!-- Logout -->
+      <button class="btn-logout" id="btn-logout" aria-label="Cerrar sesión" title="Cerrar sesión">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span data-i18n="btn.logout">Salir</span>
       </button>
 
       <button class="btn-add-main" id="btn-add-main"
@@ -394,5 +412,6 @@
 </div>
 
 <script src="app.js"></script>
+<script src="session.js"></script>
 </body>
 </html>
