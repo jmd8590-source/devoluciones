@@ -110,6 +110,12 @@ const TRANSLATIONS = {
     'alert.return.expiring': 'Devolución vence pronto',
     'alert.warranty.expiring':'Garantía vence pronto',
     'no.ticket': 'Sin foto de ticket',
+    'dashboard.no.urgent': '— Sin urgencias —',
+    'detail.total':        'Total',
+    'btn.logout':          'Salir',
+    'demo.banner':         '🎮 Modo demo — los datos no se guardan.',
+    'demo.register':       'Crear cuenta gratis →',
+    'session.greeting':    'Hola,',
   },
   en: {
     'nav.dashboard':  'Home',
@@ -211,7 +217,14 @@ const TRANSLATIONS = {
     'alert.return.expiring': 'Return expiring soon',
     'alert.warranty.expiring':'Warranty expiring soon',
     'no.ticket': 'No receipt photo',
+    'dashboard.no.urgent': '— No urgent items —',
+    'detail.total':        'Total',
+    'btn.logout':          'Sign out',
+    'demo.banner':         '🎮 Demo mode — data is not saved.',
+    'demo.register':       'Create free account →',
+    'session.greeting':    'Hello,',
   }
+
 };
 
 let currentLang = localStorage.getItem('gp_lang') || 'es';
@@ -517,7 +530,7 @@ function renderDashboard() {
       });
     urgentList.innerHTML = '';
     if (urgents.length === 0) {
-      urgentList.innerHTML = '<p style="font-size:14px;color:var(--t-muted);padding:8px 0">— Sin urgencias —</p>';
+      urgentList.innerHTML = `<p style="font-size:14px;color:var(--t-muted);padding:8px 0">${t('dashboard.no.urgent')}</p>`;
     } else {
       urgents.slice(0, 5).forEach(p => urgentList.appendChild(buildMiniCard(p, 'urgent')));
     }
@@ -1125,7 +1138,8 @@ function openDetail(id) {
 
     addDetailRow(retSection, t('detail.return.start'), fmtDate(p.retStart));
     if (retDl) addDetailRow(retSection, t('detail.return.end'), fmtDate(retDl));
-    if (p.retDays) addDetailRow(retSection, 'Total', `${p.retDays} ${t('label.days')}`);
+    if (p.retDays) addDetailRow(retSection, t('detail.total'), `${p.retDays} ${t('label.days')}`);
+
     if (p.retConditions) addDetailRow(retSection, t('detail.return.cond'), p.retConditions);
     body.appendChild(retSection);
   }
@@ -1436,6 +1450,17 @@ function init() {
     if (currentView === 'dashboard') renderDashboard();
     else if (currentView === 'products') renderProducts();
     else if (currentView === 'alerts') renderAlerts();
+    // Update demo banner if present
+    const bannerSpan = document.querySelector('#demo-banner span:first-child');
+    if (bannerSpan) bannerSpan.textContent = t('demo.banner') + ' ';
+    const bannerLink = document.querySelector('#demo-banner button.link');
+    if (bannerLink) bannerLink.textContent = t('demo.register');
+    // Update logout button text
+    const logoutSpan = document.querySelector('#btn-logout span[data-i18n]');
+    if (logoutSpan) logoutSpan.textContent = t('btn.logout');
+    // Update user greeting avatar tooltip lang
+    const nameEl = document.getElementById('user-name');
+    if (nameEl) nameEl.title = '';
   });
 
   // ── Auto-sync purchase date → return start if empty
