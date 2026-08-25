@@ -1345,8 +1345,12 @@ function init() {
     });
   });
 
-  // ── Add button (header)
+  // ── Add button (header — desktop/tablet)
   document.getElementById('btn-add-main')?.addEventListener('click', openAdd);
+
+  // ── FAB (mobile floating add button)
+  document.getElementById('btn-fab')?.addEventListener('click', openAdd);
+
 
   // ── Form submit
   document.getElementById('product-form')?.addEventListener('submit', handleFormSubmit);
