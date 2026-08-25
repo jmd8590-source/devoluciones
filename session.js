@@ -32,11 +32,9 @@
   const nameEl   = document.getElementById('user-name');
   const avatarEl = document.getElementById('user-avatar');
   if (nameEl) {
-    // Show first name only, escaped safely via textContent
     nameEl.textContent = (session.name || session.email || '').split(' ')[0];
   }
   if (avatarEl) {
-    // Use first letter as avatar
     const letter = (session.name || session.email || '?')[0].toUpperCase();
     avatarEl.textContent = letter;
     avatarEl.style.cssText = `
@@ -51,6 +49,47 @@
       font-weight:700;
     `;
   }
+
+  // ── Demo banner ───────────────────────────────────────────────
+  if (session.isDemo) {
+    const lang = localStorage.getItem('gp_lang') || 'es';
+    const bannerText = lang === 'en'
+      ? '🎮 Demo mode — data is not saved. '
+      : '🎮 Modo demo — los datos no se guardan. ';
+    const linkText = lang === 'en' ? 'Create a free account →' : 'Crear cuenta gratis →';
+
+    const banner = document.createElement('div');
+    banner.className = 'demo-banner';
+    banner.id = 'demo-banner';
+
+    const textSpan = document.createElement('span');
+    textSpan.textContent = bannerText;
+
+    const link = document.createElement('button');
+    link.className = 'link';
+    link.textContent = linkText;
+    link.addEventListener('click', () => {
+      sessionStorage.removeItem('gp_session_v1');
+      window.location.replace('auth.html');
+    });
+
+    banner.appendChild(textSpan);
+    banner.appendChild(link);
+
+    // Insert after header
+    const header = document.querySelector('.app-header');
+    if (header) {
+      header.insertAdjacentElement('afterend', banner);
+      // Adjust main padding to account for banner
+      const main = document.querySelector('.app-main');
+      if (main) {
+        const bannerH = banner.offsetHeight || 40;
+        const current = getComputedStyle(main).paddingTop;
+        main.style.paddingTop = (parseFloat(current) + bannerH) + 'px';
+      }
+    }
+  }
+
 
   // ── Logout ────────────────────────────────────────────────────
   document.getElementById('btn-logout')?.addEventListener('click', () => {

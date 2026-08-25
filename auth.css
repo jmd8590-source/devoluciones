@@ -326,9 +326,100 @@ body {
 }
 .lang-pill:hover { background: var(--c-glass2); color: var(--t-primary); border-color: var(--c-border2); }
 
+/* ── Demo divider ──────────────────────────────────────────── */
+.demo-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 0;
+}
+.demo-divider span:first-child,
+.demo-divider span:last-child {
+  flex: 1;
+  height: 1px;
+  background: var(--c-border);
+}
+.demo-or {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--t-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Demo button ───────────────────────────────────────────── */
+.btn-demo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  padding: 13px;
+  border-radius: var(--r-full);
+  background: transparent;
+  border: 1.5px solid var(--c-border2);
+  color: var(--t-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--dur) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+.btn-demo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(79,140,255,0.08) 0%, rgba(162,89,255,0.08) 100%);
+  opacity: 0;
+  transition: opacity var(--dur);
+}
+.btn-demo:hover {
+  border-color: var(--c-primary);
+  color: var(--t-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(79,140,255,0.2);
+}
+.btn-demo:hover::before { opacity: 1; }
+.btn-demo:active { transform: scale(0.98); }
+.btn-demo svg { flex-shrink: 0; transition: transform var(--dur) var(--ease-spring); }
+.btn-demo:hover svg { transform: scale(1.15); }
+
+/* Demo badge shown in app */
+.demo-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 20px;
+  background: linear-gradient(90deg, rgba(255,190,61,0.12) 0%, rgba(255,140,66,0.12) 100%);
+  border-bottom: 1px solid rgba(255,190,61,0.2);
+  font-size: 13px;
+  font-weight: 500;
+  color: #ffd080;
+  position: sticky;
+  top: var(--header-h, 64px);
+  z-index: 90;
+}
+
 /* ── Responsive ────────────────────────────────────────────── */
 @media (max-width: 480px) {
-  .auth-card-inner { padding: 28px 22px 22px; }
-  .auth-title { font-size: 22px; }
-  .auth-wrapper { gap: 20px; padding: 16px; }
+  .auth-card-inner { padding: 24px 18px 20px; }
+  .auth-title { font-size: 20px; }
+  .auth-wrapper { gap: 16px; padding: 12px; min-height: 100dvh; }
+  .auth-logo { gap: 8px; }
+  .logo-name { font-size: 19px; }
+  .field-wrap input { font-size: 16px; } /* prevents iOS zoom */
+  .btn-auth, .btn-demo { padding: 14px; }
 }
+@media (max-width: 360px) {
+  .auth-card-inner { padding: 20px 14px 16px; }
+  .auth-title { font-size: 18px; }
+}
+/* Landscape small */
+@media (max-height: 600px) and (orientation: landscape) {
+  .auth-wrapper { min-height: unset; padding: 12px 16px; gap: 12px; }
+  .auth-logo { display: none; }
+  .auth-header { margin-bottom: 16px; }
+}
+

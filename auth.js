@@ -47,6 +47,9 @@ const AUTH_STRINGS = {
     'pwd.fair':         'Regular',
     'pwd.good':         'Buena',
     'pwd.strong':       'Muy segura',
+    'demo.or':          'o continúa sin cuenta',
+    'demo.btn':         'Ver demo',
+    'demo.banner':      '🎮 Modo demo — los datos no se guardan.',
   },
   en: {
     'login.title':      'Welcome back',
@@ -74,6 +77,9 @@ const AUTH_STRINGS = {
     'pwd.fair':         'Fair',
     'pwd.good':         'Good',
     'pwd.strong':       'Strong',
+    'demo.or':          'or continue without an account',
+    'demo.btn':         'Try demo',
+    'demo.banner':      '🎮 Demo mode — data is not saved.',
   }
 };
 
@@ -107,6 +113,8 @@ function applyAuthLang() {
   setText('auth-lang-code',  code);
   setText('auth-lang-flag2', flag);
   setText('auth-lang-code2', code);
+  setText('demo-or-text',    at('demo.or'));
+  setText('btn-demo-text',   at('demo.btn'));
 
   document.documentElement.lang = currentLang;
 }
@@ -479,7 +487,142 @@ function simulateDelay(ms) {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   14. INIT
+   15. DEMO MODE
+══════════════════════════════════════════════════════════════ */
+const DEMO_PRODUCTS_KEY = 'gp_products_v2';
+
+function loadDemoProducts() {
+  const today = new Date();
+  const fmt = (d) => d.toISOString().slice(0, 10);
+  const addD = (d, days) => { const r=new Date(d); r.setDate(r.getDate()+days); return fmt(r); };
+  const addY = (d, y)    => { const r=new Date(d); r.setFullYear(r.getFullYear()+y); return fmt(r); };
+
+  return [
+    {
+      id: 'demo-1',
+      name: currentLang === 'en' ? 'iPhone 16 Pro' : 'iPhone 16 Pro',
+      brand: 'Apple',
+      price: 1199,
+      store: currentLang === 'en' ? 'Apple Store' : 'Apple Store',
+      purchaseDate: fmt(today),
+      notes: currentLang === 'en' ? 'Natural Titanium, 256 GB' : 'Titanio natural, 256 GB',
+      retDays: 14,
+      retStart: fmt(today),
+      retConditions: currentLang === 'en'
+        ? 'Unopened original box required.'
+        : 'Caja original sin abrir, con todos los accesorios.',
+      warStart: fmt(today),
+      warYears: 2,
+      warCovers: currentLang === 'en'
+        ? 'Manufacturing defects\nHardware failures\nBattery defects (>80% capacity)'
+        : 'Defectos de fabricación\nFallos de hardware\nDefectos de batería (>80% capacidad)',
+      warNoCovers: currentLang === 'en'
+        ? 'Accidental damage\nWater damage\nUnauthorised repairs'
+        : 'Daños accidentales\nDaños por agua\nReparaciones no autorizadas',
+      ticketImage: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'demo-2',
+      name: currentLang === 'en' ? 'Sony WH-1000XM5' : 'Sony WH-1000XM5',
+      brand: 'Sony',
+      price: 279,
+      store: currentLang === 'en' ? 'Amazon' : 'Amazon',
+      purchaseDate: addD(today, -20),
+      notes: currentLang === 'en' ? 'Black, noise-cancelling' : 'Negro, cancelación de ruido',
+      retDays: 30,
+      retStart: addD(today, -20),
+      retConditions: currentLang === 'en'
+        ? 'Original packaging and receipt required.'
+        : 'Embalaje original y ticket de compra.',
+      warStart: addD(today, -20),
+      warYears: 1,
+      warCovers: currentLang === 'en'
+        ? 'Manufacturing defects\nElectronic failures'
+        : 'Defectos de fabricación\nFallos electrónicos',
+      warNoCovers: currentLang === 'en'
+        ? 'Physical damage\nWater damage\nNormal wear'
+        : 'Daños físicos\nDaños por líquidos\nDesgaste normal',
+      ticketImage: null,
+      createdAt: addD(today, -20) + 'T10:00:00.000Z',
+      updatedAt: addD(today, -20) + 'T10:00:00.000Z',
+    },
+    {
+      id: 'demo-3',
+      name: currentLang === 'en' ? 'Samsung 65" OLED TV' : 'Samsung 65" OLED TV',
+      brand: 'Samsung',
+      price: 1499,
+      store: currentLang === 'en' ? 'MediaMarkt' : 'MediaMarkt',
+      purchaseDate: addD(today, -5),
+      notes: currentLang === 'en' ? '4K, 120Hz, Smart TV' : '4K, 120Hz, Smart TV',
+      retDays: 15,
+      retStart: addD(today, -5),
+      retConditions: currentLang === 'en'
+        ? 'Must be in original packaging, unused.'
+        : 'En embalaje original, sin uso.',
+      warStart: addD(today, -5),
+      warYears: 3,
+      warCovers: currentLang === 'en'
+        ? 'Panel defects\nElectronic component failures'
+        : 'Defectos de panel\nFallos de componentes electrónicos',
+      warNoCovers: currentLang === 'en'
+        ? 'Dead pixels <5\nPhysical damage\nPower surges'
+        : 'Píxeles muertos <5\nDaños físicos\nSubidas de tensión',
+      ticketImage: null,
+      createdAt: addD(today, -5) + 'T09:00:00.000Z',
+      updatedAt: addD(today, -5) + 'T09:00:00.000Z',
+    },
+    {
+      id: 'demo-4',
+      name: currentLang === 'en' ? 'LG Washing Machine' : 'Lavadora LG',
+      brand: 'LG',
+      price: 699,
+      store: currentLang === 'en' ? 'El Corte Inglés' : 'El Corte Inglés',
+      purchaseDate: addD(today, -400),
+      notes: currentLang === 'en' ? '9kg, A+++ energy class' : '9kg, clase energética A+++',
+      retDays: 14,
+      retStart: addD(today, -400),
+      retConditions: '',
+      warStart: addD(today, -400),
+      warYears: 5,
+      warCovers: currentLang === 'en'
+        ? 'Motor defects (10 years)\nElectronic parts\nDrums and bearings'
+        : 'Defectos del motor (10 años)\nPiezas electrónicas\nTambor y rodamientos',
+      warNoCovers: currentLang === 'en'
+        ? 'Wear parts (belts, filters)\nCosmétic damage\nMisuse'
+        : 'Piezas de desgaste (correas, filtros)\nDaños estéticos\nUso indebido',
+      ticketImage: null,
+      createdAt: addD(today, -400) + 'T08:00:00.000Z',
+      updatedAt: addD(today, -400) + 'T08:00:00.000Z',
+    },
+  ];
+}
+
+function handleDemo() {
+  // Create demo session
+  const demoSession = {
+    token: 'demo-' + Date.now(),
+    userId: 'demo',
+    name: currentLang === 'en' ? 'Demo User' : 'Usuario Demo',
+    email: 'demo@garantiaspro.app',
+    isDemo: true,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + 60 * 60 * 1000, // 1 hour
+  };
+  try {
+    sessionStorage.setItem('gp_session_v1', JSON.stringify(demoSession));
+    // Only load demo products if there's nothing stored yet
+    const existing = localStorage.getItem(DEMO_PRODUCTS_KEY);
+    if (!existing || JSON.parse(existing).length === 0) {
+      localStorage.setItem(DEMO_PRODUCTS_KEY, JSON.stringify(loadDemoProducts()));
+    }
+  } catch (e) { /* continue anyway */ }
+  window.location.replace('index.html');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   16. INIT
 ══════════════════════════════════════════════════════════════ */
 function initAuth() {
   applyAuthLang();
@@ -487,6 +630,9 @@ function initAuth() {
   // Switch panels
   document.getElementById('go-register')?.addEventListener('click', showRegister);
   document.getElementById('go-login')?.addEventListener('click', showLogin);
+
+  // Demo button
+  document.getElementById('btn-demo')?.addEventListener('click', handleDemo);
 
   // Forms
   document.getElementById('login-form')?.addEventListener('submit', handleLogin);
