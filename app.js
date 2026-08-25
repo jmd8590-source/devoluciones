@@ -1351,6 +1351,9 @@ function init() {
   // ── FAB (mobile floating add button)
   document.getElementById('btn-fab')?.addEventListener('click', openAdd);
 
+  // ── Empty state add button
+  document.getElementById('btn-add-empty')?.addEventListener('click', openAdd);
+
 
   // ── Form submit
   document.getElementById('product-form')?.addEventListener('submit', handleFormSubmit);
