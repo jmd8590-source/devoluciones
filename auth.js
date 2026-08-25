@@ -525,18 +525,18 @@ function loadDemoProducts() {
     },
     {
       id: 'demo-2',
-      name: currentLang === 'en' ? 'Sony WH-1000XM5' : 'Sony WH-1000XM5',
+      name: 'Sony WH-1000XM5',
       brand: 'Sony',
       price: 279,
       store: currentLang === 'en' ? 'Amazon' : 'Amazon',
-      purchaseDate: addD(today, -20),
+      purchaseDate: addD(today, -27),
       notes: currentLang === 'en' ? 'Black, noise-cancelling' : 'Negro, cancelación de ruido',
-      retDays: 30,
-      retStart: addD(today, -20),
+      retDays: 29,
+      retStart: addD(today, -27),
       retConditions: currentLang === 'en'
         ? 'Original packaging and receipt required.'
         : 'Embalaje original y ticket de compra.',
-      warStart: addD(today, -20),
+      warStart: addD(today, -27),
       warYears: 1,
       warCovers: currentLang === 'en'
         ? 'Manufacturing defects\nElectronic failures'
@@ -545,19 +545,19 @@ function loadDemoProducts() {
         ? 'Physical damage\nWater damage\nNormal wear'
         : 'Daños físicos\nDaños por líquidos\nDesgaste normal',
       ticketImage: null,
-      createdAt: addD(today, -20) + 'T10:00:00.000Z',
-      updatedAt: addD(today, -20) + 'T10:00:00.000Z',
+      createdAt: addD(today, -27) + 'T10:00:00.000Z',
+      updatedAt: addD(today, -27) + 'T10:00:00.000Z',
     },
     {
       id: 'demo-3',
-      name: currentLang === 'en' ? 'Samsung 65" OLED TV' : 'Samsung 65" OLED TV',
+      name: 'Samsung 65" OLED TV',
       brand: 'Samsung',
       price: 1499,
       store: currentLang === 'en' ? 'MediaMarkt' : 'MediaMarkt',
-      purchaseDate: addD(today, -5),
+      purchaseDate: addD(today, -7),
       notes: currentLang === 'en' ? '4K, 120Hz, Smart TV' : '4K, 120Hz, Smart TV',
-      retDays: 15,
-      retStart: addD(today, -5),
+      retDays: 10,
+      retStart: addD(today, -7),
       retConditions: currentLang === 'en'
         ? 'Must be in original packaging, unused.'
         : 'En embalaje original, sin uso.',
