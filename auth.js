@@ -1,7 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════
-   GarantíasPro — Auth Logic
-   Security: SHA-256 + PBKDF2 password hashing via Web Crypto API
-             Rate limiting, session tokens, XSS-safe DOM ops
+   GarantíasPro — Auth Logic (Supabase Auth)
+   Seguridad: contraseñas gestionadas por Supabase (bcrypt en servidor),
+              verificación de email obligatoria, límites de intentos
+              en servidor + bloqueo local, operaciones DOM sin innerHTML.
    ═══════════════════════════════════════════════════════════════ */
 
 'use strict';
@@ -9,12 +10,9 @@
 /* ══════════════════════════════════════════════════════════════
    1. CONSTANTS & CONFIG
 ══════════════════════════════════════════════════════════════ */
-const USERS_KEY      = 'gp_users_v1';
-const SESSION_KEY    = 'gp_session_v1';
 const RATE_KEY       = 'gp_rate_v1';
-const MAX_ATTEMPTS   = 5;          // max failed logins before lockout
-const LOCKOUT_MS     = 5 * 60000;  // 5 minutes lockout
-const SESSION_MINS   = 120;        // session lifetime in minutes
+const MAX_ATTEMPTS   = 5;          // intentos fallidos antes del bloqueo local
+const LOCKOUT_MS     = 5 * 60000;  // 5 minutos
 const MIN_PWD_LEN    = 8;
 
 /* ══════════════════════════════════════════════════════════════
@@ -30,6 +28,10 @@ const AUTH_STRINGS = {
     'label.email':      'Correo electrónico',
     'label.pwd':        'Contraseña',
     'label.pwd2':       'Confirmar contraseña',
+    'ph.name':          'Tu nombre',
+    'ph.pwd.new':       'Mínimo 8 caracteres',
+    'ph.pwd.repeat':    'Repite la contraseña',
+    'pwd.hint':         'Usa letras y números. Mínimo 8 caracteres.',
     'btn.login':        'Iniciar sesión',
     'btn.register':     'Crear cuenta',
     'no.account':       '¿No tienes cuenta?',
@@ -39,17 +41,28 @@ const AUTH_STRINGS = {
     'err.required':     'Rellena todos los campos obligatorios.',
     'err.email':        'Introduce un correo electrónico válido.',
     'err.pwd.short':    `La contraseña debe tener al menos ${MIN_PWD_LEN} caracteres.`,
+    'err.pwd.weak':     'La contraseña debe incluir letras y números.',
     'err.pwd.match':    'Las contraseñas no coinciden.',
-    'err.email.taken':  'Ya existe una cuenta con ese correo.',
     'err.credentials':  'Correo o contraseña incorrectos.',
+    'err.unconfirmed':  'Todavía no has confirmado tu correo. Revisa tu bandeja de entrada (y la carpeta de spam).',
     'err.locked':       'Demasiados intentos. Espera 5 minutos.',
+    'err.ratelimit':    'Demasiadas solicitudes. Espera unos minutos e inténtalo de nuevo.',
+    'err.network':      'No se pudo conectar con el servidor. Comprueba tu conexión.',
+    'err.generic':      'Ha ocurrido un error. Inténtalo de nuevo.',
     'pwd.weak':         'Débil',
     'pwd.fair':         'Regular',
     'pwd.good':         'Buena',
     'pwd.strong':       'Muy segura',
     'demo.or':          'o continúa sin cuenta',
     'demo.btn':         'Ver demo',
-    'demo.banner':      '🎮 Modo demo — los datos no se guardan.',
+    'verify.title':     'Revisa tu correo',
+    'verify.text':      'Te hemos enviado un enlace de confirmación. Ábrelo para activar tu cuenta y después inicia sesión.',
+    'verify.resend':    'Reenviar email',
+    'verify.sent':      'Email reenviado. Puede tardar unos minutos.',
+    'verify.back':      'Volver a iniciar sesión',
+    'resend.login':     'Reenviar email de confirmación',
+    'pwd.show':         'Mostrar contraseña',
+    'pwd.hide':         'Ocultar contraseña',
   },
   en: {
     'login.title':      'Welcome back',
@@ -60,6 +73,10 @@ const AUTH_STRINGS = {
     'label.email':      'Email address',
     'label.pwd':        'Password',
     'label.pwd2':       'Confirm password',
+    'ph.name':          'Your name',
+    'ph.pwd.new':       'At least 8 characters',
+    'ph.pwd.repeat':    'Repeat password',
+    'pwd.hint':         'Use letters and numbers. At least 8 characters.',
     'btn.login':        'Sign in',
     'btn.register':     'Create account',
     'no.account':       "Don't have an account?",
@@ -69,17 +86,28 @@ const AUTH_STRINGS = {
     'err.required':     'Please fill in all required fields.',
     'err.email':        'Please enter a valid email address.',
     'err.pwd.short':    `Password must be at least ${MIN_PWD_LEN} characters.`,
+    'err.pwd.weak':     'Password must include letters and numbers.',
     'err.pwd.match':    'Passwords do not match.',
-    'err.email.taken':  'An account with that email already exists.',
     'err.credentials':  'Incorrect email or password.',
+    'err.unconfirmed':  "You haven't confirmed your email yet. Check your inbox (and spam folder).",
     'err.locked':       'Too many attempts. Please wait 5 minutes.',
+    'err.ratelimit':    'Too many requests. Please wait a few minutes and try again.',
+    'err.network':      'Could not reach the server. Check your connection.',
+    'err.generic':      'Something went wrong. Please try again.',
     'pwd.weak':         'Weak',
     'pwd.fair':         'Fair',
     'pwd.good':         'Good',
     'pwd.strong':       'Strong',
     'demo.or':          'or continue without an account',
     'demo.btn':         'Try demo',
-    'demo.banner':      '🎮 Demo mode — data is not saved.',
+    'verify.title':     'Check your email',
+    'verify.text':      'We sent you a confirmation link. Open it to activate your account, then sign in.',
+    'verify.resend':    'Resend email',
+    'verify.sent':      'Email sent again. It may take a few minutes.',
+    'verify.back':      'Back to sign in',
+    'resend.login':     'Resend confirmation email',
+    'pwd.show':         'Show password',
+    'pwd.hide':         'Hide password',
   }
 };
 
@@ -87,6 +115,15 @@ let currentLang = localStorage.getItem('gp_lang') || 'es';
 
 function at(key) {
   return (AUTH_STRINGS[currentLang] || AUTH_STRINGS.es)[key] || key;
+}
+
+function setText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+function setPlaceholder(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.placeholder = text;
 }
 
 function applyAuthLang() {
@@ -106,78 +143,44 @@ function applyAuthLang() {
   setText('go-register',       at('go.register'));
   setText('have-account-text', at('have.account'));
   setText('go-login',          at('go.login'));
+  setText('demo-or-text',      at('demo.or'));
+  setText('btn-demo-text',     at('demo.btn'));
+  setText('pwd-hint',          at('pwd.hint'));
+  setText('verify-title',      at('verify.title'));
+  setText('verify-text',       at('verify.text'));
+  setText('btn-resend-text',   at('verify.resend'));
+  setText('verify-go-login',   at('verify.back'));
+  setText('btn-resend-login',  at('resend.login'));
+  setPlaceholder('reg-name',      at('ph.name'));
+  setPlaceholder('reg-password',  at('ph.pwd.new'));
+  setPlaceholder('reg-password2', at('ph.pwd.repeat'));
 
-  const flag = currentLang === 'es' ? '🇪🇸' : '🇬🇧';
-  const code = currentLang === 'es' ? 'ES' : 'EN';
-  setText('auth-lang-flag',  flag);
-  setText('auth-lang-code',  code);
-  setText('auth-lang-flag2', flag);
-  setText('auth-lang-code2', code);
-  setText('demo-or-text',    at('demo.or'));
-  setText('btn-demo-text',   at('demo.btn'));
+  document.querySelectorAll('.js-lang-code').forEach(el => {
+    el.textContent = currentLang === 'es' ? 'ES' : 'EN';
+  });
+  document.querySelectorAll('.toggle-pwd').forEach(btn => {
+    const input = document.getElementById(btn.dataset.target);
+    btn.setAttribute('aria-label', input && input.type === 'text' ? at('pwd.hide') : at('pwd.show'));
+  });
 
   document.documentElement.lang = currentLang;
 }
 
-function setText(id, text) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = text;
-}
-
 /* ══════════════════════════════════════════════════════════════
-   3. SECURITY — CRYPTO UTILS
+   3. VALIDATION
 ══════════════════════════════════════════════════════════════ */
-
-// Generate a cryptographically secure random salt (hex string)
-function generateSalt() {
-  const buf = new Uint8Array(32);
-  crypto.getRandomValues(buf);
-  return Array.from(buf, b => b.toString(16).padStart(2,'0')).join('');
-}
-
-// Hash password using PBKDF2 (Web Crypto API)
-async function hashPassword(password, salt) {
-  const enc  = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']
-  );
-  const bits = await crypto.subtle.deriveBits(
-    { name:'PBKDF2', salt: enc.encode(salt), iterations: 200000, hash:'SHA-256' },
-    keyMaterial, 256
-  );
-  return Array.from(new Uint8Array(bits), b => b.toString(16).padStart(2,'0')).join('');
-}
-
-// Constant-time string comparison to avoid timing attacks
-function safeEqual(a, b) {
-  if (typeof a !== 'string' || typeof b !== 'string') return false;
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
-}
-
-// Generate secure session token
-function generateToken() {
-  const buf = new Uint8Array(48);
-  crypto.getRandomValues(buf);
-  return Array.from(buf, b => b.toString(16).padStart(2,'0')).join('');
-}
-
-// Sanitize / validate email (basic RFC-safe)
 function isValidEmail(email) {
   if (typeof email !== 'string') return false;
   return /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/.test(email.trim().toLowerCase());
 }
 
-// Strip dangerous chars from name field
 function sanitizeName(str) {
   if (typeof str !== 'string') return '';
   return str.replace(/[\x00-\x1F\x7F<>&"']/g, '').trim().slice(0, 60);
 }
 
 /* ══════════════════════════════════════════════════════════════
-   4. RATE LIMITING
+   4. LOCAL RATE LIMITING (complementa el límite del servidor)
 ══════════════════════════════════════════════════════════════ */
 function getRateData() {
   try {
@@ -188,32 +191,23 @@ function getRateData() {
 function saveRateData(data) {
   try { localStorage.setItem(RATE_KEY, JSON.stringify(data)); } catch {}
 }
-
 function isLockedOut(email) {
   const data = getRateData();
   const entry = data[email.toLowerCase()];
   if (!entry) return false;
   if (entry.count >= MAX_ATTEMPTS) {
-    const elapsed = Date.now() - entry.lastAttempt;
-    if (elapsed < LOCKOUT_MS) return true;
-    // Reset after lockout period
+    if (Date.now() - entry.lastAttempt < LOCKOUT_MS) return true;
     delete data[email.toLowerCase()];
     saveRateData(data);
-    return false;
   }
   return false;
 }
-
 function recordFailedAttempt(email) {
   const data = getRateData();
   const key  = email.toLowerCase();
-  data[key] = {
-    count: ((data[key]?.count) || 0) + 1,
-    lastAttempt: Date.now()
-  };
+  data[key] = { count: ((data[key]?.count) || 0) + 1, lastAttempt: Date.now() };
   saveRateData(data);
 }
-
 function clearAttempts(email) {
   const data = getRateData();
   delete data[email.toLowerCase()];
@@ -221,73 +215,12 @@ function clearAttempts(email) {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   5. USER STORAGE
-══════════════════════════════════════════════════════════════ */
-function loadUsers() {
-  try {
-    const raw = localStorage.getItem(USERS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch { return []; }
-}
-
-function saveUsers(users) {
-  try { localStorage.setItem(USERS_KEY, JSON.stringify(users)); } catch {}
-}
-
-function findUser(email) {
-  return loadUsers().find(u => u.email === email.trim().toLowerCase());
-}
-
-/* ══════════════════════════════════════════════════════════════
-   6. SESSION MANAGEMENT
-══════════════════════════════════════════════════════════════ */
-function createSession(userId, name, email) {
-  const session = {
-    token:     generateToken(),
-    userId,
-    name,
-    email,
-    createdAt: Date.now(),
-    expiresAt: Date.now() + SESSION_MINS * 60 * 1000,
-  };
-  try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch {}
-  return session;
-}
-
-function getSession() {
-  try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-    const s = JSON.parse(raw);
-    if (!s || !s.token || !s.expiresAt) return null;
-    if (Date.now() > s.expiresAt) {
-      sessionStorage.removeItem(SESSION_KEY);
-      return null;
-    }
-    return s;
-  } catch { return null; }
-}
-
-function clearSession() {
-  sessionStorage.removeItem(SESSION_KEY);
-}
-
-/* ══════════════════════════════════════════════════════════════
-   7. REDIRECT IF ALREADY LOGGED IN
-══════════════════════════════════════════════════════════════ */
-if (getSession()) {
-  window.location.replace('index.html');
-}
-
-/* ══════════════════════════════════════════════════════════════
-   8. UI HELPERS
+   5. UI HELPERS
 ══════════════════════════════════════════════════════════════ */
 function showError(id, msg) {
   const el = document.getElementById(id);
   if (!el) return;
-  el.textContent = msg;  // safe: textContent, not innerHTML
+  el.textContent = msg;  // textContent: seguro frente a XSS
   el.hidden = false;
 }
 function hideError(id) {
@@ -295,25 +228,30 @@ function hideError(id) {
   if (el) el.hidden = true;
 }
 
-function setLoading(formId, btnId, loading) {
+function setLoading(btnId, loading) {
   const btn = document.getElementById(btnId);
   if (!btn) return;
-  const txt = btn.querySelector('.btn-text');
+  const txt  = btn.querySelector('.btn-text');
   const spin = btn.querySelector('.btn-spinner');
   btn.disabled = loading;
   if (txt)  txt.hidden = loading;
   if (spin) spin.hidden = !loading;
 }
 
-function markFieldError(wrapId, hasError) {
-  const el = document.getElementById(wrapId);
-  if (!el) return;
-  const wrap = el.closest('.field-wrap');
-  if (wrap) wrap.classList.toggle('error', hasError);
+function mapAuthError(error) {
+  if (!error) return at('err.generic');
+  const code = error.code || '';
+  const msg  = (error.message || '').toLowerCase();
+  if (code === 'invalid_credentials' || msg.includes('invalid login credentials')) return at('err.credentials');
+  if (code === 'email_not_confirmed' || msg.includes('email not confirmed')) return at('err.unconfirmed');
+  if (code.startsWith('over_') || error.status === 429 || msg.includes('rate limit')) return at('err.ratelimit');
+  if (code === 'weak_password') return at('err.pwd.weak');
+  if (error.name === 'AuthRetryableFetchError' || msg.includes('fetch') || msg.includes('network')) return at('err.network');
+  return at('err.generic');
 }
 
 /* ══════════════════════════════════════════════════════════════
-   9. PASSWORD STRENGTH METER
+   6. PASSWORD STRENGTH METER
 ══════════════════════════════════════════════════════════════ */
 function calcStrength(pwd) {
   let score = 0;
@@ -322,343 +260,292 @@ function calcStrength(pwd) {
   if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
   if (/[0-9]/.test(pwd)) score++;
   if (/[^A-Za-z0-9]/.test(pwd)) score++;
-  // cap at 4
   return Math.min(4, Math.max(0, Math.ceil(score * 4 / 5)));
 }
 
 function updateStrengthMeter(pwd) {
-  const bars   = [document.getElementById('sb1'),document.getElementById('sb2'),document.getElementById('sb3'),document.getElementById('sb4')];
+  const bars   = ['sb1','sb2','sb3','sb4'].map(id => document.getElementById(id));
   const label  = document.getElementById('strength-label');
   const score  = calcStrength(pwd);
-  const colors = ['', '#ff4f6e', '#ffbe3d', '#4f8cff', '#31e08f'];
+  const colors = ['', '#e5484d', '#e5a03a', '#4a7dff', '#30a46c'];
   const labels = ['', at('pwd.weak'), at('pwd.fair'), at('pwd.good'), at('pwd.strong')];
 
   bars.forEach((b, i) => {
     if (!b) return;
-    b.style.background = i < score ? (colors[score] || '#4f8cff') : 'rgba(255,255,255,0.08)';
+    b.style.background = i < score ? colors[score] : '';
   });
   if (label) {
     label.textContent = pwd.length > 0 ? (labels[score] || '') : '';
-    label.style.color = colors[score] || 'var(--t-muted)';
+    label.style.color = colors[score] || '';
   }
 }
 
 /* ══════════════════════════════════════════════════════════════
-   10. PANEL SWITCHING
+   7. PANEL SWITCHING
 ══════════════════════════════════════════════════════════════ */
-function showLogin() {
-  const lCard = document.getElementById('card-login');
-  const rCard = document.getElementById('card-register');
-  lCard.classList.remove('auth-card-hidden');
-  lCard.setAttribute('aria-hidden', 'false');
-  rCard.classList.add('auth-card-hidden');
-  rCard.setAttribute('aria-hidden', 'true');
+function showCard(which) {
+  ['login', 'register', 'verify'].forEach(name => {
+    const card = document.getElementById('card-' + name);
+    if (!card) return;
+    const active = name === which;
+    card.classList.toggle('auth-card-hidden', !active);
+    card.setAttribute('aria-hidden', active ? 'false' : 'true');
+  });
   hideError('login-error');
-  document.getElementById('login-email')?.focus();
+  hideError('register-error');
+  hideError('verify-msg');
+  const resendLogin = document.getElementById('btn-resend-login');
+  if (resendLogin) resendLogin.hidden = true;
+  if (which === 'login')    document.getElementById('login-email')?.focus();
+  if (which === 'register') document.getElementById('reg-name')?.focus();
 }
 
-function showRegister() {
-  const lCard = document.getElementById('card-login');
-  const rCard = document.getElementById('card-register');
-  rCard.classList.remove('auth-card-hidden');
-  rCard.setAttribute('aria-hidden', 'false');
-  lCard.classList.add('auth-card-hidden');
-  lCard.setAttribute('aria-hidden', 'true');
-  hideError('register-error');
-  document.getElementById('reg-name')?.focus();
+let pendingVerifyEmail = '';
+
+function showVerify(email) {
+  pendingVerifyEmail = email;
+  setText('verify-email', email);
+  showCard('verify');
 }
 
 /* ══════════════════════════════════════════════════════════════
-   11. LOGIN HANDLER
+   8. LOGIN HANDLER
 ══════════════════════════════════════════════════════════════ */
 async function handleLogin(e) {
   e.preventDefault();
   hideError('login-error');
+  const resendLogin = document.getElementById('btn-resend-login');
+  if (resendLogin) resendLogin.hidden = true;
 
-  const email = document.getElementById('login-email')?.value.trim() || '';
+  const email = (document.getElementById('login-email')?.value || '').trim().toLowerCase();
   const pwd   = document.getElementById('login-password')?.value || '';
 
-  if (!email || !pwd) {
-    showError('login-error', at('err.required'));
-    return;
-  }
-  if (!isValidEmail(email)) {
-    showError('login-error', at('err.email'));
-    return;
-  }
-  if (isLockedOut(email)) {
-    showError('login-error', at('err.locked'));
-    return;
-  }
+  if (!email || !pwd)        return showError('login-error', at('err.required'));
+  if (!isValidEmail(email))  return showError('login-error', at('err.email'));
+  if (isLockedOut(email))    return showError('login-error', at('err.locked'));
 
-  setLoading('login-form', 'btn-login', true);
-
+  setLoading('btn-login', true);
   try {
-    await simulateDelay(300); // UX delay, also slightly hardens timing attacks
-
-    const user = findUser(email);
-    if (!user) {
-      recordFailedAttempt(email);
-      showError('login-error', at('err.credentials'));
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pwd });
+    if (error) {
+      const unconfirmed = error.code === 'email_not_confirmed' ||
+                          (error.message || '').toLowerCase().includes('email not confirmed');
+      if (!unconfirmed) recordFailedAttempt(email);
+      showError('login-error', mapAuthError(error));
+      if (unconfirmed && resendLogin) {
+        pendingVerifyEmail = email;
+        resendLogin.hidden = false;
+      }
       return;
     }
-
-    const hash = await hashPassword(pwd, user.salt);
-    if (!safeEqual(hash, user.passwordHash)) {
-      recordFailedAttempt(email);
-      showError('login-error', at('err.credentials'));
-      return;
+    if (data && data.session) {
+      clearAttempts(email);
+      clearDemoSession();
+      window.location.replace('index.html');
     }
-
-    // Success
-    clearAttempts(email);
-    createSession(user.id, user.name, user.email);
-    window.location.replace('index.html');
-
+  } catch (err) {
+    showError('login-error', mapAuthError(err));
   } finally {
-    setLoading('login-form', 'btn-login', false);
+    setLoading('btn-login', false);
   }
 }
 
 /* ══════════════════════════════════════════════════════════════
-   12. REGISTER HANDLER
+   9. REGISTER HANDLER
 ══════════════════════════════════════════════════════════════ */
 async function handleRegister(e) {
   e.preventDefault();
   hideError('register-error');
 
-  const name   = sanitizeName(document.getElementById('reg-name')?.value || '');
-  const email  = (document.getElementById('reg-email')?.value || '').trim().toLowerCase();
-  const pwd    = document.getElementById('reg-password')?.value || '';
-  const pwd2   = document.getElementById('reg-password2')?.value || '';
+  const name  = sanitizeName(document.getElementById('reg-name')?.value || '');
+  const email = (document.getElementById('reg-email')?.value || '').trim().toLowerCase();
+  const pwd   = document.getElementById('reg-password')?.value || '';
+  const pwd2  = document.getElementById('reg-password2')?.value || '';
 
-  if (!name || !email || !pwd || !pwd2) {
-    showError('register-error', at('err.required'));
-    return;
-  }
-  if (!isValidEmail(email)) {
-    showError('register-error', at('err.email'));
-    return;
-  }
-  if (pwd.length < MIN_PWD_LEN) {
-    showError('register-error', at('err.pwd.short'));
-    return;
-  }
-  if (pwd !== pwd2) {
-    showError('register-error', at('err.pwd.match'));
-    return;
-  }
-  if (findUser(email)) {
-    showError('register-error', at('err.email.taken'));
-    return;
-  }
+  if (!name || !email || !pwd || !pwd2)           return showError('register-error', at('err.required'));
+  if (!isValidEmail(email))                       return showError('register-error', at('err.email'));
+  if (pwd.length < MIN_PWD_LEN)                   return showError('register-error', at('err.pwd.short'));
+  if (!/[A-Za-z]/.test(pwd) || !/[0-9]/.test(pwd)) return showError('register-error', at('err.pwd.weak'));
+  if (pwd !== pwd2)                               return showError('register-error', at('err.pwd.match'));
 
-  setLoading('register-form', 'btn-register', true);
-
+  setLoading('btn-register', true);
   try {
-    const salt         = generateSalt();
-    const passwordHash = await hashPassword(pwd, salt);
-    const id           = generateSecureId();
-
-    const users = loadUsers();
-    users.push({ id, name, email, salt, passwordHash, createdAt: Date.now() });
-    saveUsers(users);
-
-    // Auto-login
-    createSession(id, name, email);
-    window.location.replace('index.html');
-
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password: pwd,
+      options: {
+        data: { name },
+        emailRedirectTo: AUTH_REDIRECT_URL,
+      },
+    });
+    if (error) {
+      showError('register-error', mapAuthError(error));
+      return;
+    }
+    // Si la verificación de email está desactivada en Supabase, ya hay sesión
+    if (data && data.session) {
+      clearDemoSession();
+      window.location.replace('index.html');
+      return;
+    }
+    // Por privacidad, Supabase no revela si el correo ya existía:
+    // mostramos siempre el mismo mensaje.
+    document.getElementById('register-form')?.reset();
+    updateStrengthMeter('');
+    showVerify(email);
+  } catch (err) {
+    showError('register-error', mapAuthError(err));
   } finally {
-    setLoading('register-form', 'btn-register', false);
+    setLoading('btn-register', false);
   }
 }
 
 /* ══════════════════════════════════════════════════════════════
-   13. UTILS
+   10. RESEND CONFIRMATION
 ══════════════════════════════════════════════════════════════ */
-function generateSecureId() {
-  const arr = new Uint32Array(4);
-  crypto.getRandomValues(arr);
-  return Array.from(arr, n => n.toString(16).padStart(8,'0')).join('-');
-}
-
-function simulateDelay(ms) {
-  return new Promise(r => setTimeout(r, ms));
+async function resendConfirmation(targetMsgId) {
+  if (!pendingVerifyEmail) return;
+  try {
+    const { error } = await sb.auth.resend({
+      type: 'signup',
+      email: pendingVerifyEmail,
+      options: { emailRedirectTo: AUTH_REDIRECT_URL },
+    });
+    const el = document.getElementById(targetMsgId);
+    if (error) {
+      if (el) el.classList.remove('info-msg');
+      showError(targetMsgId, mapAuthError(error));
+    } else {
+      if (el) el.classList.add('info-msg');
+      showError(targetMsgId, at('verify.sent'));
+    }
+  } catch (err) {
+    showError(targetMsgId, mapAuthError(err));
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
-   15. DEMO MODE
+   11. DEMO MODE (100% local, en sessionStorage)
 ══════════════════════════════════════════════════════════════ */
-const DEMO_PRODUCTS_KEY = 'gp_products_v2';
-
-function loadDemoProducts() {
-  const today = new Date();
-  const fmt = (d) => d.toISOString().slice(0, 10);
-  const addD = (d, days) => { const r=new Date(d); r.setDate(r.getDate()+days); return fmt(r); };
-  const addY = (d, y)    => { const r=new Date(d); r.setFullYear(r.getFullYear()+y); return fmt(r); };
+function buildDemoProducts() {
+  const en = currentLang === 'en';
+  const now = new Date();
+  const addD = (days) => { const r = new Date(now); r.setDate(r.getDate() + days); return localISODate(r); };
+  const stamp = (days) => { const r = new Date(now); r.setDate(r.getDate() + days); return r.toISOString(); };
 
   return [
     {
-      id: 'demo-1',
-      name: currentLang === 'en' ? 'iPhone 16 Pro' : 'iPhone 16 Pro',
-      brand: 'Apple',
-      price: 1199,
-      store: currentLang === 'en' ? 'Apple Store' : 'Apple Store',
-      purchaseDate: fmt(today),
-      notes: currentLang === 'en' ? 'Natural Titanium, 256 GB' : 'Titanio natural, 256 GB',
-      retDays: 14,
-      retStart: fmt(today),
-      retConditions: currentLang === 'en'
-        ? 'Unopened original box required.'
-        : 'Caja original sin abrir, con todos los accesorios.',
-      warStart: fmt(today),
-      warYears: 2,
-      warCovers: currentLang === 'en'
-        ? 'Manufacturing defects\nHardware failures\nBattery defects (>80% capacity)'
-        : 'Defectos de fabricación\nFallos de hardware\nDefectos de batería (>80% capacidad)',
-      warNoCovers: currentLang === 'en'
-        ? 'Accidental damage\nWater damage\nUnauthorised repairs'
-        : 'Daños accidentales\nDaños por agua\nReparaciones no autorizadas',
-      ticketImage: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      id: 'demo-1', name: 'iPhone 16 Pro', brand: 'Apple', price: 1199, store: 'Apple Store',
+      purchaseDate: addD(0), notes: en ? 'Natural Titanium, 256 GB' : 'Titanio natural, 256 GB',
+      retDays: 14, retStart: addD(0),
+      retConditions: en ? 'Unopened original box required.' : 'Caja original sin abrir, con todos los accesorios.',
+      warStart: addD(0), warYears: 2,
+      warCovers: en ? 'Manufacturing defects\nHardware failures\nBattery defects (>80% capacity)'
+                    : 'Defectos de fabricación\nFallos de hardware\nDefectos de batería (>80% capacidad)',
+      warNoCovers: en ? 'Accidental damage\nWater damage\nUnauthorised repairs'
+                      : 'Daños accidentales\nDaños por agua\nReparaciones no autorizadas',
+      ticketImage: null, createdAt: stamp(0), updatedAt: stamp(0),
     },
     {
-      id: 'demo-2',
-      name: 'Sony WH-1000XM5',
-      brand: 'Sony',
-      price: 279,
-      store: currentLang === 'en' ? 'Amazon' : 'Amazon',
-      purchaseDate: addD(today, -27),
-      notes: currentLang === 'en' ? 'Black, noise-cancelling' : 'Negro, cancelación de ruido',
-      retDays: 29,
-      retStart: addD(today, -27),
-      retConditions: currentLang === 'en'
-        ? 'Original packaging and receipt required.'
-        : 'Embalaje original y ticket de compra.',
-      warStart: addD(today, -27),
-      warYears: 1,
-      warCovers: currentLang === 'en'
-        ? 'Manufacturing defects\nElectronic failures'
-        : 'Defectos de fabricación\nFallos electrónicos',
-      warNoCovers: currentLang === 'en'
-        ? 'Physical damage\nWater damage\nNormal wear'
-        : 'Daños físicos\nDaños por líquidos\nDesgaste normal',
-      ticketImage: null,
-      createdAt: addD(today, -27) + 'T10:00:00.000Z',
-      updatedAt: addD(today, -27) + 'T10:00:00.000Z',
+      id: 'demo-2', name: 'Sony WH-1000XM5', brand: 'Sony', price: 279, store: 'Amazon',
+      purchaseDate: addD(-27), notes: en ? 'Black, noise-cancelling' : 'Negro, cancelación de ruido',
+      retDays: 29, retStart: addD(-27),
+      retConditions: en ? 'Original packaging and receipt required.' : 'Embalaje original y ticket de compra.',
+      warStart: addD(-27), warYears: 1,
+      warCovers: en ? 'Manufacturing defects\nElectronic failures' : 'Defectos de fabricación\nFallos electrónicos',
+      warNoCovers: en ? 'Physical damage\nWater damage\nNormal wear' : 'Daños físicos\nDaños por líquidos\nDesgaste normal',
+      ticketImage: null, createdAt: stamp(-27), updatedAt: stamp(-27),
     },
     {
-      id: 'demo-3',
-      name: 'Samsung 65" OLED TV',
-      brand: 'Samsung',
-      price: 1499,
-      store: currentLang === 'en' ? 'MediaMarkt' : 'MediaMarkt',
-      purchaseDate: addD(today, -7),
-      notes: currentLang === 'en' ? '4K, 120Hz, Smart TV' : '4K, 120Hz, Smart TV',
-      retDays: 10,
-      retStart: addD(today, -7),
-      retConditions: currentLang === 'en'
-        ? 'Must be in original packaging, unused.'
-        : 'En embalaje original, sin uso.',
-      warStart: addD(today, -5),
-      warYears: 3,
-      warCovers: currentLang === 'en'
-        ? 'Panel defects\nElectronic component failures'
-        : 'Defectos de panel\nFallos de componentes electrónicos',
-      warNoCovers: currentLang === 'en'
-        ? 'Dead pixels <5\nPhysical damage\nPower surges'
-        : 'Píxeles muertos <5\nDaños físicos\nSubidas de tensión',
-      ticketImage: null,
-      createdAt: addD(today, -5) + 'T09:00:00.000Z',
-      updatedAt: addD(today, -5) + 'T09:00:00.000Z',
+      id: 'demo-3', name: 'Samsung 65" OLED TV', brand: 'Samsung', price: 1499, store: 'MediaMarkt',
+      purchaseDate: addD(-7), notes: '4K, 120Hz, Smart TV',
+      retDays: 10, retStart: addD(-7),
+      retConditions: en ? 'Must be in original packaging, unused.' : 'En embalaje original, sin uso.',
+      warStart: addD(-5), warYears: 3,
+      warCovers: en ? 'Panel defects\nElectronic component failures' : 'Defectos de panel\nFallos de componentes electrónicos',
+      warNoCovers: en ? 'Dead pixels <5\nPhysical damage\nPower surges' : 'Píxeles muertos <5\nDaños físicos\nSubidas de tensión',
+      ticketImage: null, createdAt: stamp(-5), updatedAt: stamp(-5),
     },
     {
-      id: 'demo-4',
-      name: currentLang === 'en' ? 'LG Washing Machine' : 'Lavadora LG',
-      brand: 'LG',
-      price: 699,
-      store: currentLang === 'en' ? 'El Corte Inglés' : 'El Corte Inglés',
-      purchaseDate: addD(today, -400),
-      notes: currentLang === 'en' ? '9kg, A+++ energy class' : '9kg, clase energética A+++',
-      retDays: 14,
-      retStart: addD(today, -400),
-      retConditions: '',
-      warStart: addD(today, -400),
-      warYears: 5,
-      warCovers: currentLang === 'en'
-        ? 'Motor defects (10 years)\nElectronic parts\nDrums and bearings'
-        : 'Defectos del motor (10 años)\nPiezas electrónicas\nTambor y rodamientos',
-      warNoCovers: currentLang === 'en'
-        ? 'Wear parts (belts, filters)\nCosmétic damage\nMisuse'
-        : 'Piezas de desgaste (correas, filtros)\nDaños estéticos\nUso indebido',
-      ticketImage: null,
-      createdAt: addD(today, -400) + 'T08:00:00.000Z',
-      updatedAt: addD(today, -400) + 'T08:00:00.000Z',
+      id: 'demo-4', name: en ? 'LG Washing Machine' : 'Lavadora LG', brand: 'LG', price: 699, store: 'El Corte Inglés',
+      purchaseDate: addD(-400), notes: en ? '9kg, A+++ energy class' : '9kg, clase energética A+++',
+      retDays: 14, retStart: addD(-400), retConditions: '',
+      warStart: addD(-400), warYears: 5,
+      warCovers: en ? 'Motor defects (10 years)\nElectronic parts\nDrums and bearings' : 'Defectos del motor (10 años)\nPiezas electrónicas\nTambor y rodamientos',
+      warNoCovers: en ? 'Wear parts (belts, filters)\nCosmetic damage\nMisuse' : 'Piezas de desgaste (correas, filtros)\nDaños estéticos\nUso indebido',
+      ticketImage: null, createdAt: stamp(-400), updatedAt: stamp(-400),
     },
   ];
 }
 
 function handleDemo() {
-  // Create demo session
   const demoSession = {
     token: 'demo-' + Date.now(),
     userId: 'demo',
     name: currentLang === 'en' ? 'Demo User' : 'Usuario Demo',
-    email: 'demo@garantiaspro.app',
+    email: '',
     isDemo: true,
     createdAt: Date.now(),
-    expiresAt: Date.now() + 60 * 60 * 1000, // 1 hour
+    expiresAt: Date.now() + 60 * 60 * 1000, // 1 hora
   };
   try {
-    sessionStorage.setItem('gp_session_v1', JSON.stringify(demoSession));
-    // Only load demo products if there's nothing stored yet
-    const existing = localStorage.getItem(DEMO_PRODUCTS_KEY);
-    if (!existing || JSON.parse(existing).length === 0) {
-      localStorage.setItem(DEMO_PRODUCTS_KEY, JSON.stringify(loadDemoProducts()));
-    }
-  } catch (e) { /* continue anyway */ }
+    sessionStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(demoSession));
+    sessionStorage.setItem(DEMO_PRODUCTS_KEY, JSON.stringify(buildDemoProducts()));
+  } catch { /* continuar igualmente */ }
   window.location.replace('index.html');
 }
 
 /* ══════════════════════════════════════════════════════════════
-   16. INIT
+   12. INIT
 ══════════════════════════════════════════════════════════════ */
+async function redirectIfLoggedIn() {
+  try {
+    const { data } = await sb.auth.getSession();
+    if (data && data.session) {
+      clearDemoSession();
+      window.location.replace('index.html');
+    }
+  } catch { /* sin sesión */ }
+}
+
 function initAuth() {
   applyAuthLang();
 
-  // Switch panels
-  document.getElementById('go-register')?.addEventListener('click', showRegister);
-  document.getElementById('go-login')?.addEventListener('click', showLogin);
+  // Cuando el usuario vuelve desde el enlace del email, Supabase crea la sesión
+  sb.auth.onAuthStateChange((event, session) => {
+    if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+      clearDemoSession();
+      window.location.replace('index.html');
+    }
+  });
+  redirectIfLoggedIn();
 
-  // Demo button
+  document.getElementById('go-register')?.addEventListener('click', () => showCard('register'));
+  document.getElementById('go-login')?.addEventListener('click', () => showCard('login'));
+  document.getElementById('verify-go-login')?.addEventListener('click', () => showCard('login'));
   document.getElementById('btn-demo')?.addEventListener('click', handleDemo);
+  document.getElementById('btn-resend')?.addEventListener('click', () => resendConfirmation('verify-msg'));
+  document.getElementById('btn-resend-login')?.addEventListener('click', () => resendConfirmation('login-error'));
 
-  // Forms
   document.getElementById('login-form')?.addEventListener('submit', handleLogin);
   document.getElementById('register-form')?.addEventListener('submit', handleRegister);
 
-  // Password strength
   document.getElementById('reg-password')?.addEventListener('input', (e) => {
     updateStrengthMeter(e.target.value);
   });
 
-  // Toggle password visibility
   document.querySelectorAll('.toggle-pwd').forEach(btn => {
     btn.addEventListener('click', () => {
-      const targetId = btn.dataset.target;
-      const input = document.getElementById(targetId);
+      const input = document.getElementById(btn.dataset.target);
       if (!input) return;
-      const isText = input.type === 'text';
-      input.type = isText ? 'password' : 'text';
-      btn.setAttribute('aria-label', isText ? 'Mostrar contraseña' : 'Ocultar contraseña');
-      // swap eye icon opacity as visual cue
-      btn.style.opacity = isText ? '0.5' : '1';
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.setAttribute('aria-label', show ? at('pwd.hide') : at('pwd.show'));
+      btn.innerHTML = iconSvg(show ? 'eyeOff' : 'eye', 16);
     });
   });
 
-  // Language toggles
-  ['auth-lang-toggle','auth-lang-toggle2'].forEach(id => {
+  ['auth-lang-toggle', 'auth-lang-toggle2'].forEach(id => {
     document.getElementById(id)?.addEventListener('click', () => {
       currentLang = currentLang === 'es' ? 'en' : 'es';
       localStorage.setItem('gp_lang', currentLang);
@@ -667,7 +554,6 @@ function initAuth() {
     });
   });
 
-  // Clear field errors on input
   document.querySelectorAll('.field-wrap input').forEach(input => {
     input.addEventListener('input', () => {
       const wrap = input.closest('.field-wrap');

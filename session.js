@@ -1,126 +1,135 @@
 /* ═══════════════════════════════════════════════════════════════
-   GarantíasPro — Session helper (runs after app.js)
-   Loads user info from session and wires up logout button
+   GarantíasPro — Session helper
+   Valida la sesión contra Supabase, rellena el saludo del usuario,
+   muestra el aviso de modo demo y gestiona el cierre de sesión.
+   Expone window.GPSession.resolve() para que app.js espere.
    ═══════════════════════════════════════════════════════════════ */
 
 'use strict';
 
 (function () {
-  const SESSION_KEY = 'gp_session_v1';
+  function lang() { return localStorage.getItem('gp_lang') || 'es'; }
 
-  // ── Load session ──────────────────────────────────────────────
-  function getSession() {
+  function goToAuth() { window.location.replace('auth.html'); }
+
+  let resolved = null;
+
+  async function resolve() {
+    if (resolved) return resolved;
+
+    // ── Modo demo ──────────────────────────────────────────────
+    const demo = getDemoSession();
+    if (demo) {
+      resolved = { isDemo: true, user: null, name: demo.name || '', email: '' };
+      return resolved;
+    }
+
+    // ── Sesión real: validación en servidor ────────────────────
     try {
-      const raw = sessionStorage.getItem(SESSION_KEY);
-      if (!raw) return null;
-      const s = JSON.parse(raw);
-      if (!s || !s.token || Date.now() > s.expiresAt) {
-        sessionStorage.removeItem(SESSION_KEY);
-        return null;
+      const { data, error } = await sb.auth.getUser();
+      if (error || !data || !data.user) {
+        await sb.auth.signOut({ scope: 'local' }).catch(() => {});
+        goToAuth();
+        return new Promise(() => {}); // detiene la carga mientras redirige
       }
-      return s;
-    } catch { return null; }
+      const user = data.user;
+      const name = (user.user_metadata && user.user_metadata.name) || '';
+      resolved = { isDemo: false, user, name, email: user.email || '' };
+
+      // Si cierra sesión en otra pestaña, salir también aquí
+      sb.auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_OUT') goToAuth();
+      });
+      return resolved;
+    } catch {
+      goToAuth();
+      return new Promise(() => {});
+    }
   }
 
-  // ── Populate user greeting ────────────────────────────────────
-  const session = getSession();
-  if (!session) {
-    window.location.replace('auth.html');
-    return;
+  // ── UI ──────────────────────────────────────────────────────
+  function renderUser(info) {
+    const nameEl   = document.getElementById('user-name');
+    const avatarEl = document.getElementById('user-avatar');
+    const display  = info.name || info.email || '';
+    if (nameEl) nameEl.textContent = display.split(' ')[0];
+    if (avatarEl) avatarEl.textContent = (display[0] || '?').toUpperCase();
+    const greeting = document.getElementById('user-greeting');
+    if (greeting && info.email) greeting.title = info.email;
   }
 
-  const nameEl   = document.getElementById('user-name');
-  const avatarEl = document.getElementById('user-avatar');
-  if (nameEl) {
-    nameEl.textContent = (session.name || session.email || '').split(' ')[0];
-  }
-  if (avatarEl) {
-    const letter = (session.name || session.email || '?')[0].toUpperCase();
-    avatarEl.textContent = letter;
-    avatarEl.style.cssText = `
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      width:24px;height:24px;
-      border-radius:50%;
-      background:linear-gradient(135deg,#4f8cff,#a259ff);
-      color:#fff;
-      font-size:12px;
-      font-weight:700;
-    `;
+  function demoTexts() {
+    return lang() === 'en'
+      ? { text: 'Demo mode — data is deleted when you close the tab.', link: 'Create a free account' }
+      : { text: 'Modo demo — los datos se borran al cerrar la pestaña.', link: 'Crear cuenta gratis' };
   }
 
-  // ── Demo banner ───────────────────────────────────────────────
-  if (session.isDemo) {
-    const lang = localStorage.getItem('gp_lang') || 'es';
-    const bannerText = lang === 'en'
-      ? '🎮 Demo mode — data is not saved. '
-      : '🎮 Modo demo — los datos no se guardan. ';
-    const linkText = lang === 'en' ? 'Create a free account →' : 'Crear cuenta gratis →';
+  function renderDemoBanner() {
+    const main = document.querySelector('.app-main');
+    if (!main || document.getElementById('demo-banner')) return;
+    const tx = demoTexts();
 
     const banner = document.createElement('div');
     banner.className = 'demo-banner';
     banner.id = 'demo-banner';
+    banner.setAttribute('role', 'status');
 
+    banner.appendChild(iconEl('info', 16));
     const textSpan = document.createElement('span');
-    textSpan.textContent = bannerText;
+    textSpan.className = 'demo-banner-text';
+    textSpan.textContent = tx.text;
 
     const link = document.createElement('button');
-    link.className = 'link';
-    link.textContent = linkText;
+    link.type = 'button';
+    link.className = 'demo-banner-link';
+    link.textContent = tx.link;
     link.addEventListener('click', () => {
-      sessionStorage.removeItem('gp_session_v1');
-      window.location.replace('auth.html');
+      clearDemoSession();
+      goToAuth();
     });
 
     banner.appendChild(textSpan);
     banner.appendChild(link);
+    main.insertBefore(banner, main.firstChild);
+  }
 
-    // Insert after header
-    const header = document.querySelector('.app-header');
-    if (header) {
-      header.insertAdjacentElement('afterend', banner);
-      // Adjust main padding to account for banner
-      const main = document.querySelector('.app-main');
-      if (main) {
-        const bannerH = banner.offsetHeight || 40;
-        const current = getComputedStyle(main).paddingTop;
-        main.style.paddingTop = (parseFloat(current) + bannerH) + 'px';
-      }
+  function refreshTexts() {
+    const text = lang() === 'en' ? 'Sign out' : 'Salir';
+    document.querySelectorAll('[data-i18n="btn.logout"]').forEach(el => { el.textContent = text; });
+    const tx = demoTexts();
+    const bt = document.querySelector('#demo-banner .demo-banner-text');
+    if (bt) bt.textContent = tx.text;
+    const bl = document.querySelector('#demo-banner .demo-banner-link');
+    if (bl) bl.textContent = tx.link;
+  }
+
+  // ── Logout ──────────────────────────────────────────────────
+  async function doLogout() {
+    if (resolved && resolved.isDemo) {
+      clearDemoSession();
+      goToAuth();
+      return;
     }
+    try { await sb.auth.signOut(); } catch { /* ignorar */ }
+    goToAuth();
   }
 
+  async function initSessionUI() {
+    document.getElementById('btn-logout')?.addEventListener('click', doLogout);
+    document.getElementById('nav-logout')?.addEventListener('click', doLogout);
+    document.getElementById('lang-toggle')?.addEventListener('click', () => setTimeout(refreshTexts, 0));
 
-  // ── Logout ────────────────────────────────────────────────────
-  function doLogout() {
-    sessionStorage.removeItem(SESSION_KEY);
-    window.location.replace('auth.html');
+    const info = await resolve();
+    renderUser(info);
+    if (info.isDemo) renderDemoBanner();
+    refreshTexts();
   }
 
-  document.getElementById('btn-logout')?.addEventListener('click', doLogout);
-  document.getElementById('nav-logout')?.addEventListener('click', doLogout);
+  window.GPSession = { resolve, logout: doLogout };
 
-  // ── Add logout key to i18n (extend TRANSLATIONS if available) ─
-  if (typeof TRANSLATIONS !== 'undefined') {
-    if (TRANSLATIONS.es) TRANSLATIONS.es['btn.logout'] = 'Salir';
-    if (TRANSLATIONS.en) TRANSLATIONS.en['btn.logout'] = 'Sign out';
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSessionUI);
+  } else {
+    initSessionUI();
   }
-
-  function refreshLogoutLabels() {
-    const lang = localStorage.getItem('gp_lang') || 'es';
-    const text = lang === 'en' ? 'Sign out' : 'Salir';
-    document.querySelectorAll('[data-i18n="btn.logout"]').forEach(el => {
-      el.textContent = text;
-    });
-  }
-  refreshLogoutLabels();
-
-  // ── Update logout label on language change ────────────────────
-  const langBtn = document.getElementById('lang-toggle');
-  if (langBtn) {
-    langBtn.addEventListener('click', () => {
-      setTimeout(refreshLogoutLabels, 50);
-    });
-  }
-
 })();

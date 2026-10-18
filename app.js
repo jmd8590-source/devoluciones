@@ -1,7 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════
    GarantíasPro — Main Application Logic
-   Stack: Vanilla JS (ES2021) + LocalStorage
-   Security: DOMPurify-like escaping, CSP-compatible, no eval
+   Stack: Vanilla JS (ES2021) + Supabase (Auth, Postgres RLS, Storage)
+   Seguridad: RLS a nivel de fila por usuario en DB, bucket privado con
+              firmas temporales de URL, sanitización de entradas, CSP.
    ═══════════════════════════════════════════════════════════════ */
 
 'use strict';
@@ -19,8 +20,8 @@ const TRANSLATIONS = {
     'btn.save':       'Guardar producto',
     'btn.save.edit':  'Guardar cambios',
     'dashboard.title':  'Tu resumen',
-    'dashboard.urgent': '⚡ Urgentes',
-    'dashboard.recent': '🕓 Recientes',
+    'dashboard.urgent': 'Urgentes',
+    'dashboard.recent': 'Recientes',
     'stat.total':    'Productos',
     'stat.return':   'En periodo devolución',
     'stat.warranty': 'Garantías activas',
@@ -29,7 +30,7 @@ const TRANSLATIONS = {
     'products.subtitle': 'Gestiona tus garantías y devoluciones',
     'alerts.title':       'Alertas',
     'alerts.subtitle':    'Productos que requieren tu atención',
-    'alerts.empty.title': '¡Todo en orden!',
+    'alerts.empty.title': 'Todo en orden',
     'alerts.empty.sub':   'No tienes alertas pendientes',
     'search.placeholder': 'Buscar producto…',
     'filter.all':      'Todos',
@@ -40,11 +41,11 @@ const TRANSLATIONS = {
     'empty.sub':   'Pulsa "Nuevo producto" para empezar',
     'modal.title.add':  'Nuevo producto',
     'modal.title.edit': 'Editar producto',
-    'form.ticket.section': '🎟️ Ticket de compra',
+    'form.ticket.section': 'Ticket de compra',
     'form.ticket.drag':    'Arrastra la foto o pulsa aquí',
     'form.ticket.formats': 'JPG, PNG, WEBP — máx. 5 MB',
-    'form.ticket.remove':  '✕ Eliminar foto',
-    'form.info.section':   '📦 Información del producto',
+    'form.ticket.remove':  'Eliminar foto',
+    'form.info.section':   'Información del producto',
     'form.name.label':       'Nombre del producto',
     'form.name.placeholder': 'Ej: iPhone 15 Pro',
     'form.brand.label':       'Marca',
@@ -55,27 +56,29 @@ const TRANSLATIONS = {
     'form.purchase.label': 'Fecha de compra',
     'form.notes.label':       'Notas adicionales',
     'form.notes.placeholder': 'Número de serie, color, etc.',
-    'form.return.section':              '↩️ Periodo de devolución',
+    'form.return.section':              'Periodo de devolución',
     'form.ret.days.label':              'Días para devolver',
     'form.ret.start.label':             'Fecha inicio',
     'form.ret.conditions.label':        'Condiciones de devolución',
     'form.ret.conditions.placeholder':  'Debe estar sin abrir, con ticket original…',
-    'form.warranty.section':            '🛡️ Garantía',
+    'form.warranty.section':            'Garantía',
     'form.war.start.label':             'Inicio garantía',
     'form.war.years.label':             'Años de garantía',
-    'form.war.covers.label':            '✅ Qué cubre',
+    'form.war.covers.label':            'Qué cubre',
     'form.war.covers.placeholder':      'Defectos de fabricación, fallos de hardware…',
-    'form.war.nocovers.label':          '❌ Qué NO cubre',
+    'form.war.nocovers.label':          'Qué NO cubre',
     'form.war.nocovers.placeholder':    'Daños por agua, roturas accidentales, mal uso…',
     'confirm.title':  '¿Eliminar producto?',
     'confirm.text':   'Esta acción no se puede deshacer.',
     'confirm.delete': 'Eliminar',
-    'toast.saved':    '✅ Producto guardado',
-    'toast.updated':  '✏️ Producto actualizado',
-    'toast.deleted':  '🗑️ Producto eliminado',
-    'toast.error':    '⚠️ Completa los campos obligatorios',
-    'toast.photo.big':'⚠️ La foto supera los 5 MB',
-    'toast.photo.err':'⚠️ Formato no permitido',
+    'toast.saved':    'Producto guardado',
+    'toast.updated':  'Producto actualizado',
+    'toast.deleted':  'Producto eliminado',
+    'toast.error':    'Completa los campos obligatorios',
+    'toast.photo.big':'La foto supera los 5 MB',
+    'toast.photo.err':'Formato no permitido',
+    'toast.load.err': 'Error al cargar productos de la base de datos',
+    'toast.save.err': 'No se pudo guardar el producto. Inténtalo de nuevo.',
     'detail.purchaseDate':   'Fecha de compra',
     'detail.store':          'Tienda',
     'detail.brand':          'Marca',
@@ -113,7 +116,7 @@ const TRANSLATIONS = {
     'dashboard.no.urgent': '— Sin urgencias —',
     'detail.total':        'Total',
     'btn.logout':          'Salir',
-    'demo.banner':         '🎮 Modo demo — los datos no se guardan.',
+    'demo.banner':         'Modo demo — los datos se borran al cerrar la pestaña.',
     'demo.register':       'Crear cuenta gratis →',
     'session.greeting':    'Hola,',
   },
@@ -126,8 +129,8 @@ const TRANSLATIONS = {
     'btn.save':       'Save product',
     'btn.save.edit':  'Save changes',
     'dashboard.title':  'Your summary',
-    'dashboard.urgent': '⚡ Urgent',
-    'dashboard.recent': '🕓 Recent',
+    'dashboard.urgent': 'Urgent',
+    'dashboard.recent': 'Recent',
     'stat.total':    'Products',
     'stat.return':   'In return period',
     'stat.warranty': 'Active warranties',
@@ -136,7 +139,7 @@ const TRANSLATIONS = {
     'products.subtitle': 'Manage your warranties and returns',
     'alerts.title':       'Alerts',
     'alerts.subtitle':    'Products that need your attention',
-    'alerts.empty.title': 'All clear!',
+    'alerts.empty.title': 'All clear',
     'alerts.empty.sub':   'No pending alerts',
     'search.placeholder': 'Search product…',
     'filter.all':      'All',
@@ -147,11 +150,11 @@ const TRANSLATIONS = {
     'empty.sub':   'Press "New product" to get started',
     'modal.title.add':  'New product',
     'modal.title.edit': 'Edit product',
-    'form.ticket.section': '🎟️ Purchase receipt',
+    'form.ticket.section': 'Purchase receipt',
     'form.ticket.drag':    'Drag photo or click here',
     'form.ticket.formats': 'JPG, PNG, WEBP — max 5 MB',
-    'form.ticket.remove':  '✕ Remove photo',
-    'form.info.section':   '📦 Product information',
+    'form.ticket.remove':  'Remove photo',
+    'form.info.section':   'Product information',
     'form.name.label':       'Product name',
     'form.name.placeholder': 'e.g. iPhone 15 Pro',
     'form.brand.label':       'Brand',
@@ -162,27 +165,29 @@ const TRANSLATIONS = {
     'form.purchase.label': 'Purchase date',
     'form.notes.label':       'Additional notes',
     'form.notes.placeholder': 'Serial number, colour, etc.',
-    'form.return.section':              '↩️ Return period',
+    'form.return.section':              'Return period',
     'form.ret.days.label':              'Days to return',
     'form.ret.start.label':             'Start date',
     'form.ret.conditions.label':        'Return conditions',
     'form.ret.conditions.placeholder':  'Must be unopened, with original receipt…',
-    'form.warranty.section':            '🛡️ Warranty',
+    'form.warranty.section':            'Warranty',
     'form.war.start.label':             'Warranty start',
     'form.war.years.label':             'Years of warranty',
-    'form.war.covers.label':            '✅ What it covers',
+    'form.war.covers.label':            'What it covers',
     'form.war.covers.placeholder':      'Manufacturing defects, hardware failures…',
-    'form.war.nocovers.label':          '❌ What it does NOT cover',
+    'form.war.nocovers.label':          'What it does NOT cover',
     'form.war.nocovers.placeholder':    'Water damage, accidental breakage, misuse…',
     'confirm.title':  'Delete product?',
     'confirm.text':   'This action cannot be undone.',
     'confirm.delete': 'Delete',
-    'toast.saved':    '✅ Product saved',
-    'toast.updated':  '✏️ Product updated',
-    'toast.deleted':  '🗑️ Product deleted',
-    'toast.error':    '⚠️ Fill in required fields',
-    'toast.photo.big':'⚠️ Photo exceeds 5 MB',
-    'toast.photo.err':'⚠️ Format not allowed',
+    'toast.saved':    'Product saved',
+    'toast.updated':  'Product updated',
+    'toast.deleted':  'Product deleted',
+    'toast.error':    'Fill in required fields',
+    'toast.photo.big':'Photo exceeds 5 MB',
+    'toast.photo.err':'Format not allowed',
+    'toast.load.err': 'Error loading products from database',
+    'toast.save.err': 'Could not save product. Please try again.',
     'detail.purchaseDate':   'Purchase date',
     'detail.store':          'Store',
     'detail.brand':          'Brand',
@@ -220,11 +225,10 @@ const TRANSLATIONS = {
     'dashboard.no.urgent': '— No urgent items —',
     'detail.total':        'Total',
     'btn.logout':          'Sign out',
-    'demo.banner':         '🎮 Demo mode — data is not saved.',
+    'demo.banner':         'Demo mode — data is deleted when you close the tab.',
     'demo.register':       'Create free account →',
     'session.greeting':    'Hello,',
   }
-
 };
 
 let currentLang = localStorage.getItem('gp_lang') || 'es';
@@ -240,18 +244,13 @@ function t(key, vars) {
 }
 
 function applyTranslations() {
-  // text content
   document.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = t(el.dataset.i18n);
   });
-  // placeholders
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     el.placeholder = t(el.dataset.i18nPlaceholder);
   });
-  // lang toggle
-  const flagEl = document.getElementById('lang-flag');
   const codeEl = document.getElementById('lang-code');
-  if (flagEl) flagEl.textContent = currentLang === 'es' ? '🇪🇸' : '🇬🇧';
   if (codeEl) codeEl.textContent = currentLang === 'es' ? 'ES' : 'EN';
   document.documentElement.lang = currentLang;
 }
@@ -259,8 +258,6 @@ function applyTranslations() {
 /* ══════════════════════════════════════════════════════════════
    2. SECURITY UTILITIES
 ══════════════════════════════════════════════════════════════ */
-
-// HTML entity escaping — prevents XSS when inserting into DOM via innerHTML
 function escHtml(str) {
   if (typeof str !== 'string') return '';
   return str
@@ -271,10 +268,6 @@ function escHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-// Sanitize storage keys
-const STORAGE_KEY = 'gp_products_v2';
-
-// Validate and clamp numbers
 function safeInt(val, min, max, fallback) {
   const n = parseInt(val, 10);
   if (isNaN(n)) return fallback;
@@ -285,7 +278,6 @@ function safeFloat(val, min, max, fallback) {
   if (isNaN(n)) return fallback;
   return Math.min(Math.max(n, min), max);
 }
-// Validate date strings
 function safeDate(str) {
   if (!str || typeof str !== 'string') return '';
   if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return '';
@@ -293,47 +285,145 @@ function safeDate(str) {
   if (isNaN(d.getTime())) return '';
   return str;
 }
-// Sanitize text (strip control chars, limit length)
 function safeText(str, maxLen = 500) {
   if (typeof str !== 'string') return '';
   return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').slice(0, maxLen);
 }
 
+function generateId() {
+  if (crypto && crypto.randomUUID) return crypto.randomUUID();
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  arr[6] = (arr[6] & 0x0f) | 0x40;
+  arr[8] = (arr[8] & 0x3f) | 0x80;
+  const hex = Array.from(arr, b => b.toString(16).padStart(2,'0')).join('');
+  return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+}
+
 /* ══════════════════════════════════════════════════════════════
-   3. DATA LAYER (LocalStorage)
+   3. DATA LAYER (Supabase + Local Demo Cache)
 ══════════════════════════════════════════════════════════════ */
-function loadProducts() {
+let activeSession = null;
+let currentProducts = [];
+
+// Transforma una fila de PostgreSQL a formato de la app
+function dbToProduct(row, signedUrl) {
+  return {
+    id:            row.id,
+    name:          row.name,
+    brand:         row.brand || '',
+    price:         row.price != null ? Number(row.price) : null,
+    store:         row.store || '',
+    purchaseDate:  row.purchase_date || '',
+    notes:         row.notes || '',
+    retDays:       row.ret_days != null ? Number(row.ret_days) : null,
+    retStart:      row.ret_start || '',
+    retConditions: row.ret_conditions || '',
+    warStart:      row.war_start || '',
+    warYears:      row.war_years != null ? Number(row.war_years) : null,
+    warCovers:     row.war_covers || '',
+    warNoCovers:   row.war_no_covers || '',
+    ticketPath:    row.ticket_path || null,
+    ticketImage:   signedUrl || null,
+    createdAt:     row.created_at,
+    updatedAt:     row.updated_at,
+  };
+}
+
+// Transforma un objeto de la app a columnas de PostgreSQL
+function productToDb(p, userId) {
+  return {
+    id:             p.id,
+    user_id:        userId,
+    name:           p.name,
+    brand:          p.brand || null,
+    price:          p.price != null && !isNaN(p.price) ? p.price : null,
+    store:          p.store || null,
+    purchase_date:  p.purchaseDate || null,
+    notes:          p.notes || null,
+    ret_days:       p.retDays != null && !isNaN(p.retDays) ? p.retDays : null,
+    ret_start:      p.retStart || null,
+    ret_conditions: p.retConditions || null,
+    war_start:      p.warStart || null,
+    war_years:      p.warYears != null && !isNaN(p.warYears) ? p.warYears : null,
+    war_covers:     p.warCovers || null,
+    war_no_covers:  p.warNoCovers || null,
+    ticket_path:    p.ticketPath || null,
+  };
+}
+
+// Carga productos desde Supabase o desde sessionStorage en modo demo
+async function fetchProducts() {
+  if (!activeSession) {
+    activeSession = await window.GPSession.resolve();
+  }
+
+  // MODO DEMO
+  if (activeSession.isDemo) {
+    try {
+      const raw = sessionStorage.getItem(DEMO_PRODUCTS_KEY);
+      currentProducts = raw ? JSON.parse(raw) : [];
+    } catch {
+      currentProducts = [];
+    }
+    return currentProducts;
+  }
+
+  // MODO SUPABASE
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(p => p && typeof p === 'object' && p.id);
-  } catch {
+    const { data, error } = await sb
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching products:', error);
+      showToast(t('toast.load.err'), 'error');
+      return [];
+    }
+
+    const rows = data || [];
+
+    // Generar URLs firmadas para los tickets almacenados en el bucket privado
+    const paths = rows.map(r => r.ticket_path).filter(Boolean);
+    const signedMap = {};
+    if (paths.length > 0) {
+      try {
+        const { data: signedList } = await sb.storage
+          .from(TICKETS_BUCKET)
+          .createSignedUrls(paths, 3600);
+        if (signedList) {
+          signedList.forEach(item => {
+            if (item && item.path && item.signedUrl) {
+              signedMap[item.path] = item.signedUrl;
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('Could not generate signed URLs in batch:', err);
+      }
+    }
+
+    currentProducts = rows.map(r => dbToProduct(r, signedMap[r.ticket_path] || null));
+    return currentProducts;
+  } catch (err) {
+    console.error('Fetch error:', err);
+    showToast(t('toast.load.err'), 'error');
     return [];
   }
 }
 
-function saveProducts(products) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
-  } catch (e) {
-    showToast('⚠️ No se pudo guardar (almacenamiento lleno)', 'warn');
-  }
+function loadProducts() {
+  return currentProducts;
 }
 
-function generateId() {
-  // Secure random ID
-  const arr = new Uint32Array(4);
-  crypto.getRandomValues(arr);
-  return Array.from(arr, n => n.toString(16).padStart(8, '0')).join('-');
-}
+window.getLoadedProducts = () => currentProducts;
 
 /* ══════════════════════════════════════════════════════════════
    4. DATE UTILITIES
 ══════════════════════════════════════════════════════════════ */
 function today() {
-  return new Date().toISOString().slice(0, 10);
+  return localISODate(new Date());
 }
 
 function daysBetween(fromStr, toStr) {
@@ -344,7 +434,6 @@ function daysBetween(fromStr, toStr) {
   return Math.round((b - a) / 86400000);
 }
 
-// Returns days remaining until a deadline. Negative = past.
 function daysUntil(dateStr) {
   if (!dateStr) return null;
   return daysBetween(today(), dateStr);
@@ -354,7 +443,7 @@ function addDays(dateStr, days) {
   if (!dateStr || days == null) return '';
   const d = new Date(dateStr + 'T00:00:00');
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return localISODate(d);
 }
 
 function addYears(dateStr, years) {
@@ -363,7 +452,7 @@ function addYears(dateStr, years) {
   d.setFullYear(d.getFullYear() + Math.floor(years));
   const extra = years - Math.floor(years);
   if (extra > 0) d.setDate(d.getDate() + Math.round(extra * 365));
-  return d.toISOString().slice(0, 10);
+  return localISODate(d);
 }
 
 function fmtDate(str) {
@@ -414,38 +503,32 @@ function getWarrantyStatus(p) {
   return { type: 'ok', days };
 }
 
-// Returns true if product needs attention (urgent)
 function isUrgent(p) {
   const rs = getReturnStatus(p);
   const ws = getWarrantyStatus(p);
   return (rs.type === 'danger' || ws.type === 'danger');
 }
 
-function isExpired(p) {
-  const rs = getReturnStatus(p);
-  const ws = getWarrantyStatus(p);
-  return (rs.type === 'expired' && ws.type !== 'ok' && ws.type !== 'warn' && ws.type !== 'danger');
-}
-
 /* ══════════════════════════════════════════════════════════════
    6. TOAST NOTIFICATIONS
 ══════════════════════════════════════════════════════════════ */
 function showToast(msg, type = 'ok') {
-  const icons = { ok: '✅', warn: '⚠️', error: '❌', info: 'ℹ️' };
   const container = document.getElementById('toast-container');
+  if (!container) return;
   const toast = document.createElement('div');
-  toast.className = 'toast';
+  toast.className = 'toast toast-' + type;
   toast.setAttribute('role', 'status');
 
-  const iconEl = document.createElement('span');
-  iconEl.className = 'toast-icon';
-  iconEl.textContent = icons[type] || icons.info;
+  const iconName = type === 'ok' ? 'check' : type === 'warn' ? 'alert' : type === 'error' ? 'x' : 'info';
+  const iconSpan = document.createElement('span');
+  iconSpan.className = 'toast-icon';
+  iconSpan.innerHTML = iconSvg(iconName, 18);
 
   const msgEl = document.createElement('span');
   msgEl.className = 'toast-msg';
-  msgEl.textContent = msg; // safe: no html
+  msgEl.textContent = msg;
 
-  toast.appendChild(iconEl);
+  toast.appendChild(iconSpan);
   toast.appendChild(msgEl);
   container.appendChild(toast);
 
@@ -481,14 +564,12 @@ function switchView(name) {
 function renderDashboard() {
   const products = loadProducts();
 
-  // Date
   const dateEl = document.getElementById('dashboard-date');
   if (dateEl) {
     const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     dateEl.textContent = new Date().toLocaleDateString(currentLang === 'es' ? 'es-ES' : 'en-GB', opts);
   }
 
-  // Stats
   const returnActive = products.filter(p => {
     const s = getReturnStatus(p); return s.type === 'ok' || s.type === 'warn' || s.type === 'danger';
   });
@@ -505,7 +586,6 @@ function renderDashboard() {
   setEl('stat-warranty', warActive.length);
   setEl('stat-expired', expiring.length);
 
-  // Alert badge
   const badge = document.getElementById('alerts-badge');
   if (badge) {
     const urgentCount = products.filter(isUrgent).length;
@@ -513,19 +593,12 @@ function renderDashboard() {
     badge.hidden = urgentCount === 0;
   }
 
-  // Urgent list
   const urgentList = document.getElementById('urgent-list');
   if (urgentList) {
     const urgents = products.filter(isUrgent)
       .sort((a, b) => {
-        const da = Math.min(
-          getReturnStatus(a).days ?? 99999,
-          getWarrantyStatus(a).days ?? 99999
-        );
-        const db = Math.min(
-          getReturnStatus(b).days ?? 99999,
-          getWarrantyStatus(b).days ?? 99999
-        );
+        const da = Math.min(getReturnStatus(a).days ?? 99999, getWarrantyStatus(a).days ?? 99999);
+        const db = Math.min(getReturnStatus(b).days ?? 99999, getWarrantyStatus(b).days ?? 99999);
         return da - db;
       });
     urgentList.innerHTML = '';
@@ -536,7 +609,6 @@ function renderDashboard() {
     }
   }
 
-  // Recent list
   const recentList = document.getElementById('recent-list');
   if (recentList) {
     const recent = [...products]
@@ -556,7 +628,6 @@ function buildMiniCard(p, mode) {
   const rs = getReturnStatus(p);
   const ws = getWarrantyStatus(p);
 
-  // Determine dominant status
   let statusType = 'ok';
   let statusDays = null;
   let statusLabel = '';
@@ -624,7 +695,6 @@ function renderProducts() {
   if (!grid) return;
 
   let filtered = products.filter(p => {
-    // Search
     if (currentSearch) {
       const q = currentSearch.toLowerCase();
       const match = (p.name || '').toLowerCase().includes(q) ||
@@ -632,7 +702,6 @@ function renderProducts() {
                     (p.store || '').toLowerCase().includes(q);
       if (!match) return false;
     }
-    // Filter
     if (currentFilter === 'return') {
       const rs = getReturnStatus(p);
       return rs.type !== 'none';
@@ -661,7 +730,7 @@ function renderProducts() {
     .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
     .forEach((p, i) => {
       const card = buildProductCard(p);
-      card.style.animationDelay = (i * 40) + 'ms';
+      card.style.animationDelay = (i * 30) + 'ms';
       grid.appendChild(card);
     });
 }
@@ -679,25 +748,22 @@ function buildProductCard(p) {
   card.setAttribute('tabindex', '0');
   card.setAttribute('aria-label', p.name);
 
-  // ── Ticket image
   if (p.ticketImage) {
     const img = document.createElement('img');
     img.className = 'card-ticket';
     img.alt = 'Ticket de ' + escHtml(p.name);
-    img.src = p.ticketImage; // already validated data URL
+    img.src = p.ticketImage;
     card.appendChild(img);
   } else {
     const noTicket = document.createElement('div');
     noTicket.className = 'card-no-ticket';
-    noTicket.textContent = '🛍️';
+    noTicket.innerHTML = iconSvg('receipt', 26);
     card.appendChild(noTicket);
   }
 
-  // ── Body
   const body = document.createElement('div');
   body.className = 'card-body';
 
-  // Header
   const header = document.createElement('div');
   header.className = 'card-header';
   const nameWrap = document.createElement('div');
@@ -714,7 +780,6 @@ function buildProductCard(p) {
   header.appendChild(nameWrap);
   body.appendChild(header);
 
-  // Pills
   const pills = document.createElement('div');
   pills.className = 'card-pills';
 
@@ -732,14 +797,12 @@ function buildProductCard(p) {
   }
   body.appendChild(pills);
 
-  // Return progress bar
   if (rs.type !== 'none' && rs.days !== null && p.retDays) {
     const elapsed = p.retDays - Math.max(rs.days, 0);
     const pct = Math.min(100, Math.max(0, (elapsed / p.retDays) * 100));
     body.appendChild(buildProgressBar(pct, rs.type, t('label.return.active'), `${Math.max(rs.days,0)} ${t('label.days')}`));
   }
 
-  // Warranty progress bar
   if (ws.type !== 'none' && ws.days !== null && p.warYears && p.warStart) {
     const totalDays = Math.round(p.warYears * 365);
     const elapsed = totalDays - Math.max(ws.days, 0);
@@ -749,7 +812,6 @@ function buildProductCard(p) {
 
   card.appendChild(body);
 
-  // ── Footer
   const footer = document.createElement('div');
   footer.className = 'card-footer';
   const dateEl = document.createElement('span');
@@ -764,14 +826,14 @@ function buildProductCard(p) {
   editBtn.className = 'btn-icon';
   editBtn.setAttribute('aria-label', 'Editar');
   editBtn.title = 'Editar';
-  editBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+  editBtn.innerHTML = iconSvg('edit', 15);
   editBtn.addEventListener('click', (e) => { e.stopPropagation(); openEdit(p.id); });
 
   const delBtn = document.createElement('button');
   delBtn.className = 'btn-icon btn-icon-danger';
   delBtn.setAttribute('aria-label', 'Eliminar');
   delBtn.title = 'Eliminar';
-  delBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
+  delBtn.innerHTML = iconSvg('trash', 15);
   delBtn.addEventListener('click', (e) => { e.stopPropagation(); confirmDelete(p.id); });
 
   actions.appendChild(editBtn);
@@ -788,18 +850,22 @@ function buildProductCard(p) {
 function buildPill(status, kind, deadline) {
   const pill = document.createElement('span');
   const classMap = { ok: 'pill-ok', warn: 'pill-warn', danger: 'pill-danger', expired: 'pill-expired', none: '' };
-  const iconMap = { return: '↩️', warranty: '🛡️' };
   pill.className = 'pill ' + (classMap[status.type] || 'pill-info');
 
-  let text = '';
+  const icoSpan = document.createElement('span');
+  icoSpan.className = 'pill-icon';
+  icoSpan.innerHTML = iconSvg(kind === 'return' ? 'return' : 'shield', 13);
+  pill.appendChild(icoSpan);
+
+  const textSpan = document.createElement('span');
   if (status.type === 'expired') {
-    text = kind === 'return' ? t('label.expired.return') : t('label.expired.warranty');
+    textSpan.textContent = kind === 'return' ? t('label.expired.return') : t('label.expired.warranty');
   } else if (status.days !== null) {
-    text = iconMap[kind] + ' ' + (status.days === 1
+    textSpan.textContent = status.days === 1
       ? `1 ${t('label.day.left.singular') || t('label.days.left')}`
-      : `${status.days} ${t('label.days.left')}`);
+      : `${status.days} ${t('label.days.left')}`;
   }
-  pill.textContent = text;
+  pill.appendChild(textSpan);
   return pill;
 }
 
@@ -858,12 +924,11 @@ function renderAlerts() {
     emptyAlerts && (emptyAlerts.hidden = true);
     alertItems.forEach(({ p, status, kind }, i) => {
       const item = buildAlertItem(p, status, kind);
-      item.style.animationDelay = (i * 50) + 'ms';
+      item.style.animationDelay = (i * 40) + 'ms';
       list.appendChild(item);
     });
   }
 
-  // Update badge
   const badge = document.getElementById('alerts-badge');
   if (badge) {
     const count = alertItems.length;
@@ -878,11 +943,11 @@ function buildAlertItem(p, status, kind) {
 
   const stripe = document.createElement('div');
   stripe.className = 'alert-stripe';
-  stripe.style.background = status.type === 'danger' ? 'var(--g-urgent)' : 'linear-gradient(180deg,var(--c-amber),var(--c-orange))';
+  stripe.style.background = status.type === 'danger' ? 'var(--c-red)' : 'var(--c-amber)';
 
   const icon = document.createElement('div');
   icon.className = 'alert-icon';
-  icon.textContent = kind === 'return' ? '↩️' : '🛡️';
+  icon.innerHTML = iconSvg(kind === 'return' ? 'return' : 'shield', 20);
 
   const info = document.createElement('div');
   info.className = 'alert-info';
@@ -913,27 +978,29 @@ function buildAlertItem(p, status, kind) {
 /* ══════════════════════════════════════════════════════════════
    11. PRODUCT FORM (ADD / EDIT)
 ══════════════════════════════════════════════════════════════ */
-let pendingTicketDataUrl = null; // temporary while modal is open
+let pendingTicketDataUrl = null;
+let pendingTicketFile = null;
+let pendingTicketPath = null;
 
 function openAdd() {
   pendingTicketDataUrl = null;
+  pendingTicketFile = null;
+  pendingTicketPath = null;
+
   const form = document.getElementById('product-form');
   if (form) form.reset();
   setEl('edit-id', '');
 
-  // Reset ticket UI
   setTicketPreview(null);
 
-  // Set default dates
-  const today = new Date().toISOString().slice(0, 10);
+  const todayStr = today();
   const purchEl = document.getElementById('prod-purchase');
-  if (purchEl && !purchEl.value) purchEl.value = today;
+  if (purchEl && !purchEl.value) purchEl.value = todayStr;
   const retStart = document.getElementById('ret-start');
-  if (retStart && !retStart.value) retStart.value = today;
+  if (retStart && !retStart.value) retStart.value = todayStr;
   const warStart = document.getElementById('war-start');
-  if (warStart && !warStart.value) warStart.value = today;
+  if (warStart && !warStart.value) warStart.value = todayStr;
 
-  // Modal title
   const title = document.getElementById('modal-heading');
   if (title) title.textContent = t('modal.title.add');
   const saveBtn = document.getElementById('btn-save');
@@ -948,19 +1015,21 @@ function openEdit(id) {
   if (!p) return;
 
   pendingTicketDataUrl = p.ticketImage || null;
+  pendingTicketFile = null;
+  pendingTicketPath = p.ticketPath || null;
 
   document.getElementById('edit-id').value = p.id;
   document.getElementById('prod-name').value = p.name || '';
   document.getElementById('prod-brand').value = p.brand || '';
-  document.getElementById('prod-price').value = p.price || '';
+  document.getElementById('prod-price').value = p.price != null ? p.price : '';
   document.getElementById('prod-store').value = p.store || '';
   document.getElementById('prod-purchase').value = p.purchaseDate || '';
   document.getElementById('prod-notes').value = p.notes || '';
-  document.getElementById('ret-days').value = p.retDays || '';
+  document.getElementById('ret-days').value = p.retDays != null ? p.retDays : '';
   document.getElementById('ret-start').value = p.retStart || '';
   document.getElementById('ret-conditions').value = p.retConditions || '';
   document.getElementById('war-start').value = p.warStart || '';
-  document.getElementById('war-years').value = p.warYears || '';
+  document.getElementById('war-years').value = p.warYears != null ? p.warYears : '';
   document.getElementById('war-covers').value = p.warCovers || '';
   document.getElementById('war-nocovers').value = p.warNoCovers || '';
 
@@ -992,7 +1061,7 @@ function setTicketPreview(dataUrl) {
   }
 }
 
-function handleFormSubmit(e) {
+async function handleFormSubmit(e) {
   e.preventDefault();
 
   const name = safeText(document.getElementById('prod-name').value.trim(), 100);
@@ -1005,46 +1074,124 @@ function handleFormSubmit(e) {
 
   const id = document.getElementById('edit-id').value;
   const isEdit = !!id;
+  const productId = isEdit ? id : generateId();
 
-  const product = {
-    id: isEdit ? id : generateId(),
-    name,
-    brand:          safeText(document.getElementById('prod-brand').value.trim(), 60),
-    price:          safeFloat(document.getElementById('prod-price').value, 0, 999999, null),
-    store:          safeText(document.getElementById('prod-store').value.trim(), 100),
-    purchaseDate:   safeDate(document.getElementById('prod-purchase').value),
-    notes:          safeText(document.getElementById('prod-notes').value.trim(), 500),
-    retDays:        safeInt(document.getElementById('ret-days').value, 0, 3650, null),
-    retStart:       safeDate(document.getElementById('ret-start').value),
-    retConditions:  safeText(document.getElementById('ret-conditions').value.trim(), 400),
-    warStart:       safeDate(document.getElementById('war-start').value),
-    warYears:       safeFloat(document.getElementById('war-years').value, 0, 50, null),
-    warCovers:      safeText(document.getElementById('war-covers').value.trim(), 600),
-    warNoCovers:    safeText(document.getElementById('war-nocovers').value.trim(), 600),
-    ticketImage:    pendingTicketDataUrl || null,
-    createdAt:      isEdit ? undefined : new Date().toISOString(),
-    updatedAt:      new Date().toISOString(),
-  };
+  const saveBtn = document.getElementById('btn-save');
+  if (saveBtn) saveBtn.disabled = true;
 
-  let products = loadProducts();
-  if (isEdit) {
-    const idx = products.findIndex(x => x.id === id);
-    if (idx > -1) {
-      product.createdAt = products[idx].createdAt;
-      products[idx] = product;
+  try {
+    const product = {
+      id: productId,
+      name,
+      brand:          safeText(document.getElementById('prod-brand').value.trim(), 60),
+      price:          safeFloat(document.getElementById('prod-price').value, 0, 999999, null),
+      store:          safeText(document.getElementById('prod-store').value.trim(), 100),
+      purchaseDate:   safeDate(document.getElementById('prod-purchase').value),
+      notes:          safeText(document.getElementById('prod-notes').value.trim(), 500),
+      retDays:        safeInt(document.getElementById('ret-days').value, 0, 3650, null),
+      retStart:       safeDate(document.getElementById('ret-start').value),
+      retConditions:  safeText(document.getElementById('ret-conditions').value.trim(), 400),
+      warStart:       safeDate(document.getElementById('war-start').value),
+      warYears:       safeFloat(document.getElementById('war-years').value, 0, 50, null),
+      warCovers:      safeText(document.getElementById('war-covers').value.trim(), 600),
+      warNoCovers:    safeText(document.getElementById('war-nocovers').value.trim(), 600),
+      ticketImage:    pendingTicketDataUrl || null,
+      ticketPath:     pendingTicketPath || null,
+      createdAt:      isEdit ? undefined : new Date().toISOString(),
+      updatedAt:      new Date().toISOString(),
+    };
+
+    // ── GUARDADO EN MODO DEMO (sessionStorage) ────────────────────
+    if (activeSession.isDemo) {
+      if (isEdit) {
+        const idx = currentProducts.findIndex(x => x.id === id);
+        if (idx > -1) {
+          product.createdAt = currentProducts[idx].createdAt;
+          currentProducts[idx] = product;
+        }
+      } else {
+        currentProducts.unshift(product);
+      }
+      try {
+        sessionStorage.setItem(DEMO_PRODUCTS_KEY, JSON.stringify(currentProducts));
+      } catch (err) {
+        showToast(t('toast.photo.big'), 'warn');
+      }
+    } else {
+      // ── GUARDADO EN SUPABASE (Postgres + Storage) ────────────────
+      const userId = activeSession.user.id;
+
+      // 1. Subida de foto a Supabase Storage si se eligió un archivo nuevo
+      if (pendingTicketFile) {
+        const ext = pendingTicketFile.name.split('.').pop() || 'jpg';
+        const storagePath = `${userId}/${productId}_${Date.now()}.${ext}`;
+        const { error: upErr } = await sb.storage
+          .from(TICKETS_BUCKET)
+          .upload(storagePath, pendingTicketFile, {
+            contentType: pendingTicketFile.type,
+            upsert: true,
+          });
+        if (upErr) {
+          console.error('Storage upload error:', upErr);
+        } else {
+          // Si había una foto previa, eliminar la anterior
+          if (product.ticketPath && product.ticketPath !== storagePath) {
+            sb.storage.from(TICKETS_BUCKET).remove([product.ticketPath]).catch(() => {});
+          }
+          product.ticketPath = storagePath;
+          // Obtener URL firmada
+          const { data: su } = await sb.storage.from(TICKETS_BUCKET).createSignedUrl(storagePath, 3600 * 24);
+          product.ticketImage = su ? su.signedUrl : null;
+        }
+      } else if (!pendingTicketDataUrl && product.ticketPath) {
+        // El usuario pulsó "Eliminar foto"
+        sb.storage.from(TICKETS_BUCKET).remove([product.ticketPath]).catch(() => {});
+        product.ticketPath = null;
+        product.ticketImage = null;
+      }
+
+      // 2. Insert o Update en tabla 'products'
+      const row = productToDb(product, userId);
+      delete row.user_id; // RLS y default se encargan en insert; no modificar en update
+
+      if (isEdit) {
+        const { error: updErr } = await sb
+          .from('products')
+          .update(row)
+          .eq('id', productId);
+        if (updErr) throw updErr;
+
+        const idx = currentProducts.findIndex(x => x.id === id);
+        if (idx > -1) {
+          product.createdAt = currentProducts[idx].createdAt;
+          currentProducts[idx] = product;
+        }
+      } else {
+        const { data: insData, error: insErr } = await sb
+          .from('products')
+          .insert(row)
+          .select('*')
+          .single();
+        if (insErr) throw insErr;
+        product.createdAt = insData.created_at;
+        product.updatedAt = insData.updated_at;
+        currentProducts.unshift(product);
+      }
     }
-  } else {
-    products.unshift(product);
+
+    closeModal('modal-overlay');
+    showToast(t(isEdit ? 'toast.updated' : 'toast.saved'), 'ok');
+
+    if (currentView === 'dashboard') renderDashboard();
+    else if (currentView === 'products') renderProducts();
+    else if (currentView === 'alerts') renderAlerts();
+
+  } catch (err) {
+    console.error('Save product error:', err);
+    showToast(t('toast.save.err'), 'error');
+  } finally {
+    if (saveBtn) saveBtn.disabled = false;
   }
-
-  saveProducts(products);
-  closeModal('modal-overlay');
-  showToast(t(isEdit ? 'toast.updated' : 'toast.saved'), 'ok');
-
-  // Re-render current view
-  if (currentView === 'dashboard') renderDashboard();
-  else if (currentView === 'products') renderProducts();
-  else if (currentView === 'alerts') renderAlerts();
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1063,9 +1210,11 @@ function handleFileSelect(file) {
     showToast(t('toast.photo.big'), 'warn');
     return;
   }
+
+  pendingTicketFile = file;
+
   const reader = new FileReader();
   reader.onload = (ev) => {
-    // Validate result is a data URL of expected type
     const result = ev.target.result;
     if (typeof result !== 'string' || !result.startsWith('data:image/')) return;
     pendingTicketDataUrl = result;
@@ -1107,11 +1256,11 @@ function openDetail(id) {
   } else {
     const noTicket = document.createElement('div');
     noTicket.className = 'detail-no-ticket';
-    noTicket.textContent = t('no.ticket');
+    noTicket.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;">${iconSvg('receipt', 18)} ${t('no.ticket')}</span>`;
     body.appendChild(noTicket);
   }
 
-  // ── Product info section
+  // Info sección
   const infoSection = makeDetailSection(t('form.info.section'));
   addDetailRow(infoSection, t('detail.brand'), p.brand);
   addDetailRow(infoSection, t('detail.store'), p.store);
@@ -1122,15 +1271,13 @@ function openDetail(id) {
   if (p.notes) addDetailRow(infoSection, t('detail.notes'), p.notes);
   body.appendChild(infoSection);
 
-  // ── Return section
+  // Devolución
   if (rs.type !== 'none' || p.retDays) {
     const retSection = makeDetailSection(t('detail.return.title'));
-
-    // Countdown ring
     if (rs.days !== null) {
       const totalDays = p.retDays || 1;
       const remainPct = Math.max(0, Math.min(100, (rs.days / totalDays) * 100));
-      const ringColor = rs.type === 'ok' ? '#31e08f' : rs.type === 'warn' ? '#ffbe3d' : '#ff4f6e';
+      const ringColor = rs.type === 'ok' ? '#30a46c' : rs.type === 'warn' ? '#e5a03a' : '#e5484d';
       retSection.appendChild(buildCountdownRing(
         Math.max(rs.days, 0), t('label.days'), t('label.return.active'), remainPct, ringColor
       ));
@@ -1139,19 +1286,17 @@ function openDetail(id) {
     addDetailRow(retSection, t('detail.return.start'), fmtDate(p.retStart));
     if (retDl) addDetailRow(retSection, t('detail.return.end'), fmtDate(retDl));
     if (p.retDays) addDetailRow(retSection, t('detail.total'), `${p.retDays} ${t('label.days')}`);
-
     if (p.retConditions) addDetailRow(retSection, t('detail.return.cond'), p.retConditions);
     body.appendChild(retSection);
   }
 
-  // ── Warranty section
+  // Garantía
   if (ws.type !== 'none' || p.warYears) {
     const warSection = makeDetailSection(t('detail.warranty.title'));
-
     if (ws.days !== null) {
       const totalDays = Math.round((p.warYears || 1) * 365);
       const remainPct = Math.max(0, Math.min(100, (ws.days / totalDays) * 100));
-      const ringColor = ws.type === 'ok' ? '#7c6aff' : ws.type === 'warn' ? '#ffbe3d' : '#ff4f6e';
+      const ringColor = ws.type === 'ok' ? '#7c6aff' : ws.type === 'warn' ? '#e5a03a' : '#e5484d';
       warSection.appendChild(buildCountdownRing(
         Math.max(ws.days, 0), t('label.days'), t('label.warranty.active'), remainPct, ringColor
       ));
@@ -1167,8 +1312,7 @@ function openDetail(id) {
       coversTitle.textContent = t('detail.warranty.covers');
       coversTitle.style.marginTop = '12px';
       warSection.appendChild(coversTitle);
-      const list = buildCoverageList(p.warCovers, true);
-      warSection.appendChild(list);
+      warSection.appendChild(buildCoverageList(p.warCovers, true));
     }
     if (p.warNoCovers) {
       const nocoversTitle = document.createElement('div');
@@ -1176,8 +1320,7 @@ function openDetail(id) {
       nocoversTitle.textContent = t('detail.warranty.nocovers');
       nocoversTitle.style.marginTop = '12px';
       warSection.appendChild(nocoversTitle);
-      const list = buildCoverageList(p.warNoCovers, false);
-      warSection.appendChild(list);
+      warSection.appendChild(buildCoverageList(p.warNoCovers, false));
     }
     body.appendChild(warSection);
   }
@@ -1272,7 +1415,13 @@ function buildCoverageList(text, isCovers) {
     if (!trimmed) return;
     const item = document.createElement('div');
     item.className = 'coverage-item ' + (isCovers ? 'covers' : 'no-covers');
-    item.textContent = trimmed;
+    const ico = document.createElement('span');
+    ico.className = 'coverage-ico';
+    ico.innerHTML = iconSvg(isCovers ? 'check' : 'x', 14);
+    const txt = document.createElement('span');
+    txt.textContent = trimmed;
+    item.appendChild(ico);
+    item.appendChild(txt);
     list.appendChild(item);
   });
   return list;
@@ -1288,20 +1437,38 @@ function confirmDelete(id) {
   openModal('confirm-overlay');
 }
 
-function executeDelete() {
+async function executeDelete() {
   if (!pendingDeleteId) return;
-  let products = loadProducts();
-  products = products.filter(x => x.id !== pendingDeleteId);
-  saveProducts(products);
-  pendingDeleteId = null;
+  const id = pendingDeleteId;
+  const product = currentProducts.find(x => x.id === id);
 
-  closeModal('confirm-overlay');
-  closeModal('detail-overlay');
+  try {
+    if (activeSession.isDemo) {
+      currentProducts = currentProducts.filter(x => x.id !== id);
+      try {
+        sessionStorage.setItem(DEMO_PRODUCTS_KEY, JSON.stringify(currentProducts));
+      } catch {}
+    } else {
+      if (product && product.ticketPath) {
+        sb.storage.from(TICKETS_BUCKET).remove([product.ticketPath]).catch(() => {});
+      }
+      const { error } = await sb.from('products').delete().eq('id', id);
+      if (error) throw error;
+      currentProducts = currentProducts.filter(x => x.id !== id);
+    }
 
-  showToast(t('toast.deleted'), 'ok');
-  if (currentView === 'dashboard') renderDashboard();
-  else if (currentView === 'products') renderProducts();
-  else if (currentView === 'alerts') renderAlerts();
+    pendingDeleteId = null;
+    closeModal('confirm-overlay');
+    closeModal('detail-overlay');
+
+    showToast(t('toast.deleted'), 'ok');
+    if (currentView === 'dashboard') renderDashboard();
+    else if (currentView === 'products') renderProducts();
+    else if (currentView === 'alerts') renderAlerts();
+  } catch (err) {
+    console.error('Delete error:', err);
+    showToast(t('toast.save.err'), 'error');
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1315,7 +1482,6 @@ function openModal(id) {
   el.hidden = false;
   openModals.add(id);
   document.body.style.overflow = 'hidden';
-  // Focus first focusable element
   setTimeout(() => {
     const first = el.querySelector('input:not([type="file"]), textarea, button:not(.modal-close)');
     if (first) first.focus();
@@ -1333,9 +1499,20 @@ function closeModal(id) {
 /* ══════════════════════════════════════════════════════════════
    16. INIT & EVENT BINDING
 ══════════════════════════════════════════════════════════════ */
-function init() {
+async function init() {
   applyTranslations();
+
+  // Esperar a que la sesión esté lista
+  activeSession = await window.GPSession.resolve();
+
+  // Cargar productos
+  await fetchProducts();
+
+  // Render inicial
   renderDashboard();
+
+  // Disparar evento para comprobación de alertas urgentes
+  window.dispatchEvent(new CustomEvent('productsReady', { detail: currentProducts }));
 
   // ── Nav buttons
   document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -1345,15 +1522,10 @@ function init() {
     });
   });
 
-  // ── Add button (header — desktop/tablet)
+  // ── Add buttons
   document.getElementById('btn-add-main')?.addEventListener('click', openAdd);
-
-  // ── FAB (mobile floating add button)
   document.getElementById('btn-fab')?.addEventListener('click', openAdd);
-
-  // ── Empty state add button
   document.getElementById('btn-add-empty')?.addEventListener('click', openAdd);
-
 
   // ── Form submit
   document.getElementById('product-form')?.addEventListener('submit', handleFormSubmit);
@@ -1385,7 +1557,6 @@ function init() {
   // ── Escape key
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      // Close topmost modal
       if (openModals.has('confirm-overlay')) { closeModal('confirm-overlay'); return; }
       if (openModals.has('detail-overlay'))  { closeModal('detail-overlay'); return; }
       if (openModals.has('modal-overlay'))   { closeModal('modal-overlay'); return; }
@@ -1422,6 +1593,8 @@ function init() {
   // Remove ticket
   document.getElementById('btn-remove-ticket')?.addEventListener('click', () => {
     pendingTicketDataUrl = null;
+    pendingTicketFile = null;
+    pendingTicketPath = null;
     setTicketPreview(null);
     const fi = document.getElementById('ticket-file');
     if (fi) fi.value = '';
@@ -1453,21 +1626,9 @@ function init() {
     currentLang = currentLang === 'es' ? 'en' : 'es';
     localStorage.setItem('gp_lang', currentLang);
     applyTranslations();
-    // Re-render to update all dynamic text
     if (currentView === 'dashboard') renderDashboard();
     else if (currentView === 'products') renderProducts();
     else if (currentView === 'alerts') renderAlerts();
-    // Update demo banner if present
-    const bannerSpan = document.querySelector('#demo-banner span:first-child');
-    if (bannerSpan) bannerSpan.textContent = t('demo.banner') + ' ';
-    const bannerLink = document.querySelector('#demo-banner button.link');
-    if (bannerLink) bannerLink.textContent = t('demo.register');
-    // Update logout button text
-    const logoutSpan = document.querySelector('#btn-logout span[data-i18n]');
-    if (logoutSpan) logoutSpan.textContent = t('btn.logout');
-    // Update user greeting avatar tooltip lang
-    const nameEl = document.getElementById('user-name');
-    if (nameEl) nameEl.title = '';
   });
 
   // ── Auto-sync purchase date → return start if empty
@@ -1479,7 +1640,6 @@ function init() {
   });
 }
 
-// Boot when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {

@@ -4,42 +4,38 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="GarantíasPro — Accede a tu cuenta para gestionar garantías y devoluciones." />
-  <meta name="theme-color" content="#0a0f1e" />
+  <meta name="theme-color" content="#0b1120" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self';
                  script-src 'self';
                  style-src 'self' https://fonts.googleapis.com;
                  font-src 'self' https://fonts.gstatic.com;
-                 img-src 'self' data: blob:;
-                 connect-src 'none';
+                 img-src 'self' data:;
+                 connect-src https://ynmqlzpqsyvhzlspzfkd.supabase.co wss://ynmqlzpqsyvhzlspzfkd.supabase.co;
                  object-src 'none';
                  base-uri 'self';
                  form-action 'self';" />
   <title>GarantíasPro — Acceso</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="auth.css" />
 </head>
 <body>
 
-<!-- Orbs de fondo -->
-<div class="bg-orb bg-orb-1" aria-hidden="true"></div>
-<div class="bg-orb bg-orb-2" aria-hidden="true"></div>
-<div class="bg-orb bg-orb-3" aria-hidden="true"></div>
-
 <div class="auth-wrapper">
 
   <!-- ── LOGO ── -->
-  <div class="auth-logo" aria-label="GarantíasPro">
-    <span class="logo-symbol" aria-hidden="true">✦</span>
+  <div class="auth-logo">
+    <span class="logo-mark" data-icon="logo" data-icon-size="22"></span>
     <span class="logo-name">GarantíasPro</span>
   </div>
 
   <!-- ══════════════════════════════
        PANEL LOGIN
   ══════════════════════════════ -->
-  <div class="auth-card" id="card-login" role="main">
+  <main class="auth-card" id="card-login">
     <div class="auth-card-inner">
       <div class="auth-header">
         <h1 class="auth-title" id="login-title">Bienvenido de nuevo</h1>
@@ -50,12 +46,7 @@
         <div class="field-group">
           <label for="login-email" id="label-email-login">Correo electrónico</label>
           <div class="field-wrap">
-            <span class="field-icon" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                <polyline points="22,6 12,13 2,6"/>
-              </svg>
-            </span>
+            <span class="field-icon" data-icon="mail" data-icon-size="16"></span>
             <input type="email" id="login-email" name="email"
                    placeholder="tu@email.com"
                    autocomplete="email" required
@@ -67,9 +58,8 @@
           <label for="login-password" id="label-pwd-login">Contraseña</label>
           <div class="field-wrap">
             <span class="field-icon" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
             </span>
             <input type="password" id="login-password" name="password"
@@ -78,15 +68,13 @@
                    maxlength="128" />
             <button type="button" class="toggle-pwd" aria-label="Mostrar contraseña"
                     data-target="login-password">
-              <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
+              <span data-icon="eye" data-icon-size="16"></span>
             </button>
           </div>
         </div>
 
         <div class="error-msg" id="login-error" role="alert" aria-live="polite" hidden></div>
+        <button type="button" class="link-btn link-btn-sm" id="btn-resend-login" hidden>Reenviar email de confirmación</button>
 
         <button type="submit" class="btn-auth" id="btn-login">
           <span class="btn-text" id="btn-login-text">Iniciar sesión</span>
@@ -101,9 +89,7 @@
         </div>
 
         <button type="button" class="btn-demo" id="btn-demo">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="5 3 19 12 5 21 5 3"/>
-          </svg>
+          <span data-icon="eye" data-icon-size="16"></span>
           <span id="btn-demo-text">Ver demo</span>
         </button>
       </form>
@@ -113,53 +99,46 @@
         <button class="link-btn" id="go-register" type="button">Regístrate</button>
       </p>
 
-      <!-- Lang toggle -->
       <div class="lang-row">
-        <button class="lang-pill" id="auth-lang-toggle" aria-label="Cambiar idioma">
-          <span id="auth-lang-flag">🇪🇸</span>
-          <span id="auth-lang-code">ES</span>
+        <button class="lang-pill" id="auth-lang-toggle" type="button" aria-label="Cambiar idioma">
+          <span data-icon="globe" data-icon-size="14"></span>
+          <span class="js-lang-code">ES</span>
         </button>
       </div>
     </div>
-  </div>
+  </main>
 
   <!-- ══════════════════════════════
        PANEL REGISTRO
   ══════════════════════════════ -->
-  <div class="auth-card auth-card-hidden" id="card-register" role="main" aria-hidden="true">
+  <main class="auth-card auth-card-hidden" id="card-register" aria-hidden="true">
     <div class="auth-card-inner">
       <div class="auth-header">
         <h1 class="auth-title" id="register-title">Crear cuenta</h1>
         <p class="auth-sub" id="register-sub">Empieza a controlar tus garantías</p>
       </div>
 
-      <form class="auth-form" id="register-form" novalidate autocomplete="off">
+      <form class="auth-form" id="register-form" novalidate autocomplete="on">
 
         <div class="field-group">
           <label for="reg-name" id="label-name">Nombre</label>
           <div class="field-wrap">
             <span class="field-icon" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>
               </svg>
             </span>
             <input type="text" id="reg-name" name="name"
                    placeholder="Tu nombre"
                    autocomplete="name" required
-                   maxlength="60" spellcheck="true" />
+                   maxlength="60" spellcheck="false" />
           </div>
         </div>
 
         <div class="field-group">
           <label for="reg-email" id="label-email-reg">Correo electrónico</label>
           <div class="field-wrap">
-            <span class="field-icon" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                <polyline points="22,6 12,13 2,6"/>
-              </svg>
-            </span>
+            <span class="field-icon" data-icon="mail" data-icon-size="16"></span>
             <input type="email" id="reg-email" name="email"
                    placeholder="tu@email.com"
                    autocomplete="email" required
@@ -171,9 +150,8 @@
           <label for="reg-password" id="label-pwd-reg">Contraseña</label>
           <div class="field-wrap">
             <span class="field-icon" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
             </span>
             <input type="password" id="reg-password" name="password"
@@ -182,13 +160,9 @@
                    maxlength="128" />
             <button type="button" class="toggle-pwd" aria-label="Mostrar contraseña"
                     data-target="reg-password">
-              <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
+              <span data-icon="eye" data-icon-size="16"></span>
             </button>
           </div>
-          <!-- Password strength -->
           <div class="pwd-strength" id="pwd-strength" aria-live="polite">
             <div class="strength-bars">
               <div class="s-bar" id="sb1"></div>
@@ -198,15 +172,15 @@
             </div>
             <span class="strength-label" id="strength-label"></span>
           </div>
+          <p class="field-hint" id="pwd-hint">Usa letras y números. Mínimo 8 caracteres.</p>
         </div>
 
         <div class="field-group">
           <label for="reg-password2" id="label-pwd2">Confirmar contraseña</label>
           <div class="field-wrap">
             <span class="field-icon" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 12l2 2 4-4"/><rect x="3" y="11" width="18" height="11" rx="2"/>
-                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
             </span>
             <input type="password" id="reg-password2" name="password2"
@@ -215,10 +189,7 @@
                    maxlength="128" />
             <button type="button" class="toggle-pwd" aria-label="Mostrar contraseña"
                     data-target="reg-password2">
-              <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
+              <span data-icon="eye" data-icon-size="16"></span>
             </button>
           </div>
         </div>
@@ -237,16 +208,38 @@
       </p>
 
       <div class="lang-row">
-        <button class="lang-pill" id="auth-lang-toggle2" aria-label="Cambiar idioma">
-          <span id="auth-lang-flag2">🇪🇸</span>
-          <span id="auth-lang-code2">ES</span>
+        <button class="lang-pill" id="auth-lang-toggle2" type="button" aria-label="Cambiar idioma">
+          <span data-icon="globe" data-icon-size="14"></span>
+          <span class="js-lang-code">ES</span>
         </button>
       </div>
     </div>
-  </div>
+  </main>
+
+  <!-- ══════════════════════════════
+       PANEL VERIFICAR EMAIL
+  ══════════════════════════════ -->
+  <main class="auth-card auth-card-hidden" id="card-verify" aria-hidden="true">
+    <div class="auth-card-inner verify-inner">
+      <div class="verify-icon" data-icon="mail" data-icon-size="28"></div>
+      <h1 class="auth-title" id="verify-title">Revisa tu correo</h1>
+      <p class="auth-sub" id="verify-text">Te hemos enviado un enlace de confirmación. Ábrelo para activar tu cuenta y después inicia sesión.</p>
+      <p class="verify-email" id="verify-email"></p>
+      <div class="error-msg info-msg" id="verify-msg" role="status" aria-live="polite" hidden></div>
+      <button type="button" class="btn-demo" id="btn-resend">
+        <span id="btn-resend-text">Reenviar email</span>
+      </button>
+      <p class="auth-switch">
+        <button class="link-btn" id="verify-go-login" type="button">Volver a iniciar sesión</button>
+      </p>
+    </div>
+  </main>
 
 </div>
 
+<script src="vendor/supabase.js"></script>
+<script src="supabase-client.js"></script>
+<script src="icons.js"></script>
 <script src="auth.js"></script>
 </body>
 </html>
