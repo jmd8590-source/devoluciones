@@ -305,6 +305,8 @@ let pendingVerifyEmail = '';
 function showVerify(email) {
   pendingVerifyEmail = email;
   setText('verify-email', email);
+  const loginInput = document.getElementById('login-email');
+  if (loginInput) loginInput.value = email;
   showCard('verify');
 }
 
@@ -510,6 +512,21 @@ async function redirectIfLoggedIn() {
 
 function initAuth() {
   applyAuthLang();
+
+  // Si la URL contiene un código de intercambio PKCE (?code=)
+  const search = window.location.search || '';
+  if (search.includes('code=')) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    if (code && sb.auth.exchangeCodeForSession) {
+      sb.auth.exchangeCodeForSession(code).then(({ data, error }) => {
+        if (!error && data && data.session) {
+          clearDemoSession();
+          window.location.replace('index.html');
+        }
+      }).catch(() => {});
+    }
+  }
 
   // Cuando el usuario vuelve desde el enlace del email, Supabase crea la sesión
   sb.auth.onAuthStateChange((event, session) => {

@@ -26,7 +26,29 @@
 
     // ── Sesión real: validación en servidor ────────────────────
     try {
-      const { data, error } = await sb.auth.getUser();
+      const hash = window.location.hash || '';
+      const search = window.location.search || '';
+
+      if (search.includes('code=')) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        if (code && sb.auth.exchangeCodeForSession) {
+          await sb.auth.exchangeCodeForSession(code).catch(() => {});
+        }
+      } else if (hash.includes('access_token=')) {
+        await new Promise(r => setTimeout(r, 350));
+      }
+
+      let { data, error } = await sb.auth.getUser();
+      if ((error || !data || !data.user) && hash.includes('access_token=')) {
+        await new Promise(r => setTimeout(r, 500));
+        const retry = await sb.auth.getUser().catch(() => ({ data: null }));
+        if (retry && retry.data && retry.data.user) {
+          data = retry.data;
+          error = null;
+        }
+      }
+
       if (error || !data || !data.user) {
         await sb.auth.signOut({ scope: 'local' }).catch(() => {});
         goToAuth();
