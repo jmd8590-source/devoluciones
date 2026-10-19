@@ -343,6 +343,27 @@ button { font: inherit; color: inherit; }
 .verify-inner .error-msg { width: 100%; }
 .verify-inner .auth-switch { margin-top: 4px; }
 
+/* ── Legal note & footer ───────────────────────────────────── */
+a.auth-logo { text-decoration: none; }
+.auth-legal-note {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--t-muted);
+  text-align: center;
+}
+.auth-legal-note a, .auth-footer a { color: var(--t-secondary); text-decoration: underline; text-underline-offset: 2px; }
+.auth-legal-note a:hover, .auth-footer a:hover { color: var(--t-primary); }
+.auth-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--t-muted);
+  text-align: center;
+}
+.auth-footer nav { display: flex; gap: 16px; }
+
 /* ── Responsive ────────────────────────────────────────────── */
 @media (max-width: 480px) {
   .auth-card-inner { padding: 24px 18px 20px; }

@@ -27,10 +27,10 @@
 <div class="auth-wrapper">
 
   <!-- ── LOGO ── -->
-  <div class="auth-logo">
+  <a class="auth-logo" href="./" aria-label="GarantíasPro, volver al inicio">
     <span class="logo-mark" data-icon="logo" data-icon-size="22"></span>
     <span class="logo-name">GarantíasPro</span>
-  </div>
+  </a>
 
   <!-- ══════════════════════════════
        PANEL LOGIN
@@ -196,6 +196,11 @@
 
         <div class="error-msg" id="register-error" role="alert" aria-live="polite" hidden></div>
 
+        <p class="auth-legal-note" id="register-legal">
+          Al crear la cuenta aceptas la <a href="privacidad.html">política de privacidad</a>.
+          Tus datos se usan solo para el funcionamiento de la app.
+        </p>
+
         <button type="submit" class="btn-auth" id="btn-register">
           <span class="btn-text" id="btn-register-text">Crear cuenta</span>
           <span class="btn-spinner" hidden aria-hidden="true"></span>
@@ -234,6 +239,15 @@
       </p>
     </div>
   </main>
+
+  <footer class="auth-footer">
+    <span>GarantíasPro · Responsable: Jesús Mendoza Domínguez</span>
+    <nav aria-label="Información legal">
+      <a href="./">Inicio</a>
+      <a href="privacidad.html">Privacidad</a>
+      <a href="mailto:jemendo90@gmail.com">Contacto</a>
+    </nav>
+  </footer>
 
 </div>
 

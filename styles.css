@@ -1435,4 +1435,32 @@ ul, ol { list-style: none; }
   .stat-card:hover { transform: none; }
 }
 
+/* ── App legal footer ────────────────────────────────────── */
+.app-legal-footer {
+  margin-top: 48px;
+  padding: 24px 0 16px;
+  border-top: 1px solid var(--c-border);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--t-muted);
+}
+.app-legal-footer a {
+  color: var(--t-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.app-legal-footer a:hover {
+  color: var(--t-primary);
+}
+.app-legal-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+
 

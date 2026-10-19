@@ -1,68 +1,68 @@
-/* ═══════════════════════════════════════════════════════════════
-   GarantíasPro — Auth Logic (Supabase Auth)
-   Seguridad: contraseñas gestionadas por Supabase (bcrypt en servidor),
-              verificación de email obligatoria, límites de intentos
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   GarantÃ­asPro â€” Auth Logic (Supabase Auth)
+   Seguridad: contraseÃ±as gestionadas por Supabase (bcrypt en servidor),
+              verificaciÃ³n de email obligatoria, lÃ­mites de intentos
               en servidor + bloqueo local, operaciones DOM sin innerHTML.
-   ═══════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 'use strict';
 
-/* ══════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    1. CONSTANTS & CONFIG
-══════════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const RATE_KEY       = 'gp_rate_v1';
 const MAX_ATTEMPTS   = 5;          // intentos fallidos antes del bloqueo local
 const LOCKOUT_MS     = 5 * 60000;  // 5 minutos
 const MIN_PWD_LEN    = 8;
 
-/* ══════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    2. i18n (Auth strings only)
-══════════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const AUTH_STRINGS = {
   es: {
     'login.title':      'Bienvenido de nuevo',
-    'login.sub':        'Inicia sesión en tu cuenta',
+    'login.sub':        'Inicia sesiÃ³n en tu cuenta',
     'register.title':   'Crear cuenta',
-    'register.sub':     'Empieza a controlar tus garantías',
+    'register.sub':     'Empieza a controlar tus garantÃ­as',
     'label.name':       'Nombre',
-    'label.email':      'Correo electrónico',
-    'label.pwd':        'Contraseña',
-    'label.pwd2':       'Confirmar contraseña',
+    'label.email':      'Correo electrÃ³nico',
+    'label.pwd':        'ContraseÃ±a',
+    'label.pwd2':       'Confirmar contraseÃ±a',
     'ph.name':          'Tu nombre',
-    'ph.pwd.new':       'Mínimo 8 caracteres',
-    'ph.pwd.repeat':    'Repite la contraseña',
-    'pwd.hint':         'Usa letras y números. Mínimo 8 caracteres.',
-    'btn.login':        'Iniciar sesión',
+    'ph.pwd.new':       'MÃ­nimo 8 caracteres',
+    'ph.pwd.repeat':    'Repite la contraseÃ±a',
+    'pwd.hint':         'Usa letras y nÃºmeros. MÃ­nimo 8 caracteres.',
+    'btn.login':        'Iniciar sesiÃ³n',
     'btn.register':     'Crear cuenta',
-    'no.account':       '¿No tienes cuenta?',
-    'go.register':      'Regístrate',
-    'have.account':     '¿Ya tienes cuenta?',
-    'go.login':         'Iniciar sesión',
+    'no.account':       'Â¿No tienes cuenta?',
+    'go.register':      'RegÃ­strate',
+    'have.account':     'Â¿Ya tienes cuenta?',
+    'go.login':         'Iniciar sesiÃ³n',
     'err.required':     'Rellena todos los campos obligatorios.',
-    'err.email':        'Introduce un correo electrónico válido.',
-    'err.pwd.short':    `La contraseña debe tener al menos ${MIN_PWD_LEN} caracteres.`,
-    'err.pwd.weak':     'La contraseña debe incluir letras y números.',
-    'err.pwd.match':    'Las contraseñas no coinciden.',
-    'err.credentials':  'Correo o contraseña incorrectos.',
-    'err.unconfirmed':  'Todavía no has confirmado tu correo. Revisa tu bandeja de entrada (y la carpeta de spam).',
+    'err.email':        'Introduce un correo electrÃ³nico vÃ¡lido.',
+    'err.pwd.short':    `La contraseÃ±a debe tener al menos ${MIN_PWD_LEN} caracteres.`,
+    'err.pwd.weak':     'La contraseÃ±a debe incluir letras y nÃºmeros.',
+    'err.pwd.match':    'Las contraseÃ±as no coinciden.',
+    'err.credentials':  'Correo o contraseÃ±a incorrectos.',
+    'err.unconfirmed':  'TodavÃ­a no has confirmado tu correo. Revisa tu bandeja de entrada (y la carpeta de spam).',
     'err.locked':       'Demasiados intentos. Espera 5 minutos.',
-    'err.ratelimit':    'Demasiadas solicitudes. Espera unos minutos e inténtalo de nuevo.',
-    'err.network':      'No se pudo conectar con el servidor. Comprueba tu conexión.',
-    'err.generic':      'Ha ocurrido un error. Inténtalo de nuevo.',
-    'pwd.weak':         'Débil',
+    'err.ratelimit':    'Demasiadas solicitudes. Espera unos minutos e intÃ©ntalo de nuevo.',
+    'err.network':      'No se pudo conectar con el servidor. Comprueba tu conexiÃ³n.',
+    'err.generic':      'Ha ocurrido un error. IntÃ©ntalo de nuevo.',
+    'pwd.weak':         'DÃ©bil',
     'pwd.fair':         'Regular',
     'pwd.good':         'Buena',
     'pwd.strong':       'Muy segura',
-    'demo.or':          'o continúa sin cuenta',
+    'demo.or':          'o continÃºa sin cuenta',
     'demo.btn':         'Ver demo',
     'verify.title':     'Revisa tu correo',
-    'verify.text':      'Te hemos enviado un enlace de confirmación. Ábrelo para activar tu cuenta y después inicia sesión.',
+    'verify.text':      'Te hemos enviado un enlace de confirmaciÃ³n. Ãbrelo para activar tu cuenta y despuÃ©s inicia sesiÃ³n.',
     'verify.resend':    'Reenviar email',
     'verify.sent':      'Email reenviado. Puede tardar unos minutos.',
-    'verify.back':      'Volver a iniciar sesión',
-    'resend.login':     'Reenviar email de confirmación',
-    'pwd.show':         'Mostrar contraseña',
-    'pwd.hide':         'Ocultar contraseña',
+    'verify.back':      'Volver a iniciar sesiÃ³n',
+    'resend.login':     'Reenviar email de confirmaciÃ³n',
+    'pwd.show':         'Mostrar contraseÃ±a',
+    'pwd.hide':         'Ocultar contraseÃ±a',
   },
   en: {
     'login.title':      'Welcome back',
@@ -166,9 +166,9 @@ function applyAuthLang() {
   document.documentElement.lang = currentLang;
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    3. VALIDATION
-══════════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function isValidEmail(email) {
   if (typeof email !== 'string') return false;
   return /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/.test(email.trim().toLowerCase());
@@ -179,9 +179,9 @@ function sanitizeName(str) {
   return str.replace(/[\x00-\x1F\x7F<>&"']/g, '').trim().slice(0, 60);
 }
 
-/* ══════════════════════════════════════════════════════════════
-   4. LOCAL RATE LIMITING (complementa el límite del servidor)
-══════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   4. LOCAL RATE LIMITING (complementa el lÃ­mite del servidor)
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function getRateData() {
   try {
     const raw = localStorage.getItem(RATE_KEY);
@@ -214,9 +214,9 @@ function clearAttempts(email) {
   saveRateData(data);
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    5. UI HELPERS
-══════════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function showError(id, msg) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -250,9 +250,9 @@ function mapAuthError(error) {
   return at('err.generic');
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    6. PASSWORD STRENGTH METER
-══════════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function calcStrength(pwd) {
   let score = 0;
   if (pwd.length >= 8)  score++;
@@ -280,9 +280,9 @@ function updateStrengthMeter(pwd) {
   }
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    7. PANEL SWITCHING
-══════════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function showCard(which) {
   ['login', 'register', 'verify'].forEach(name => {
     const card = document.getElementById('card-' + name);
@@ -310,9 +310,9 @@ function showVerify(email) {
   showCard('verify');
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    8. LOGIN HANDLER
-══════════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 async function handleLogin(e) {
   e.preventDefault();
   hideError('login-error');
@@ -343,7 +343,7 @@ async function handleLogin(e) {
     if (data && data.session) {
       clearAttempts(email);
       clearDemoSession();
-      window.location.replace('index.html');
+      window.location.replace('app.html');
     }
   } catch (err) {
     showError('login-error', mapAuthError(err));
@@ -352,9 +352,9 @@ async function handleLogin(e) {
   }
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    9. REGISTER HANDLER
-══════════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 async function handleRegister(e) {
   e.preventDefault();
   hideError('register-error');
@@ -384,13 +384,13 @@ async function handleRegister(e) {
       showError('register-error', mapAuthError(error));
       return;
     }
-    // Si la verificación de email está desactivada en Supabase, ya hay sesión
+    // Si la verificaciÃ³n de email estÃ¡ desactivada en Supabase, ya hay sesiÃ³n
     if (data && data.session) {
       clearDemoSession();
-      window.location.replace('index.html');
+      window.location.replace('app.html');
       return;
     }
-    // Por privacidad, Supabase no revela si el correo ya existía:
+    // Por privacidad, Supabase no revela si el correo ya existÃ­a:
     // mostramos siempre el mismo mensaje.
     document.getElementById('register-form')?.reset();
     updateStrengthMeter('');
@@ -402,9 +402,9 @@ async function handleRegister(e) {
   }
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    10. RESEND CONFIRMATION
-══════════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 async function resendConfirmation(targetMsgId) {
   if (!pendingVerifyEmail) return;
   try {
@@ -426,9 +426,9 @@ async function resendConfirmation(targetMsgId) {
   }
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    11. DEMO MODE (100% local, en sessionStorage)
-══════════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function buildDemoProducts() {
   const en = currentLang === 'en';
   const now = new Date();
@@ -443,19 +443,19 @@ function buildDemoProducts() {
       retConditions: en ? 'Unopened original box required.' : 'Caja original sin abrir, con todos los accesorios.',
       warStart: addD(0), warYears: 2,
       warCovers: en ? 'Manufacturing defects\nHardware failures\nBattery defects (>80% capacity)'
-                    : 'Defectos de fabricación\nFallos de hardware\nDefectos de batería (>80% capacidad)',
+                    : 'Defectos de fabricaciÃ³n\nFallos de hardware\nDefectos de baterÃ­a (>80% capacidad)',
       warNoCovers: en ? 'Accidental damage\nWater damage\nUnauthorised repairs'
-                      : 'Daños accidentales\nDaños por agua\nReparaciones no autorizadas',
+                      : 'DaÃ±os accidentales\nDaÃ±os por agua\nReparaciones no autorizadas',
       ticketImage: null, createdAt: stamp(0), updatedAt: stamp(0),
     },
     {
       id: 'demo-2', name: 'Sony WH-1000XM5', brand: 'Sony', price: 279, store: 'Amazon',
-      purchaseDate: addD(-27), notes: en ? 'Black, noise-cancelling' : 'Negro, cancelación de ruido',
+      purchaseDate: addD(-27), notes: en ? 'Black, noise-cancelling' : 'Negro, cancelaciÃ³n de ruido',
       retDays: 29, retStart: addD(-27),
       retConditions: en ? 'Original packaging and receipt required.' : 'Embalaje original y ticket de compra.',
       warStart: addD(-27), warYears: 1,
-      warCovers: en ? 'Manufacturing defects\nElectronic failures' : 'Defectos de fabricación\nFallos electrónicos',
-      warNoCovers: en ? 'Physical damage\nWater damage\nNormal wear' : 'Daños físicos\nDaños por líquidos\nDesgaste normal',
+      warCovers: en ? 'Manufacturing defects\nElectronic failures' : 'Defectos de fabricaciÃ³n\nFallos electrÃ³nicos',
+      warNoCovers: en ? 'Physical damage\nWater damage\nNormal wear' : 'DaÃ±os fÃ­sicos\nDaÃ±os por lÃ­quidos\nDesgaste normal',
       ticketImage: null, createdAt: stamp(-27), updatedAt: stamp(-27),
     },
     {
@@ -464,17 +464,17 @@ function buildDemoProducts() {
       retDays: 10, retStart: addD(-7),
       retConditions: en ? 'Must be in original packaging, unused.' : 'En embalaje original, sin uso.',
       warStart: addD(-5), warYears: 3,
-      warCovers: en ? 'Panel defects\nElectronic component failures' : 'Defectos de panel\nFallos de componentes electrónicos',
-      warNoCovers: en ? 'Dead pixels <5\nPhysical damage\nPower surges' : 'Píxeles muertos <5\nDaños físicos\nSubidas de tensión',
+      warCovers: en ? 'Panel defects\nElectronic component failures' : 'Defectos de panel\nFallos de componentes electrÃ³nicos',
+      warNoCovers: en ? 'Dead pixels <5\nPhysical damage\nPower surges' : 'PÃ­xeles muertos <5\nDaÃ±os fÃ­sicos\nSubidas de tensiÃ³n',
       ticketImage: null, createdAt: stamp(-5), updatedAt: stamp(-5),
     },
     {
-      id: 'demo-4', name: en ? 'LG Washing Machine' : 'Lavadora LG', brand: 'LG', price: 699, store: 'El Corte Inglés',
-      purchaseDate: addD(-400), notes: en ? '9kg, A+++ energy class' : '9kg, clase energética A+++',
+      id: 'demo-4', name: en ? 'LG Washing Machine' : 'Lavadora LG', brand: 'LG', price: 699, store: 'El Corte InglÃ©s',
+      purchaseDate: addD(-400), notes: en ? '9kg, A+++ energy class' : '9kg, clase energÃ©tica A+++',
       retDays: 14, retStart: addD(-400), retConditions: '',
       warStart: addD(-400), warYears: 5,
-      warCovers: en ? 'Motor defects (10 years)\nElectronic parts\nDrums and bearings' : 'Defectos del motor (10 años)\nPiezas electrónicas\nTambor y rodamientos',
-      warNoCovers: en ? 'Wear parts (belts, filters)\nCosmetic damage\nMisuse' : 'Piezas de desgaste (correas, filtros)\nDaños estéticos\nUso indebido',
+      warCovers: en ? 'Motor defects (10 years)\nElectronic parts\nDrums and bearings' : 'Defectos del motor (10 aÃ±os)\nPiezas electrÃ³nicas\nTambor y rodamientos',
+      warNoCovers: en ? 'Wear parts (belts, filters)\nCosmetic damage\nMisuse' : 'Piezas de desgaste (correas, filtros)\nDaÃ±os estÃ©ticos\nUso indebido',
       ticketImage: null, createdAt: stamp(-400), updatedAt: stamp(-400),
     },
   ];
@@ -494,26 +494,29 @@ function handleDemo() {
     sessionStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(demoSession));
     sessionStorage.setItem(DEMO_PRODUCTS_KEY, JSON.stringify(buildDemoProducts()));
   } catch { /* continuar igualmente */ }
-  window.location.replace('index.html');
+  window.location.replace('app.html');
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    12. INIT
-══════════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 async function redirectIfLoggedIn() {
   try {
     const { data } = await sb.auth.getSession();
     if (data && data.session) {
       clearDemoSession();
-      window.location.replace('index.html');
+      window.location.replace('app.html');
     }
-  } catch { /* sin sesión */ }
+  } catch { /* sin sesiÃ³n */ }
 }
 
 function initAuth() {
   applyAuthLang();
 
-  // Si la URL contiene un código de intercambio PKCE (?code=)
+  // Enlaces "Crear cuenta" de la página de inicio
+  if (window.location.hash === '#registro') showCard('register');
+
+  // Si la URL contiene un cÃ³digo de intercambio PKCE (?code=)
   const search = window.location.search || '';
   if (search.includes('code=')) {
     const urlParams = new URLSearchParams(window.location.search);
@@ -522,17 +525,17 @@ function initAuth() {
       sb.auth.exchangeCodeForSession(code).then(({ data, error }) => {
         if (!error && data && data.session) {
           clearDemoSession();
-          window.location.replace('index.html');
+          window.location.replace('app.html');
         }
       }).catch(() => {});
     }
   }
 
-  // Cuando el usuario vuelve desde el enlace del email, Supabase crea la sesión
+  // Cuando el usuario vuelve desde el enlace del email, Supabase crea la sesiÃ³n
   sb.auth.onAuthStateChange((event, session) => {
     if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
       clearDemoSession();
-      window.location.replace('index.html');
+      window.location.replace('app.html');
     }
   });
   redirectIfLoggedIn();
