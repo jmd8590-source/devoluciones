@@ -343,7 +343,7 @@ async function handleLogin(e) {
     if (data && data.session) {
       clearAttempts(email);
       clearDemoSession();
-      window.location.replace('app.html');
+      window.location.replace('index.html');
     }
   } catch (err) {
     showError('login-error', mapAuthError(err));
@@ -387,7 +387,7 @@ async function handleRegister(e) {
     // Si la verificación de email está desactivada en Supabase, ya hay sesión
     if (data && data.session) {
       clearDemoSession();
-      window.location.replace('app.html');
+      window.location.replace('index.html');
       return;
     }
     // Por privacidad, Supabase no revela si el correo ya existía:
@@ -494,7 +494,7 @@ function handleDemo() {
     sessionStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(demoSession));
     sessionStorage.setItem(DEMO_PRODUCTS_KEY, JSON.stringify(buildDemoProducts()));
   } catch { /* continuar igualmente */ }
-  window.location.replace('app.html');
+  window.location.replace('index.html');
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -505,7 +505,7 @@ async function redirectIfLoggedIn() {
     const { data } = await sb.auth.getSession();
     if (data && data.session) {
       clearDemoSession();
-      window.location.replace('app.html');
+      window.location.replace('index.html');
     }
   } catch { /* sin sesión */ }
 }
@@ -525,7 +525,7 @@ function initAuth() {
       sb.auth.exchangeCodeForSession(code).then(({ data, error }) => {
         if (!error && data && data.session) {
           clearDemoSession();
-          window.location.replace('app.html');
+          window.location.replace('index.html');
         }
       }).catch(() => {});
     }
@@ -535,7 +535,7 @@ function initAuth() {
   sb.auth.onAuthStateChange((event, session) => {
     if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
       clearDemoSession();
-      window.location.replace('app.html');
+      window.location.replace('index.html');
     }
   });
   redirectIfLoggedIn();

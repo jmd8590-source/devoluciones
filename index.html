@@ -3,9 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GarantíasPro — Controla tus plazos de devolución y garantías</title>
-  <meta name="description" content="GarantíasPro es una aplicación gratuita para guardar tus compras y recibir avisos antes de que caduquen el plazo de devolución o la garantía. Proyecto personal de Jesús Mendoza Domínguez." />
-  <meta name="author" content="Jesús Mendoza Domínguez" />
+  <meta name="description" content="GarantíasPro — Controla tus garantías y devoluciones de forma fácil e intuitiva." />
   <meta name="theme-color" content="#0b1120" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta http-equiv="Content-Security-Policy"
@@ -13,117 +11,424 @@
                  script-src 'self';
                  style-src 'self' https://fonts.googleapis.com;
                  font-src 'self' https://fonts.gstatic.com;
-                 img-src 'self' data:;
-                 connect-src 'none';
+                 img-src 'self' data: blob: https://ynmqlzpqsyvhzlspzfkd.supabase.co;
+                 connect-src https://ynmqlzpqsyvhzlspzfkd.supabase.co wss://ynmqlzpqsyvhzlspzfkd.supabase.co;
                  object-src 'none';
                  base-uri 'self';
-                 form-action 'none';" />
+                 form-action 'self';" />
   <meta name="google-site-verification" content="fukCe-Kva0pMPNKXyPBAKAaAN-PAUmDQUZIL9MiJUGI" />
-  <meta property="og:title" content="GarantíasPro — Controla tus plazos de devolución y garantías" />
-  <meta property="og:description" content="Guarda tus compras y recibe avisos antes de que caduquen la devolución o la garantía." />
-  <meta property="og:type" content="website" />
+  <title>GarantíasPro — Devoluciones &amp; Garantías</title>
+  <!-- Session guard: comprueba la presencia de sesión antes de renderizar -->
+  <script src="session-guard.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="site.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="urgent-alert.css" />
 </head>
 <body>
 
-<header class="site-header">
-  <div class="container">
-    <a class="brand" href="./" aria-label="GarantíasPro, inicio">
-      <span class="logo-mark" data-icon="logo" data-icon-size="19"></span>
-      GarantíasPro
-    </a>
-    <nav class="header-actions" aria-label="Acceso">
-      <a class="btn btn-ghost" href="auth.html" id="hdr-login">Iniciar sesión</a>
-      <a class="btn btn-primary" href="auth.html#registro" id="hdr-register">Crear cuenta</a>
+<!-- ═══════════════════════════════════════════════
+     HEADER
+═══════════════════════════════════════════════ -->
+<header class="app-header" role="banner">
+  <div class="header-inner">
+    <div class="logo-group">
+      <span class="logo-mark" data-icon="logo" data-icon-size="20"></span>
+      <span class="logo-text">GarantíasPro</span>
+    </div>
+
+    <nav class="header-nav" aria-label="Navegación principal">
+      <button class="nav-btn active" data-view="dashboard" id="nav-dashboard"
+              aria-label="Inicio" title="Dashboard">
+        <span data-icon="inbox" data-icon-size="18"></span>
+        <span data-i18n="nav.dashboard">Inicio</span>
+      </button>
+      <button class="nav-btn" data-view="products" id="nav-products"
+              aria-label="Mis productos" title="Productos">
+        <span data-icon="package" data-icon-size="18"></span>
+        <span data-i18n="nav.products">Productos</span>
+      </button>
+      <button class="nav-btn" data-view="alerts" id="nav-alerts"
+              aria-label="Alertas">
+        <span data-icon="bell" data-icon-size="18"></span>
+        <span data-i18n="nav.alerts">Alertas</span>
+        <span class="badge" id="alerts-badge" hidden>0</span>
+      </button>
+      <button class="nav-btn nav-btn-mobile-logout" id="nav-logout"
+              aria-label="Cerrar sesión" title="Salir">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span data-i18n="btn.logout">Salir</span>
+      </button>
     </nav>
+
+    <div class="header-actions">
+      <!-- User greeting -->
+      <div class="user-greeting" id="user-greeting" aria-live="polite">
+        <span class="user-avatar" id="user-avatar" aria-hidden="true">U</span>
+        <span class="user-name" id="user-name"></span>
+      </div>
+
+      <!-- Language Toggle -->
+      <button class="lang-toggle" id="lang-toggle" aria-label="Cambiar idioma / Change language" title="ES / EN">
+        <span data-icon="globe" data-icon-size="15"></span>
+        <span class="lang-code" id="lang-code">ES</span>
+      </button>
+
+      <!-- Logout -->
+      <button class="btn-logout" id="btn-logout" aria-label="Cerrar sesión" title="Cerrar sesión">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span data-i18n="btn.logout">Salir</span>
+      </button>
+
+      <button class="btn-add-main" id="btn-add-main" aria-label="Añadir producto">
+        <span data-icon="check" data-icon-size="16" style="display:none"></span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        <span data-i18n="btn.addProduct">Nuevo producto</span>
+      </button>
+    </div>
   </div>
 </header>
 
-<main>
-  <section class="hero">
-    <div class="container">
-      <span class="hero-eyebrow">
-        <span data-icon="shield" data-icon-size="14"></span>
-        Gratuito · Sin publicidad · Proyecto personal
-      </span>
-      <h1>No vuelvas a perder <span class="accent">una devolución</span> ni una garantía</h1>
-      <p class="hero-sub">
-        Guarda tus compras con la foto del ticket y GarantíasPro te avisa
-        antes de que termine el plazo para devolver o reclamar.
-      </p>
-      <div class="hero-cta">
-        <a class="btn btn-primary btn-lg" href="auth.html#registro" id="cta-register">Crear cuenta gratis</a>
-        <a class="btn btn-ghost btn-lg" href="auth.html" id="cta-demo">Probar la demo sin registrarte</a>
+<!-- ═══════════════════════════════════════════════
+     MAIN
+═══════════════════════════════════════════════ -->
+<main class="app-main" role="main">
+
+  <!-- ── DASHBOARD VIEW ── -->
+  <section class="view active" id="view-dashboard" aria-label="Dashboard">
+    <div class="view-header">
+      <div>
+        <h1 class="view-title" data-i18n="dashboard.title">Tu resumen</h1>
+        <p class="view-subtitle" id="dashboard-date"></p>
       </div>
     </div>
-  </section>
 
-  <section class="section" aria-labelledby="features-title">
-    <div class="container">
-      <h2 class="section-title" id="features-title">Qué puedes hacer</h2>
-      <p class="section-sub">Todo lo necesario para no quedarte sin reclamar lo que es tuyo.</p>
-
-      <div class="features">
-        <article class="feature">
-          <div class="feature-icon fi-teal" data-icon="return" data-icon-size="22"></div>
-          <h3>Plazos de devolución</h3>
-          <p>Indica los días que da la tienda y verás cuántos quedan para devolver el producto.</p>
-        </article>
-        <article class="feature">
-          <div class="feature-icon fi-violet" data-icon="shield" data-icon-size="22"></div>
-          <h3>Fin de la garantía</h3>
-          <p>Calcula cuándo vence la garantía y apunta qué cubre y qué no.</p>
-        </article>
-        <article class="feature">
-          <div class="feature-icon fi-amber" data-icon="bell" data-icon-size="22"></div>
-          <h3>Avisos de urgencia</h3>
-          <p>Destaca los productos cuyo plazo está a punto de terminar.</p>
-        </article>
-        <article class="feature">
-          <div class="feature-icon fi-blue" data-icon="receipt" data-icon-size="22"></div>
-          <h3>Ticket siempre a mano</h3>
-          <p>Adjunta la foto del ticket de compra para tenerla cuando la necesites.</p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" aria-labelledby="trust-title">
-    <div class="container">
-      <div class="trust">
-        <div>
-          <h2 id="trust-title">Tus datos son solo tuyos</h2>
-          <p>
-            GarantíasPro es un proyecto personal sin ánimo de lucro. No vende datos,
-            no muestra publicidad y no usa cookies de seguimiento.
-            Consulta los detalles en la <a href="privacidad.html">política de privacidad</a>.
-          </p>
+    <!-- Stats -->
+    <div class="stats-grid" id="stats-grid" role="region" aria-label="Estadísticas">
+      <div class="stat-card stat-total">
+        <div class="stat-icon" data-icon="package" data-icon-size="24"></div>
+        <div class="stat-info">
+          <span class="stat-num" id="stat-total">0</span>
+          <span class="stat-label" data-i18n="stat.total">Productos</span>
         </div>
-        <ul class="trust-list">
-          <li><span data-icon="check" data-icon-size="16"></span><span><strong>Acceso aislado:</strong> cada cuenta solo puede leer y modificar sus propios productos y tickets.</span></li>
-          <li><span data-icon="check" data-icon-size="16"></span><span><strong>Contraseñas cifradas</strong> por el proveedor de autenticación; nunca se guardan en texto plano.</span></li>
-          <li><span data-icon="check" data-icon-size="16"></span><span><strong>Servidores en la UE</strong> (Irlanda) y conexión cifrada HTTPS.</span></li>
-          <li><span data-icon="check" data-icon-size="16"></span><span><strong>Borrado a petición:</strong> escribe a <a href="mailto:jemendo90@gmail.com">jemendo90@gmail.com</a> y eliminamos tu cuenta.</span></li>
-        </ul>
+      </div>
+      <div class="stat-card stat-return">
+        <div class="stat-icon" data-icon="return" data-icon-size="24"></div>
+        <div class="stat-info">
+          <span class="stat-num" id="stat-return">0</span>
+          <span class="stat-label" data-i18n="stat.return">En periodo devolución</span>
+        </div>
+      </div>
+      <div class="stat-card stat-warranty">
+        <div class="stat-icon" data-icon="shield" data-icon-size="24"></div>
+        <div class="stat-info">
+          <span class="stat-num" id="stat-warranty">0</span>
+          <span class="stat-label" data-i18n="stat.warranty">Garantías activas</span>
+        </div>
+      </div>
+      <div class="stat-card stat-expired">
+        <div class="stat-icon" data-icon="alert" data-icon-size="24"></div>
+        <div class="stat-info">
+          <span class="stat-num" id="stat-expired">0</span>
+          <span class="stat-label" data-i18n="stat.expired">Próximas a vencer</span>
+        </div>
       </div>
     </div>
-  </section>
-</main>
 
-<footer class="site-footer">
-  <div class="container">
-    <span>© 2026 GarantíasPro · Responsable: Jesús Mendoza Domínguez</span>
-    <nav class="footer-links" aria-label="Información legal">
+    <!-- Urgent Products -->
+    <div class="section-block" id="urgent-block">
+      <h2 class="section-title" data-i18n="dashboard.urgent">Urgentes</h2>
+      <div class="urgent-list" id="urgent-list"></div>
+    </div>
+
+    <!-- Recent -->
+    <div class="section-block">
+      <h2 class="section-title" data-i18n="dashboard.recent">Recientes</h2>
+      <div class="recent-list" id="recent-list"></div>
+    </div>
+  </section>
+
+  <!-- ── PRODUCTS VIEW ── -->
+  <section class="view" id="view-products" aria-label="Productos">
+    <div class="view-header">
+      <div>
+        <h1 class="view-title" data-i18n="products.title">Mis productos</h1>
+        <p class="view-subtitle" data-i18n="products.subtitle">Gestiona tus garantías y devoluciones</p>
+      </div>
+      <div class="view-controls">
+        <div class="search-box">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input type="search" id="search-input" data-i18n-placeholder="search.placeholder"
+                 placeholder="Buscar producto…" aria-label="Buscar" autocomplete="off"
+                 spellcheck="false" />
+        </div>
+        <div class="filter-group" role="group" aria-label="Filtros">
+          <button class="filter-btn active" data-filter="all" data-i18n="filter.all">Todos</button>
+          <button class="filter-btn" data-filter="return" data-i18n="filter.return">Devolución</button>
+          <button class="filter-btn" data-filter="warranty" data-i18n="filter.warranty">Garantía</button>
+          <button class="filter-btn" data-filter="expired" data-i18n="filter.expired">Vencido</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="products-grid" id="products-grid" role="list"></div>
+    <div class="empty-state" id="empty-state" hidden>
+      <div class="empty-icon" data-icon="inbox" data-icon-size="44"></div>
+      <p class="empty-title" data-i18n="empty.title">Sin productos aún</p>
+      <p class="empty-sub" data-i18n="empty.sub">Pulsa "Nuevo producto" para empezar</p>
+      <button class="btn-empty-add" id="btn-add-empty" type="button" aria-label="Añadir nuevo producto">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        <span data-i18n="btn.addProduct">Nuevo producto</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ── ALERTS VIEW ── -->
+  <section class="view" id="view-alerts" aria-label="Alertas">
+    <div class="view-header">
+      <div>
+        <h1 class="view-title" data-i18n="alerts.title">Alertas</h1>
+        <p class="view-subtitle" data-i18n="alerts.subtitle">Productos que requieren tu atención</p>
+      </div>
+    </div>
+    <div class="alerts-list" id="alerts-list"></div>
+    <div class="empty-state" id="alerts-empty" hidden>
+      <div class="empty-icon" data-icon="checkCircle" data-icon-size="44"></div>
+      <p class="empty-title" data-i18n="alerts.empty.title">Todo en orden</p>
+      <p class="empty-sub" data-i18n="alerts.empty.sub">No tienes alertas pendientes</p>
+    </div>
+  </section>
+
+  <footer class="app-legal-footer" role="contentinfo">
+    <span>GarantíasPro · Responsable: Jesús Mendoza Domínguez</span>
+    <nav aria-label="Información legal">
+      <a href="./">Inicio</a>
       <a href="privacidad.html">Privacidad y aviso legal</a>
       <a href="mailto:jemendo90@gmail.com">Contacto</a>
-      <a href="auth.html">Acceder</a>
     </nav>
-  </div>
-</footer>
+  </footer>
 
+</main>
+
+<!-- ═══════════════════════════════════════════════
+     MODAL — ADD / EDIT PRODUCT
+═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true"
+     aria-labelledby="modal-heading" hidden>
+  <div class="modal-panel">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-heading" data-i18n="modal.title.add">Nuevo producto</h2>
+      <button class="modal-close" id="modal-close" aria-label="Cerrar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <form class="modal-form" id="product-form" novalidate autocomplete="off">
+      <input type="hidden" id="edit-id" />
+
+      <!-- ── Foto ticket ── -->
+      <div class="form-section">
+        <h3 class="form-section-title" data-i18n="form.ticket.section">Ticket de compra</h3>
+        <div class="ticket-upload-area" id="ticket-upload-area" tabindex="0"
+             role="button" aria-label="Subir foto del ticket">
+          <img class="ticket-preview" id="ticket-preview" src="" alt="Vista previa del ticket" hidden />
+          <div class="ticket-placeholder" id="ticket-placeholder">
+            <div class="upload-icon" data-icon="camera" data-icon-size="28"></div>
+            <p class="upload-title" data-i18n="form.ticket.drag">Arrastra la foto o pulsa aquí</p>
+            <p class="upload-sub" data-i18n="form.ticket.formats">JPG, PNG, WEBP — máx. 5 MB</p>
+          </div>
+          <input type="file" id="ticket-file" accept="image/jpeg,image/png,image/webp,image/gif"
+                 style="display:none" aria-label="Seleccionar foto de ticket" />
+        </div>
+        <button type="button" class="btn-remove-ticket" id="btn-remove-ticket"
+                data-i18n="form.ticket.remove" hidden>Eliminar foto</button>
+      </div>
+
+      <!-- ── Info producto ── -->
+      <div class="form-section">
+        <h3 class="form-section-title" data-i18n="form.info.section">Información del producto</h3>
+        <div class="form-row">
+          <div class="form-field required">
+            <label for="prod-name" data-i18n="form.name.label">Nombre del producto</label>
+            <input type="text" id="prod-name" data-i18n-placeholder="form.name.placeholder"
+                   placeholder="Ej: iPhone 15 Pro" maxlength="100"
+                   required autocomplete="off" spellcheck="false" />
+          </div>
+        </div>
+        <div class="form-row two-col">
+          <div class="form-field">
+            <label for="prod-brand" data-i18n="form.brand.label">Marca</label>
+            <input type="text" id="prod-brand" data-i18n-placeholder="form.brand.placeholder"
+                   placeholder="Ej: Apple" maxlength="60" autocomplete="off" />
+          </div>
+          <div class="form-field">
+            <label for="prod-price" data-i18n="form.price.label">Precio (€)</label>
+            <input type="number" id="prod-price" min="0" max="999999" step="0.01"
+                   placeholder="0.00" autocomplete="off" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="prod-store" data-i18n="form.store.label">Tienda / Vendedor</label>
+            <input type="text" id="prod-store" data-i18n-placeholder="form.store.placeholder"
+                   placeholder="Ej: El Corte Inglés" maxlength="100" autocomplete="off" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="prod-purchase" data-i18n="form.purchase.label">Fecha de compra</label>
+            <input type="date" id="prod-purchase" required />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="prod-notes" data-i18n="form.notes.label">Notas adicionales</label>
+            <textarea id="prod-notes" rows="2" maxlength="500"
+                      data-i18n-placeholder="form.notes.placeholder"
+                      placeholder="Número de serie, color, etc."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Devolución ── -->
+      <div class="form-section">
+        <h3 class="form-section-title" data-i18n="form.return.section">Periodo de devolución</h3>
+        <div class="form-row two-col">
+          <div class="form-field">
+            <label for="ret-days" data-i18n="form.ret.days.label">Días para devolver</label>
+            <input type="number" id="ret-days" min="0" max="3650" step="1"
+                   placeholder="30" autocomplete="off" />
+          </div>
+          <div class="form-field">
+            <label for="ret-start" data-i18n="form.ret.start.label">Fecha inicio</label>
+            <input type="date" id="ret-start" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="ret-conditions" data-i18n="form.ret.conditions.label">Condiciones de devolución</label>
+            <textarea id="ret-conditions" rows="2" maxlength="400"
+                      data-i18n-placeholder="form.ret.conditions.placeholder"
+                      placeholder="Debe estar sin abrir, con ticket original…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Garantía ── -->
+      <div class="form-section">
+        <h3 class="form-section-title" data-i18n="form.warranty.section">Garantía</h3>
+        <div class="form-row two-col">
+          <div class="form-field">
+            <label for="war-start" data-i18n="form.war.start.label">Inicio garantía</label>
+            <input type="date" id="war-start" />
+          </div>
+          <div class="form-field">
+            <label for="war-years" data-i18n="form.war.years.label">Años de garantía</label>
+            <input type="number" id="war-years" min="0" max="50" step="0.5"
+                   placeholder="2" autocomplete="off" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="war-covers" data-i18n="form.war.covers.label">Qué cubre</label>
+            <textarea id="war-covers" rows="3" maxlength="600"
+                      data-i18n-placeholder="form.war.covers.placeholder"
+                      placeholder="Defectos de fabricación, fallos de hardware…"></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="war-nocovers" data-i18n="form.war.nocovers.label">Qué NO cubre</label>
+            <textarea id="war-nocovers" rows="3" maxlength="600"
+                      data-i18n-placeholder="form.war.nocovers.placeholder"
+                      placeholder="Daños por agua, roturas accidentales, mal uso…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Actions ── -->
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" id="btn-cancel"
+                data-i18n="btn.cancel">Cancelar</button>
+        <button type="submit" class="btn-primary" id="btn-save"
+                data-i18n="btn.save">Guardar producto</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MODAL — PRODUCT DETAIL
+═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="detail-overlay" role="dialog" aria-modal="true"
+     aria-labelledby="detail-heading" hidden>
+  <div class="modal-panel modal-panel-detail">
+    <div class="modal-header">
+      <h2 class="modal-title" id="detail-heading">—</h2>
+      <div class="detail-header-actions">
+        <button class="btn-icon" id="btn-edit-detail" aria-label="Editar" title="Editar">
+          <span data-icon="edit" data-icon-size="16"></span>
+        </button>
+        <button class="btn-icon btn-icon-danger" id="btn-delete-detail" aria-label="Eliminar" title="Eliminar">
+          <span data-icon="trash" data-icon-size="16"></span>
+        </button>
+        <button class="modal-close" id="detail-close" aria-label="Cerrar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="detail-body" id="detail-body"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     TOAST NOTIFICATIONS
+═══════════════════════════════════════════════ -->
+<div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+<!-- ═══════════════════════════════════════════════
+     CONFIRM DIALOG
+═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="confirm-overlay" role="alertdialog" aria-modal="true"
+     aria-labelledby="confirm-heading" hidden>
+  <div class="modal-panel modal-panel-sm">
+    <div class="confirm-icon" data-icon="trash" data-icon-size="36"></div>
+    <h2 class="confirm-title" id="confirm-heading" data-i18n="confirm.title">¿Eliminar producto?</h2>
+    <p class="confirm-text" data-i18n="confirm.text">Esta acción no se puede deshacer.</p>
+    <div class="confirm-actions">
+      <button class="btn-secondary" id="confirm-cancel" data-i18n="btn.cancel">Cancelar</button>
+      <button class="btn-danger" id="confirm-ok" data-i18n="confirm.delete">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- FAB: floating add button for mobile — visible via CSS media query -->
+<button class="btn-fab" id="btn-fab" aria-label="Añadir producto" title="Nuevo producto">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+</button>
+
+<script src="vendor/supabase.js"></script>
+<script src="supabase-client.js"></script>
 <script src="icons.js"></script>
+<script src="session.js"></script>
+<script src="app.js"></script>
+<script src="urgent-alert.js"></script>
 </body>
 </html>
