@@ -1714,20 +1714,39 @@ ul, ol { list-style: none; }
 .channel-status.status-granted {
   color: var(--c-green, #30a46c);
 }
+.channel-status.status-denied {
+  color: #f76808;
+}
 .btn-channel-action {
   background: var(--c-primary, #4a7dff);
   color: #fff;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 6px;
   padding: 7px 13px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.btn-channel-action:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+.btn-channel-action.btn-granted {
+  background: rgba(48, 164, 108, 0.15);
+  color: #30a46c;
+  border: 1px solid rgba(48, 164, 108, 0.4);
+}
+.btn-channel-action.btn-warn {
+  background: rgba(247, 104, 8, 0.15);
+  color: #f76808;
+  border: 1px solid rgba(247, 104, 8, 0.4);
 }
 .btn-channel-action:disabled {
   opacity: 0.6;
   cursor: default;
+  transform: none;
 }
 
 /* ── External Actions in Product Detail Modal ─────────────── */

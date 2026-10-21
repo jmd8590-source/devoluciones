@@ -610,6 +610,106 @@
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════
+     MODAL — CALENDAR ALARMS DEMO & EXPLANATION
+═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-calendar-demo" role="dialog" aria-modal="true"
+     aria-labelledby="cal-demo-heading" hidden>
+  <div class="modal-panel modal-panel-legal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="cal-demo-heading">🗓️ Alarmas en tu Calendario Móvil</h2>
+      <button class="modal-close" id="cal-demo-close" aria-label="Cerrar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-legal-content">
+      <p style="margin-bottom:14px;font-size:14px;color:var(--t-primary);line-height:1.5;">
+        Con GarantíasPro <strong>no necesitas entrar a la web todos los días</strong> para comprobar si se te pasa una devolución o garantía. Cada producto cuenta con un botón directo para añadir un evento con alarma a tu calendario habitual.
+      </p>
+
+      <div style="display:flex;flex-direction:column;gap:12px;margin:16px 0;">
+        <div style="display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;">
+          <div style="font-size:24px;line-height:1;">⏰</div>
+          <div>
+            <strong style="color:var(--t-primary);display:block;margin-bottom:3px;font-size:13px;">Alarma automática a 3 días</strong>
+            <p style="margin:0;font-size:12px;color:var(--t-muted);line-height:1.4;">El archivo de calendario (.ics) incluye una alerta programada exactamente <strong>3 días antes</strong> de que venza el plazo de devolución (14/30 días) o la garantía legal (3 años en España).</p>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;">
+          <div style="font-size:24px;line-height:1;">📱</div>
+          <div>
+            <strong style="color:var(--t-primary);display:block;margin-bottom:3px;font-size:13px;">Universal: Móviles Android, iPhone y PC</strong>
+            <p style="margin:0;font-size:12px;color:var(--t-muted);line-height:1.4;">Funciona directamente con <strong>Google Calendar, Apple Calendar (iOS/Mac)</strong> y <strong>Microsoft Outlook</strong>. No necesitas instalar aplicaciones de terceros.</p>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;">
+          <div style="font-size:24px;line-height:1;">👆</div>
+          <div>
+            <strong style="color:var(--t-primary);display:block;margin-bottom:3px;font-size:13px;">Disponible en cada producto registrado</strong>
+            <p style="margin:0;font-size:12px;color:var(--t-muted);line-height:1.4;">Al hacer clic sobre cualquier producto de tu lista, verás el botón <strong>«📅 Alarma calendario (.ics)»</strong> y <strong>«💬 WhatsApp»</strong> para guardar el aviso en 1 segundo.</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;margin-top:16px;">
+        <button type="button" class="btn-channel-action" id="btn-download-test-ics" style="display:inline-flex;align-items:center;gap:6px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Descargar alarma de prueba (.ics)
+        </button>
+        <button type="button" class="btn-primary" id="btn-cal-demo-ok">Entendido</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MODAL — PUSH PERMISSION HELP (ESPECIAL INCOGNITO)
+═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-push-help" role="dialog" aria-modal="true"
+     aria-labelledby="push-help-heading" hidden>
+  <div class="modal-panel modal-panel-legal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="push-help-heading">🔔 Estado de Notificaciones Push</h2>
+      <button class="modal-close" id="push-help-close" aria-label="Cerrar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-legal-content">
+      <div style="background:rgba(247,104,8,0.1);border:1px solid rgba(247,104,8,0.3);border-radius:8px;padding:12px;margin-bottom:14px;color:var(--t-primary);font-size:13px;line-height:1.5;">
+        <strong>ℹ️ ¿Por qué no se activan las notificaciones o dice bloqueado?</strong><br />
+        En el <strong>Modo Incógnito de Google Chrome</strong>, el navegador desactiva por completo las notificaciones web para proteger tu privacidad e impedir el rastreo entre sesiones.
+      </div>
+
+      <h3 style="font-size:14px;color:var(--t-primary);margin:14px 0 6px 0;">Cómo activarlas en una ventana normal:</h3>
+      <ol style="font-size:13px;color:var(--t-secondary);line-height:1.6;padding-left:20px;margin:0 0 16px 0;">
+        <li>Abre GarantíasPro en una <strong>pestaña normal</strong> de Chrome (no en ventana de incógnito).</li>
+        <li>Haz clic en el <strong>icono de ajustes o candado</strong> a la izquierda de la dirección web (URL).</li>
+        <li>En la sección <strong>«Notificaciones»</strong>, selecciona <strong>«Permitir»</strong>.</li>
+        <li>Vuelve a pulsar <em>«Activar notificaciones»</em> y recibirás el aviso de prueba.</li>
+      </ol>
+
+      <div style="background:rgba(74,125,255,0.08);border:1px solid rgba(74,125,255,0.25);border-radius:10px;padding:12px;display:flex;gap:12px;align-items:center;">
+        <span style="font-size:26px;">💡</span>
+        <div style="font-size:13px;color:var(--t-primary);line-height:1.4;">
+          <strong>Alternativa 100% recomendada:</strong><br />
+          Las <strong>Alarmas en Calendario Móvil (.ics)</strong> funcionan siempre, incluso en modo incógnito, sin pedir permisos y avisándote 3 días antes directamente en tu teléfono.
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;margin-top:16px;">
+        <button type="button" class="btn-channel-action" id="btn-push-switch-cal">Ver Alarmas de Calendario</button>
+        <button type="button" class="btn-primary" id="btn-push-help-ok">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- FAB: floating add button for mobile — visible via CSS media query -->
 <button class="btn-fab" id="btn-fab" aria-label="Añadir producto" title="Nuevo producto">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">

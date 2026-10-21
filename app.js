@@ -555,7 +555,10 @@ function switchView(name) {
 
   if (name === 'dashboard') renderDashboard();
   if (name === 'products')  renderProducts();
-  if (name === 'alerts')    renderAlerts();
+  if (name === 'alerts') {
+    renderAlerts();
+    updatePushStatusLabel();
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1683,7 +1686,7 @@ async function init() {
   });
 
   // ── Onboarding hero actions
-  document.getElementById('btn-hero-add')?.addEventListener('click', openAddModal);
+  document.getElementById('btn-hero-add')?.addEventListener('click', openAdd);
   document.getElementById('btn-hero-sample')?.addEventListener('click', async () => {
     const sampleProducts = [
       {
@@ -1691,7 +1694,7 @@ async function init() {
         purchaseDate: new Date().toISOString().slice(0,10), notes: 'Titanio natural, 256 GB',
         retDays: 14, retStart: new Date().toISOString().slice(0,10),
         retConditions: 'Caja original sin abrir, con todos los accesorios.',
-        warStart: new Date().toISOString().slice(0,10), warYears: 2,
+        warStart: new Date().toISOString().slice(0,10), warYears: 3,
         warCovers: 'Defectos de fabricación\nFallos de hardware\nDefectos de batería (>80% capacidad)',
         warNoCovers: 'Daños accidentales\nDaños por agua\nReparaciones no autorizadas',
       },
@@ -1699,11 +1702,11 @@ async function init() {
         name: 'Sony WH-1000XM5', brand: 'Sony', price: 279, store: 'Amazon',
         purchaseDate: (() => { const d = new Date(); d.setDate(d.getDate() - 27); return d.toISOString().slice(0,10); })(),
         notes: 'Negro, cancelación de ruido',
-        retDays: 29,
+        retDays: 30,
         retStart: (() => { const d = new Date(); d.setDate(d.getDate() - 27); return d.toISOString().slice(0,10); })(),
         retConditions: 'Embalaje original y ticket de compra.',
         warStart: (() => { const d = new Date(); d.setDate(d.getDate() - 27); return d.toISOString().slice(0,10); })(),
-        warYears: 1,
+        warYears: 3,
         warCovers: 'Defectos de fabricación\nFallos electrónicos',
         warNoCovers: 'Daños físicos\nDaños por líquidos\nDesgaste normal',
       }
@@ -1728,19 +1731,61 @@ async function init() {
 
   // ── Push Notifications Channel
   updatePushStatusLabel();
-  document.getElementById('btn-toggle-push')?.addEventListener('click', () => {
-    if ('Notification' in window) {
-      Notification.requestPermission().then(() => {
-        updatePushStatusLabel();
-        if (Notification.permission === 'granted') {
-          showToast('Notificaciones push activadas con éxito');
-        }
-      });
+  document.getElementById('btn-toggle-push')?.addEventListener('click', async () => {
+    if (!('Notification' in window)) {
+      showToast('Navegador no compatible con Web Notifications', 'warn');
+      return;
+    }
+
+    if (Notification.permission === 'denied') {
+      openModal('modal-push-help');
+      return;
+    }
+
+    if (Notification.permission === 'granted') {
+      try {
+        new Notification('GarantíasPro', {
+          body: '🔔 ¡Notificaciones activadas y funcionando! Te avisaremos 3 días antes de cualquier vencimiento.'
+        });
+        showToast('Notificación de prueba enviada a tu pantalla');
+      } catch {
+        showToast('Las notificaciones ya están activas en este navegador');
+      }
+      return;
+    }
+
+    try {
+      const res = await Notification.requestPermission();
+      updatePushStatusLabel();
+      if (res === 'granted') {
+        showToast('✅ Notificaciones activadas con éxito');
+        try {
+          new Notification('GarantíasPro', {
+            body: '¡Notificaciones activadas! Te avisaremos 3 días antes de que venzan tus devoluciones o garantías.'
+          });
+        } catch {}
+      } else {
+        showToast('Permiso bloqueado. En pestañas de incógnito están desactivadas por defecto.', 'warn');
+        openModal('modal-push-help');
+      }
+    } catch (err) {
+      console.warn('Error en requestPermission:', err);
+      updatePushStatusLabel();
+      openModal('modal-push-help');
     }
   });
 
-  // ── Calendar Demo Button
+  // ── Calendar Demo Button & Modal
   document.getElementById('btn-demo-calendar')?.addEventListener('click', () => {
+    openModal('modal-calendar-demo');
+  });
+  document.getElementById('cal-demo-close')?.addEventListener('click', () => {
+    closeModal('modal-calendar-demo');
+  });
+  document.getElementById('btn-cal-demo-ok')?.addEventListener('click', () => {
+    closeModal('modal-calendar-demo');
+  });
+  document.getElementById('btn-download-test-ics')?.addEventListener('click', () => {
     const sampleDate = new Date();
     sampleDate.setDate(sampleDate.getDate() + 3);
     const dStr = sampleDate.toISOString().slice(0,10);
@@ -1750,7 +1795,19 @@ async function init() {
       dateStr: dStr,
       filename: 'alarma_ejemplo_garantiaspro'
     });
-    showToast('Alarma de prueba descargada en .ics (se abre en tu app de Calendario)');
+    showToast('Alarma descargada (.ics). Al abrirla se añadirá a tu calendario habitual con aviso a 3 días.');
+  });
+
+  // ── Push Help Modal (Especial incógnito)
+  document.getElementById('push-help-close')?.addEventListener('click', () => {
+    closeModal('modal-push-help');
+  });
+  document.getElementById('btn-push-help-ok')?.addEventListener('click', () => {
+    closeModal('modal-push-help');
+  });
+  document.getElementById('btn-push-switch-cal')?.addEventListener('click', () => {
+    closeModal('modal-push-help');
+    openModal('modal-calendar-demo');
   });
 
   // ── Modales: Privacidad y Aviso Legal
@@ -1785,6 +1842,64 @@ async function init() {
 }
 
 // ── CALENDAR & BACKUP HELPERS ─────────────────────────────────
+async function saveProduct(p) {
+  if (!activeSession) {
+    activeSession = await window.GPSession.resolve();
+  }
+  const isEdit = !!p.id && currentProducts.some(x => x.id === p.id);
+  const productId = p.id || generateId();
+  const product = {
+    ...p,
+    id: productId,
+    updatedAt: new Date().toISOString(),
+    createdAt: p.createdAt || new Date().toISOString(),
+  };
+
+  if (activeSession.isDemo) {
+    if (isEdit) {
+      const idx = currentProducts.findIndex(x => x.id === productId);
+      if (idx > -1) currentProducts[idx] = product;
+    } else {
+      currentProducts.unshift(product);
+    }
+    try {
+      sessionStorage.setItem(DEMO_PRODUCTS_KEY, JSON.stringify(currentProducts));
+    } catch (e) {
+      console.warn('Session storage quota exceeded', e);
+    }
+    return product;
+  }
+
+  // Supabase Authenticated
+  const userId = activeSession.user?.id;
+  if (!userId) return product;
+
+  const row = productToDb(product, userId);
+  delete row.user_id;
+
+  if (isEdit) {
+    const { error: updErr } = await sb.from('products').update(row).eq('id', productId);
+    if (updErr) throw updErr;
+    const idx = currentProducts.findIndex(x => x.id === productId);
+    if (idx > -1) currentProducts[idx] = product;
+  } else {
+    const { data: insData, error: insErr } = await sb.from('products').insert(row).select('*').single();
+    if (insErr) throw insErr;
+    product.createdAt = insData.created_at;
+    product.updatedAt = insData.updated_at;
+    currentProducts.unshift(product);
+  }
+  return product;
+}
+
+async function reloadProducts() {
+  await fetchProducts();
+  if (currentView === 'dashboard') renderDashboard();
+  else if (currentView === 'products') renderProducts();
+  else if (currentView === 'alerts') renderAlerts();
+  window.dispatchEvent(new CustomEvent('productsReady', { detail: currentProducts }));
+}
+
 function downloadIcsFile({ title, description, dateStr, filename }) {
   if (!dateStr) return;
   const d = dateStr.replace(/-/g, '');
@@ -1829,7 +1944,7 @@ function shareWhatsAppReminder({ title, dateStr, store }) {
 function exportProductsJson() {
   const products = loadProducts();
   if (!products || products.length === 0) {
-    showToast(currentLang === 'en' ? 'No products to export' : 'No hay productos para exportar');
+    showToast(currentLang === 'en' ? 'No products to export' : 'No hay productos para exportar', 'warn');
     return;
   }
   const dataStr = JSON.stringify({
@@ -1858,7 +1973,7 @@ function importProductsJson(file) {
       const parsed = JSON.parse(e.target.result);
       const items = Array.isArray(parsed) ? parsed : (parsed.products || []);
       if (!Array.isArray(items) || items.length === 0) {
-        showToast(currentLang === 'en' ? 'Invalid backup file or 0 products found' : 'Archivo no válido o sin productos');
+        showToast(currentLang === 'en' ? 'Invalid backup file or 0 products found' : 'Archivo no válido o sin productos', 'warn');
         return;
       }
       for (const item of items) {
@@ -1883,7 +1998,7 @@ function importProductsJson(file) {
       await reloadProducts();
       showToast(currentLang === 'en' ? `Imported ${items.length} products successfully` : `Se han importado ${items.length} productos con éxito`);
     } catch {
-      showToast(currentLang === 'en' ? 'Error reading JSON backup' : 'Error al procesar el archivo JSON');
+      showToast(currentLang === 'en' ? 'Error reading JSON backup' : 'Error al procesar el archivo JSON', 'warn');
     }
   };
   reader.readAsText(file);
@@ -1893,26 +2008,42 @@ function updatePushStatusLabel() {
   const lbl = document.getElementById('push-status-label');
   const btn = document.getElementById('btn-toggle-push');
   if (!lbl) return;
+
   if (!('Notification' in window)) {
-    lbl.textContent = 'Navegador no compatible con Web Notifications';
-    if (btn) btn.disabled = true;
+    lbl.textContent = '❌ Navegador no compatible con notificaciones Web';
+    lbl.className = 'channel-status status-denied';
+    if (btn) {
+      btn.textContent = 'No soportado';
+      btn.disabled = true;
+      btn.className = 'btn-channel-action';
+    }
     return;
   }
-  if (Notification.permission === 'granted') {
+
+  const perm = Notification.permission;
+  if (perm === 'granted') {
     lbl.textContent = '✅ Notificaciones activas en este navegador';
-    lbl.classList.add('status-granted');
+    lbl.className = 'channel-status status-granted';
     if (btn) {
-      btn.textContent = 'Avisos activados';
-      btn.disabled = true;
+      btn.textContent = 'Avisos activos (Probar)';
+      btn.disabled = false;
+      btn.className = 'btn-channel-action btn-granted';
     }
-  } else if (Notification.permission === 'denied') {
-    lbl.textContent = '⚠️ Permiso bloqueado en ajustes del navegador';
-    if (btn) btn.disabled = true;
+  } else if (perm === 'denied') {
+    lbl.textContent = '⚠️ Bloqueadas en navegador o modo incógnito';
+    lbl.className = 'channel-status status-denied';
+    if (btn) {
+      btn.textContent = '¿Por qué? / Ayuda';
+      btn.disabled = false;
+      btn.className = 'btn-channel-action btn-warn';
+    }
   } else {
-    lbl.textContent = '🔔 Permiso pendiente (desactivado)';
+    lbl.textContent = '🔔 Permiso desactivado (pulsa para activar)';
+    lbl.className = 'channel-status';
     if (btn) {
       btn.textContent = 'Activar notificaciones';
       btn.disabled = false;
+      btn.className = 'btn-channel-action';
     }
   }
 }
