@@ -1732,8 +1732,15 @@ async function init() {
   // ── Push Notifications Channel
   updatePushStatusLabel();
   document.getElementById('btn-toggle-push')?.addEventListener('click', async () => {
+    // Si estamos en HTTP remoto no seguro, recargar directamente en HTTPS
+    if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      location.replace('https://' + location.host + location.pathname + location.search + location.hash);
+      return;
+    }
+
+    // Si el navegador no soporta Notification (móviles / iOS), abrir modal de alternativas en calendario
     if (!('Notification' in window)) {
-      showToast('Navegador no compatible con Web Notifications', 'warn');
+      openModal('modal-calendar-demo');
       return;
     }
 
@@ -2009,17 +2016,31 @@ function updatePushStatusLabel() {
   const btn = document.getElementById('btn-toggle-push');
   if (!lbl) return;
 
-  if (!('Notification' in window)) {
-    lbl.textContent = '❌ Navegador no compatible con notificaciones Web';
+  // 1. Contexto no seguro (HTTP no localhost)
+  if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    lbl.textContent = '🔒 Requiere conexión segura HTTPS para notificaciones';
     lbl.className = 'channel-status status-denied';
     if (btn) {
-      btn.textContent = 'No soportado';
-      btn.disabled = true;
+      btn.textContent = 'Cambiar a HTTPS (Seguro)';
+      btn.disabled = false;
+      btn.className = 'btn-channel-action btn-warn';
+    }
+    return;
+  }
+
+  // 2. Dispositivo / navegador sin soporte de Notification API (p. ej. iOS Chrome/Safari sin PWA)
+  if (!('Notification' in window)) {
+    lbl.textContent = '📱 Navegador móvil sin Web Push nativo';
+    lbl.className = 'channel-status status-denied';
+    if (btn) {
+      btn.textContent = 'Ver Alarmas Calendario (.ics)';
+      btn.disabled = false;
       btn.className = 'btn-channel-action';
     }
     return;
   }
 
+  // 3. Permisos
   const perm = Notification.permission;
   if (perm === 'granted') {
     lbl.textContent = '✅ Notificaciones activas en este navegador';

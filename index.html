@@ -12,8 +12,9 @@
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://devoluciones.jmd8590.workers.dev/" />
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self';
-                 script-src 'self';
+        content="upgrade-insecure-requests;
+                 default-src 'self';
+                 script-src 'self' 'unsafe-inline';
                  style-src 'self' https://fonts.googleapis.com;
                  font-src 'self' https://fonts.gstatic.com;
                  img-src 'self' data: blob: https://ynmqlzpqsyvhzlspzfkd.supabase.co;
@@ -21,7 +22,13 @@
                  object-src 'none';
                  base-uri 'self';
                  form-action 'self';" />
+  <script>
+    if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      location.replace('https://' + location.host + location.pathname + location.search + location.hash);
+    }
+  </script>
   <meta name="google-site-verification" content="fukCe-Kva0pMPNKXyPBAKAaAN-PAUmDQUZIL9MiJUGI" />
+  <link rel="canonical" href="https://devoluciones.jmd8590.workers.dev/" />
   <title>GarantíasPro — Control de Devoluciones y Garantías Legales</title>
   <!-- Session guard: comprueba la presencia de sesión antes de renderizar -->
   <script src="session-guard.js"></script>

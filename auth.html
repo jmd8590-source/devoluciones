@@ -7,8 +7,9 @@
   <meta name="theme-color" content="#0b1120" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self';
-                 script-src 'self';
+        content="upgrade-insecure-requests;
+                 default-src 'self';
+                 script-src 'self' 'unsafe-inline';
                  style-src 'self' https://fonts.googleapis.com;
                  font-src 'self' https://fonts.gstatic.com;
                  img-src 'self' data:;
@@ -16,7 +17,13 @@
                  object-src 'none';
                  base-uri 'self';
                  form-action 'self';" />
-  <title>GarantíasPro — Acceso</title>
+  <script>
+    if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      location.replace('https://' + location.host + location.pathname + location.search + location.hash);
+    }
+  </script>
+  <link rel="canonical" href="https://devoluciones.jmd8590.workers.dev/auth.html" />
+  <title>GarantíasPro — Acceso Seguro</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -42,14 +49,14 @@
         <p class="auth-sub" id="login-sub">Inicia sesión en tu cuenta</p>
       </div>
 
-      <form class="auth-form" id="login-form" novalidate autocomplete="on">
+      <form class="auth-form" id="login-form" method="POST" action="javascript:void(0);" novalidate autocomplete="on">
         <div class="field-group">
           <label for="login-email" id="label-email-login">Correo electrónico</label>
           <div class="field-wrap">
             <span class="field-icon" data-icon="mail" data-icon-size="16"></span>
             <input type="email" id="login-email" name="email"
                    placeholder="tu@email.com"
-                   autocomplete="email" required
+                   autocomplete="username" required
                    maxlength="120" spellcheck="false" />
           </div>
         </div>
@@ -70,6 +77,10 @@
                     data-target="login-password">
               <span data-icon="eye" data-icon-size="16"></span>
             </button>
+          </div>
+          <div class="pwd-security-tip">
+            <span class="tip-icon" aria-hidden="true">🛡️</span>
+            <span><strong>Consejo de seguridad:</strong> Introduce tu clave de GarantíasPro. (No utilices la contraseña de tu cuenta de Google/Gmail para evitar avisos de seguridad de Chrome).</span>
           </div>
         </div>
 
@@ -118,7 +129,7 @@
         <p class="auth-sub" id="register-sub">Empieza a controlar tus garantías</p>
       </div>
 
-      <form class="auth-form" id="register-form" novalidate autocomplete="on">
+      <form class="auth-form" id="register-form" method="POST" action="javascript:void(0);" novalidate autocomplete="on">
 
         <div class="field-group">
           <label for="reg-name" id="label-name">Nombre</label>
@@ -141,7 +152,7 @@
             <span class="field-icon" data-icon="mail" data-icon-size="16"></span>
             <input type="email" id="reg-email" name="email"
                    placeholder="tu@email.com"
-                   autocomplete="email" required
+                   autocomplete="username" required
                    maxlength="120" spellcheck="false" />
           </div>
         </div>
@@ -162,6 +173,10 @@
                     data-target="reg-password">
               <span data-icon="eye" data-icon-size="16"></span>
             </button>
+          </div>
+          <div class="pwd-security-tip">
+            <span class="tip-icon" aria-hidden="true">🛡️</span>
+            <span><strong>Seguridad:</strong> Crea una contraseña única (no reutilices la de tu cuenta de Google o correo).</span>
           </div>
           <div class="pwd-strength" id="pwd-strength" aria-live="polite">
             <div class="strength-bars">
