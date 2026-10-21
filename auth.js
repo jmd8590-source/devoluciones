@@ -580,6 +580,36 @@ function initAuth() {
       if (wrap) wrap.classList.remove('error');
     });
   });
+
+  // Modales legales en pantalla auth
+  const privModal = document.getElementById('modal-privacy');
+  const contModal = document.getElementById('modal-contact');
+  document.getElementById('btn-open-privacy')?.addEventListener('click', () => {
+    if (privModal) privModal.hidden = false;
+  });
+  document.getElementById('privacy-close')?.addEventListener('click', () => {
+    if (privModal) privModal.hidden = true;
+  });
+  document.getElementById('btn-privacy-ok')?.addEventListener('click', () => {
+    if (privModal) privModal.hidden = true;
+  });
+
+  document.getElementById('btn-open-contact')?.addEventListener('click', () => {
+    if (contModal) contModal.hidden = false;
+  });
+  document.getElementById('contact-close')?.addEventListener('click', () => {
+    if (contModal) contModal.hidden = true;
+  });
+  document.getElementById('contact-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('contact-name')?.value.trim();
+    const subj = document.getElementById('contact-subject')?.value.trim();
+    const msg = document.getElementById('contact-msg')?.value.trim();
+    const u = ['jemendo90', 'gmail.com'].join('@');
+    const mailUrl = `mailto:${u}?subject=${encodeURIComponent('[GarantíasPro] ' + subj)}&body=${encodeURIComponent('Hola,\n\n' + msg + '\n\nAtentamente,\n' + name)}`;
+    window.location.href = mailUrl;
+    if (contModal) contModal.hidden = true;
+  });
 }
 
 if (document.readyState === 'loading') {

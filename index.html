@@ -3,9 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="GarantíasPro — Controla tus garantías y devoluciones de forma fácil e intuitiva." />
+  <meta name="description" content="GarantíasPro — Controla tus plazos de devolución (14-30 días) y garantías legales (3 años). Guarda tus tickets en la nube con alertas automáticas." />
+  <meta name="author" content="Jesús Mendoza Domínguez" />
   <meta name="theme-color" content="#0b1120" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta property="og:title" content="GarantíasPro — Control de Devoluciones y Garantías en la Nube" />
+  <meta property="og:description" content="Aplicación web gratuita para guardar compras y tickets. Avisos automáticos antes de que venzan tus devoluciones o garantías." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://devoluciones.jmd8590.workers.dev/" />
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self';
                  script-src 'self';
@@ -17,7 +22,7 @@
                  base-uri 'self';
                  form-action 'self';" />
   <meta name="google-site-verification" content="fukCe-Kva0pMPNKXyPBAKAaAN-PAUmDQUZIL9MiJUGI" />
-  <title>GarantíasPro — Devoluciones &amp; Garantías</title>
+  <title>GarantíasPro — Control de Devoluciones y Garantías Legales</title>
   <!-- Session guard: comprueba la presencia de sesión antes de renderizar -->
   <script src="session-guard.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -69,6 +74,7 @@
       <div class="user-greeting" id="user-greeting" aria-live="polite">
         <span class="user-avatar" id="user-avatar" aria-hidden="true">U</span>
         <span class="user-name" id="user-name"></span>
+        <span class="session-sync-pill" id="session-sync-pill"></span>
       </div>
 
       <!-- Language Toggle -->
@@ -107,6 +113,59 @@
       <div>
         <h1 class="view-title" data-i18n="dashboard.title">Tu resumen</h1>
         <p class="view-subtitle" id="dashboard-date"></p>
+      </div>
+    </div>
+
+    <!-- Onboarding / Welcome Hero (visible when 0 products or first visit) -->
+    <div class="onboarding-hero" id="onboarding-hero" hidden>
+      <div class="onboarding-hero-content">
+        <span class="onboarding-eyebrow">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          GarantíasPro · Tu gestor de compras, devoluciones y garantías
+        </span>
+        <h2 class="onboarding-title">No vuelvas a perder el dinero de una devolución ni una garantía</h2>
+        <p class="onboarding-desc">
+          Guarda tus compras y tickets con total seguridad en la nube. Te avisamos con tiempo antes de que caduquen tus <strong>14 o 30 días de devolución</strong> y los <strong>3 años de garantía legal</strong> en España.
+        </p>
+
+        <div class="onboarding-features-grid">
+          <div class="onboarding-feature-card">
+            <div class="feat-icon">⏱️</div>
+            <div class="feat-content">
+              <h3>Avisos a 3 días y Calendario</h3>
+              <p>Notificaciones push en navegador o móvil y alarmas automáticas directas a tu Google Calendar, Apple Calendar o WhatsApp.</p>
+            </div>
+          </div>
+
+          <div class="onboarding-feature-card">
+            <div class="feat-icon">☁️</div>
+            <div class="feat-content">
+              <h3>Sincronización en la Nube (UE)</h3>
+              <p>Tus facturas y tickets se guardan en Supabase (Irlanda) con Row Level Security. No se pierden si cambias de móvil o limpias caché.</p>
+            </div>
+          </div>
+
+          <div class="onboarding-feature-card">
+            <div class="feat-icon">🇪🇸</div>
+            <div class="feat-content">
+              <h3>Adaptado a la Ley Española</h3>
+              <p>Cálculo automático de plazos de desistimiento de comercios y los 3 años de garantía obligatorios en España.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="onboarding-cta-row">
+          <button type="button" class="btn-hero-primary" id="btn-hero-add">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Añadir mi primer producto
+          </button>
+          <button type="button" class="btn-hero-secondary" id="btn-hero-sample">
+            🧪 Probar con datos de muestra
+          </button>
+          <a href="auth.html" class="btn-hero-outline" id="btn-hero-cloud">
+            ☁️ Crear cuenta en la nube
+          </a>
+        </div>
       </div>
     </div>
 
@@ -159,7 +218,7 @@
   <section class="view" id="view-products" aria-label="Productos">
     <div class="view-header">
       <div>
-        <h1 class="view-title" data-i18n="products.title">Mis productos</h1>
+        <h2 class="view-title" data-i18n="products.title">Mis productos</h2>
         <p class="view-subtitle" data-i18n="products.subtitle">Gestiona tus garantías y devoluciones</p>
       </div>
       <div class="view-controls">
@@ -192,16 +251,57 @@
         <span data-i18n="btn.addProduct">Nuevo producto</span>
       </button>
     </div>
+
+    <!-- Backup & Export/Import Bar -->
+    <div class="products-tools-bar">
+      <button type="button" class="btn-tool" id="btn-export-json" title="Descargar copia de seguridad en JSON">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Exportar copia de seguridad (JSON)</span>
+      </button>
+      <button type="button" class="btn-tool" id="btn-import-trigger" title="Restaurar productos desde copia JSON">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span>Importar</span>
+      </button>
+      <input type="file" id="import-json-input" accept=".json" style="display:none" />
+    </div>
   </section>
 
   <!-- ── ALERTS VIEW ── -->
   <section class="view" id="view-alerts" aria-label="Alertas">
     <div class="view-header">
       <div>
-        <h1 class="view-title" data-i18n="alerts.title">Alertas</h1>
+        <h2 class="view-title" data-i18n="alerts.title">Alertas</h2>
         <p class="view-subtitle" data-i18n="alerts.subtitle">Productos que requieren tu atención</p>
       </div>
     </div>
+
+    <!-- Notification & External Alarms Hub -->
+    <div class="alerts-notification-card">
+      <div class="notif-card-header">
+        <div class="notif-card-icon">🔔</div>
+        <div>
+          <h3 class="notif-card-title">Canales de aviso externo</h3>
+          <p class="notif-card-desc">No necesitas entrar a la web todos los días. Activa avisos automáticos en tu navegador o añade alarmas a tu Google Calendar o Apple Calendar 3 días antes de que venza cualquier plazo.</p>
+        </div>
+      </div>
+      <div class="notif-channels-grid">
+        <div class="notif-channel-item">
+          <div class="channel-text">
+            <strong>Notificaciones Push en Navegador</strong>
+            <span id="push-status-label" class="channel-status">Comprobando permisos...</span>
+          </div>
+          <button type="button" class="btn-channel-action" id="btn-toggle-push">Activar notificaciones</button>
+        </div>
+        <div class="notif-channel-item">
+          <div class="channel-text">
+            <strong>Alarmas en Calendario Móvil (.ics / Google)</strong>
+            <span>Genera avisos con alarma a 3 días en cada producto</span>
+          </div>
+          <button type="button" class="btn-channel-action" id="btn-demo-calendar">Ver cómo funciona</button>
+        </div>
+      </div>
+    </div>
+
     <div class="alerts-list" id="alerts-list"></div>
     <div class="empty-state" id="alerts-empty" hidden>
       <div class="empty-icon" data-icon="checkCircle" data-icon-size="44"></div>
@@ -213,9 +313,9 @@
   <footer class="app-legal-footer" role="contentinfo">
     <span>GarantíasPro · Responsable: Jesús Mendoza Domínguez</span>
     <nav aria-label="Información legal">
-      <a href="./">Inicio</a>
-      <a href="privacidad.html">Privacidad y aviso legal</a>
-      <a href="mailto:jemendo90@gmail.com">Contacto</a>
+      <button type="button" class="legal-btn" id="btn-open-privacy">Privacidad y aviso legal</button>
+      <button type="button" class="legal-btn" id="btn-open-contact">Contacto y Soporte</button>
+      <a href="privacidad.html" target="_blank" rel="noopener" class="legal-fallback">Ver página legal</a>
     </nav>
   </footer>
 
@@ -413,6 +513,99 @@
     <div class="confirm-actions">
       <button class="btn-secondary" id="confirm-cancel" data-i18n="btn.cancel">Cancelar</button>
       <button class="btn-danger" id="confirm-ok" data-i18n="confirm.delete">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MODAL — PRIVACIDAD Y AVISO LEGAL
+═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-privacy" role="dialog" aria-modal="true"
+     aria-labelledby="privacy-heading" hidden>
+  <div class="modal-panel modal-panel-legal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="privacy-heading">Política de privacidad y aviso legal</h2>
+      <button class="modal-close" id="privacy-close" aria-label="Cerrar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-legal-content">
+      <p><strong>Última actualización:</strong> Octubre de 2026</p>
+      <h3>1. Responsable del tratamiento</h3>
+      <p>
+        <strong>Jesús Mendoza Domínguez</strong>, persona física titular de GarantíasPro, proyecto web para la gestión personal de plazos de devolución y garantías en compras. Contacto disponible mediante el formulario de soporte.
+      </p>
+
+      <h3>2. Finalidad del tratamiento</h3>
+      <p>
+        GarantíasPro trata exclusivamente los datos estrictamente necesarios para prestar el servicio: gestión de cuentas de usuario, registro de compras y cálculo de vencimientos (14 o 30 días de devolución y 3 años de garantía legal en España). No se realizan perfiles comerciales ni venta de datos a terceros.
+      </p>
+
+      <h3>3. Datos recogidos</h3>
+      <table>
+        <thead><tr><th>Dato</th><th>Finalidad</th></tr></thead>
+        <tbody>
+          <tr><td>Correo electrónico</td><td>Autenticación segura de cuenta y recuperación de acceso.</td></tr>
+          <tr><td>Nombre de usuario</td><td>Personalización de la interfaz en tu panel.</td></tr>
+          <tr><td>Compras y tickets</td><td>Cálculo de fechas límite y visualización de comprobantes.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>4. Alojamiento y seguridad de datos (Supabase UE)</h3>
+      <p>
+        Los datos de los usuarios registrados se almacenan en servidores de <strong>Supabase en la Unión Europea (región eu-west-1, Irlanda)</strong> con cifrado en tránsito (TLS) y en reposo (AES-256), bajo estrictas políticas de aislamiento por usuario (Row Level Security en PostgreSQL).
+      </p>
+
+      <h3>5. Ejercicio de derechos (RGPD / LOPD-GDD)</h3>
+      <p>
+        Puedes ejercer en cualquier momento tus derechos de acceso, rectificación, portabilidad y supresión enviando una solicitud mediante el formulario de soporte o exportando tus datos con el botón de copia de seguridad.
+      </p>
+    </div>
+    <div class="modal-footer" style="margin-top:16px;display:flex;justify-content:flex-end;">
+      <button type="button" class="btn-primary" id="btn-privacy-ok">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MODAL — CONTACTO Y SOPORTE
+═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-contact" role="dialog" aria-modal="true"
+     aria-labelledby="contact-heading" hidden>
+  <div class="modal-panel modal-panel-legal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="contact-heading">Contacto y Soporte</h2>
+      <button class="modal-close" id="contact-close" aria-label="Cerrar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-legal-content">
+      <p>¿Tienes dudas, sugerencias o necesitas asistencia sobre GarantíasPro? Envía tu consulta directamente al responsable del proyecto.</p>
+
+      <form id="contact-form" style="display:flex;flex-direction:column;gap:12px;margin-top:12px;">
+        <div>
+          <label style="font-size:12px;color:var(--t-muted);display:block;margin-bottom:4px;">Tu nombre</label>
+          <input type="text" id="contact-name" class="form-input" style="width:100%;box-sizing:border-box;" required placeholder="Ej: Ana Pérez" />
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--t-muted);display:block;margin-bottom:4px;">Asunto</label>
+          <input type="text" id="contact-subject" class="form-input" style="width:100%;box-sizing:border-box;" required placeholder="Duda sobre una garantía o sugerencia" />
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--t-muted);display:block;margin-bottom:4px;">Mensaje</label>
+          <textarea id="contact-msg" class="form-input" style="width:100%;box-sizing:border-box;min-height:90px;" required placeholder="Describe tu consulta con detalle..."></textarea>
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top:6px;">Enviar consulta</button>
+      </form>
+
+      <div class="contact-domain-tip">
+        <strong>💡 Consejo sobre dominio propio y confianza comercial:</strong><br />
+        GarantíasPro puede funcionar en un dominio personalizado (como <code>garantiaspro.es</code> o <code>tudominio.com</code>) por unos 8 €/año. Conectarlo a Cloudflare en <em>Settings &gt; Domains</em> aporta la máxima confianza a tus clientes y evita bloqueos de operadoras.
+      </div>
     </div>
   </div>
 </div>

@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Política de privacidad y aviso legal — GarantíasPro</title>
-  <meta name="description" content="Política de privacidad y aviso legal de GarantíasPro: qué datos se recogen, para qué, dónde se guardan y cómo ejercer tus derechos." />
+  <meta name="description" content="Política de privacidad y aviso legal de GarantíasPro: qué datos se recogen, para qué, dónde se guardan y cómo ejercer tus derechos conforme a RGPD y LOPD-GDD." />
   <meta name="author" content="Jesús Mendoza Domínguez" />
   <meta name="theme-color" content="#0b1120" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self';
-                 script-src 'self';
-                 style-src 'self' https://fonts.googleapis.com;
+                 script-src 'self' 'unsafe-inline';
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
                  font-src 'self' https://fonts.gstatic.com;
                  img-src 'self' data:;
                  connect-src 'none';
@@ -22,6 +22,128 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="site.css" />
+  <style>
+    body {
+      margin: 0;
+      background: #0b1120;
+      color: #e2e8f0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 24px 20px;
+    }
+    .site-header {
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: rgba(11, 17, 32, 0.95);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(8px);
+    }
+    .site-header .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+    }
+    .brand {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+    .btn-ghost {
+      color: #94a3b8;
+    }
+    .btn-ghost:hover {
+      color: #fff;
+    }
+    .btn-primary {
+      background: #4a7dff;
+      color: #fff;
+    }
+    .legal h1 {
+      font-size: 28px;
+      margin: 28px 0 6px;
+      color: #fff;
+    }
+    .legal .updated {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 28px;
+    }
+    .legal h2 {
+      font-size: 18px;
+      color: #7096ff;
+      margin: 28px 0 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 6px;
+    }
+    .legal p, .legal li {
+      color: #cbd5e1;
+      font-size: 14px;
+    }
+    .legal table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+    .legal th, .legal td {
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 10px;
+      text-align: left;
+    }
+    .legal th {
+      background: rgba(255,255,255,0.04);
+      color: #fff;
+    }
+    .legal a {
+      color: #7096ff;
+      text-decoration: underline;
+    }
+    .site-footer {
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding: 24px 0;
+      margin-top: 48px;
+      font-size: 13px;
+      color: #64748b;
+    }
+    .site-footer .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+    }
+    .site-footer a {
+      color: #94a3b8;
+      text-decoration: none;
+      margin-left: 14px;
+    }
+    .site-footer a:hover {
+      color: #fff;
+    }
+  </style>
 </head>
 <body>
 
@@ -32,37 +154,36 @@
       GarantíasPro
     </a>
     <nav class="header-actions" aria-label="Acceso">
-      <a class="btn btn-ghost" href="./">Inicio</a>
-      <a class="btn btn-primary" href="auth.html">Acceder</a>
+      <a class="btn btn-ghost" href="./">Volver a la App</a>
+      <a class="btn btn-primary" href="auth.html">Acceder / Registro</a>
     </nav>
   </div>
 </header>
 
 <main class="container legal">
   <h1>Política de privacidad y aviso legal</h1>
-  <p class="updated">Última actualización: 19 de octubre de 2026</p>
+  <p class="updated">Última actualización: Octubre de 2026</p>
 
   <h2>1. Responsable</h2>
   <p>
-    <strong>Jesús Mendoza Domínguez</strong>, persona física, titular de este proyecto personal
-    sin ánimo de lucro.<br />
-    Contacto: <a href="mailto:jemendo90@gmail.com">jemendo90@gmail.com</a>
+    <strong>Jesús Mendoza Domínguez</strong>, persona física, titular de este proyecto web.<br />
+    Contacto: <span class="js-contact-target">Cargando contacto...</span>
   </p>
 
   <h2>2. Qué es GarantíasPro</h2>
   <p>
-    Una aplicación web gratuita para apuntar tus compras y llevar la cuenta de los plazos
-    de devolución y de garantía. No vende productos, no procesa pagos y no muestra publicidad.
+    Una aplicación web para apuntar tus compras y llevar el control automático de los plazos
+    de devolución (14 o 30 días) y de garantía legal (3 años en España). No vende productos, no procesa pagos y no muestra publicidad.
   </p>
 
   <h2>3. Qué datos se recogen y para qué</h2>
   <table>
     <thead><tr><th>Dato</th><th>Finalidad</th></tr></thead>
     <tbody>
-      <tr><td>Nombre y correo electrónico</td><td>Crear tu cuenta, iniciar sesión y enviarte los correos de confirmación o recuperación.</td></tr>
-      <tr><td>Contraseña</td><td>Proteger tu cuenta. Se guarda cifrada (hash) por el proveedor de autenticación; nadie puede leerla.</td></tr>
-      <tr><td>Productos que registras (nombre, marca, tienda, precio, fechas, notas)</td><td>Mostrarte tus plazos y avisos.</td></tr>
-      <tr><td>Fotos de tickets que subas</td><td>Que tengas el justificante disponible cuando lo necesites.</td></tr>
+      <tr><td>Nombre y correo electrónico</td><td>Crear tu cuenta segura en Supabase, iniciar sesión y confirmación por email.</td></tr>
+      <tr><td>Contraseña</td><td>Proteger tu cuenta. Se guarda con cifrado seguro (bcrypt en servidor Supabase); nadie puede leerla.</td></tr>
+      <tr><td>Productos que registras (nombre, marca, tienda, precio, fechas, notas)</td><td>Cálculo de vencimientos y generación de avisos.</td></tr>
+      <tr><td>Fotos de tickets que subas</td><td>Disponibilidad de comprobante de compra en la nube.</td></tr>
     </tbody>
   </table>
   <p>
@@ -73,47 +194,42 @@
 
   <h2>4. Dónde se guardan</h2>
   <ul>
-    <li><strong>Supabase</strong> (base de datos, autenticación y almacenamiento de fotos), en servidores de la Unión Europea (Irlanda).</li>
-    <li><strong>Cloudflare</strong>, que sirve las páginas de la web.</li>
-    <li><strong>Google Fonts</strong>, que proporciona la tipografía; al cargarla, tu navegador se conecta a servidores de Google.</li>
+    <li><strong>Supabase</strong> (base de datos PostgreSQL con Row Level Security, autenticación y almacenamiento seguro de tickets), en servidores de la <strong>Unión Europea (región eu-west-1, Irlanda)</strong>.</li>
+    <li><strong>Cloudflare</strong>, que sirve las páginas de la aplicación de forma segura con HTTPS.</li>
+    <li><strong>Google Fonts</strong>, para la tipografía moderna de la interfaz.</li>
   </ul>
   <p>
-    Cada cuenta está aislada: las reglas de seguridad de la base de datos impiden que un usuario
-    lea o modifique los datos o las fotos de otro. Toda la comunicación viaja cifrada por HTTPS.
+    Cada cuenta está estrictamente aislada por usuario: las políticas RLS a nivel de fila en la base de datos impiden que cualquier otro usuario pueda ver o modificar tus compras.
   </p>
 
   <h2>5. Modo demo</h2>
   <p>
-    Si usas la demo sin registrarte, los datos de ejemplo se guardan solo en tu navegador
-    y se borran al cerrar la pestaña. No se envían a ningún servidor.
+    Si usas la demo sin registrarte, los datos se guardan exclusivamente en la memoria temporal de tu navegador
+    (sessionStorage) y se borran automáticamente al cerrar la pestaña.
   </p>
 
   <h2>6. Cookies y almacenamiento local</h2>
   <p>
-    GarantíasPro no usa cookies de publicidad ni de analítica. Solo guarda en tu navegador
-    la información técnica imprescindible para mantener la sesión iniciada y recordar el idioma.
+    GarantíasPro no usa cookies publicitarias ni de seguimiento de terceros. Solo almacena en tu navegador
+    el token de autenticación para mantener tu sesión activa y tu preferencia de idioma.
   </p>
 
-  <h2>7. Cuánto tiempo se conservan</h2>
+  <h2>7. Conservación de datos y copia de seguridad</h2>
   <p>
-    Mientras mantengas la cuenta. Puedes borrar tus productos en cualquier momento desde la
-    aplicación. Si pides el borrado de la cuenta, se eliminan tu cuenta, tus productos y tus fotos.
+    Tus datos se conservan mientras mantengas activa tu cuenta. Dispones de un botón directo de <strong>Exportar copia de seguridad (JSON)</strong> para descargar todas tus garantías a tu ordenador en cualquier momento. Si solicitas el borrado de tu cuenta, todos tus registros y tickets se eliminan de inmediato.
   </p>
 
-  <h2>8. Tus derechos</h2>
+  <h2>8. Tus derechos (RGPD y LOPD-GDD)</h2>
   <p>
-    Puedes pedir acceso, rectificación, supresión, oposición, limitación o portabilidad de tus
-    datos escribiendo a <a href="mailto:jemendo90@gmail.com">jemendo90@gmail.com</a>.
-    Si crees que no se han atendido correctamente, puedes reclamar ante la
-    Agencia Española de Protección de Datos (www.aepd.es).
+    Puedes solicitar en cualquier momento el acceso, rectificación, supresión, oposición o portabilidad de tus
+    datos escribiendo al responsable del proyecto (<span class="js-contact-target">Cargando contacto...</span>).
+    Asimismo, tienes derecho a reclamar ante la Agencia Española de Protección de Datos (AEPD, <a href="https://www.aepd.es" target="_blank" rel="noopener">www.aepd.es</a>).
   </p>
 
   <h2>9. Aviso legal</h2>
   <p>
-    GarantíasPro es una herramienta de organización personal. Los plazos que muestra se calculan
-    a partir de los datos que introduces tú; comprueba siempre las condiciones exactas con la
-    tienda o el fabricante. El responsable no se hace cargo de reclamaciones perdidas por datos
-    incorrectos o incompletos.
+    GarantíasPro es una herramienta de organización personal y control de plazos. Los cálculos se realizan
+    en base a las fechas introducidas por el usuario y la normativa general de consumidores. El usuario debe verificar siempre los tickets específicos de su compra.
   </p>
 </main>
 
@@ -121,13 +237,28 @@
   <div class="container">
     <span>© 2026 GarantíasPro · Responsable: Jesús Mendoza Domínguez</span>
     <nav class="footer-links" aria-label="Información legal">
-      <a href="./">Inicio</a>
-      <a href="mailto:jemendo90@gmail.com">Contacto</a>
-      <a href="auth.html">Acceder</a>
+      <a href="./">Volver a la App</a>
+      <a href="#" class="js-contact-link">Contacto</a>
+      <a href="auth.html">Acceso / Registro</a>
     </nav>
   </div>
 </footer>
 
 <script src="icons.js"></script>
+<script>
+  (function() {
+    const emailParts = ['jemendo90', 'gmail.com'];
+    const email = emailParts.join('@');
+    document.querySelectorAll('.js-contact-target').forEach(el => {
+      const a = document.createElement('a');
+      a.href = 'mailto:' + email + '?subject=' + encodeURIComponent('[GarantíasPro] Consulta Legal / Privacidad');
+      a.textContent = email;
+      el.replaceWith(a);
+    });
+    document.querySelectorAll('.js-contact-link').forEach(el => {
+      el.href = 'mailto:' + email + '?subject=' + encodeURIComponent('[GarantíasPro] Contacto');
+    });
+  })();
+</script>
 </body>
 </html>

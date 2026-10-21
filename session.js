@@ -73,9 +73,31 @@
   function renderUser(info) {
     const nameEl   = document.getElementById('user-name');
     const avatarEl = document.getElementById('user-avatar');
+    const syncPill = document.getElementById('session-sync-pill');
     const display  = info.name || info.email || '';
-    if (nameEl) nameEl.textContent = display.split(' ')[0];
-    if (avatarEl) avatarEl.textContent = (display[0] || '?').toUpperCase();
+
+    if (info.isDemo) {
+      if (nameEl) nameEl.textContent = lang() === 'en' ? 'Modo Demo' : 'Modo Demo';
+      if (avatarEl) avatarEl.textContent = 'D';
+      if (syncPill) {
+        syncPill.className = 'session-sync-pill sync-pill-demo';
+        syncPill.innerHTML = lang() === 'en'
+          ? '<span class="pill-dot"></span> Local mode · <a href="auth.html#registro" class="pill-link">Save in Cloud</a>'
+          : '<span class="pill-dot"></span> Modo local · <a href="auth.html#registro" class="pill-link">Guardar en nube</a>';
+      }
+    } else {
+      const shortName = display.split(' ')[0] || display.split('@')[0] || 'Usuario';
+      if (nameEl) nameEl.textContent = shortName;
+      if (avatarEl) avatarEl.textContent = (display[0] || 'U').toUpperCase();
+      if (syncPill) {
+        syncPill.className = 'session-sync-pill sync-pill-cloud';
+        syncPill.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg> <span>' + (lang() === 'en' ? 'Cloud Sync (Supabase)' : 'Nube Supabase (UE)') + '</span>';
+        syncPill.title = lang() === 'en'
+          ? 'Connected to Supabase EU. Cross-device safe.'
+          : 'Sincronizado con Supabase (UE). Seguro entre todos tus dispositivos.';
+      }
+    }
+
     const greeting = document.getElementById('user-greeting');
     if (greeting && info.email) greeting.title = info.email;
   }

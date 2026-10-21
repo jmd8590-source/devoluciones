@@ -243,11 +243,105 @@
   <footer class="auth-footer">
     <span>GarantíasPro · Responsable: Jesús Mendoza Domínguez</span>
     <nav aria-label="Información legal">
-      <a href="privacidad.html">Privacidad y aviso legal</a>
-      <a href="mailto:jemendo90@gmail.com">Contacto</a>
+      <button type="button" class="legal-btn" id="btn-open-privacy">Privacidad y aviso legal</button>
+      <button type="button" class="legal-btn" id="btn-open-contact">Contacto y Soporte</button>
+      <a href="privacidad.html" target="_blank" rel="noopener" class="legal-fallback">Página legal</a>
     </nav>
   </footer>
 
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MODAL — PRIVACIDAD Y AVISO LEGAL
+═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-privacy" role="dialog" aria-modal="true"
+     aria-labelledby="privacy-heading" hidden>
+  <div class="modal-panel modal-panel-legal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="privacy-heading">Política de privacidad y aviso legal</h2>
+      <button class="modal-close" id="privacy-close" aria-label="Cerrar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-legal-content">
+      <p><strong>Última actualización:</strong> Octubre de 2026</p>
+      <h3>1. Responsable del tratamiento</h3>
+      <p>
+        <strong>Jesús Mendoza Domínguez</strong>, persona física titular de GarantíasPro, proyecto web para la gestión personal de plazos de devolución y garantías en compras. Contacto disponible mediante el formulario de soporte.
+      </p>
+
+      <h3>2. Finalidad del tratamiento</h3>
+      <p>
+        GarantíasPro trata exclusivamente los datos estrictamente necesarios para prestar el servicio: gestión de cuentas de usuario, registro de compras y cálculo de vencimientos (14 o 30 días de devolución y 3 años de garantía legal en España). No se realizan perfiles comerciales ni venta de datos a terceros.
+      </p>
+
+      <h3>3. Datos recogidos</h3>
+      <table>
+        <thead><tr><th>Dato</th><th>Finalidad</th></tr></thead>
+        <tbody>
+          <tr><td>Correo electrónico</td><td>Autenticación segura de cuenta y recuperación de acceso.</td></tr>
+          <tr><td>Nombre de usuario</td><td>Personalización de la interfaz en tu panel.</td></tr>
+          <tr><td>Compras y tickets</td><td>Cálculo de fechas límite y visualización de comprobantes.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>4. Alojamiento y seguridad de datos (Supabase UE)</h3>
+      <p>
+        Los datos de los usuarios registrados se almacenan en servidores de <strong>Supabase en la Unión Europea (región eu-west-1, Irlanda)</strong> con cifrado en tránsito (TLS) y en reposo (AES-256), bajo estrictas políticas de aislamiento por usuario (Row Level Security en PostgreSQL).
+      </p>
+
+      <h3>5. Ejercicio de derechos (RGPD / LOPD-GDD)</h3>
+      <p>
+        Puedes ejercer en cualquier momento tus derechos de acceso, rectificación, portabilidad y supresión enviando una solicitud mediante el formulario de soporte o exportando tus datos con el botón de copia de seguridad.
+      </p>
+    </div>
+    <div class="modal-footer" style="margin-top:16px;display:flex;justify-content:flex-end;">
+      <button type="button" class="btn-primary" id="btn-privacy-ok">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MODAL — CONTACTO Y SOPORTE
+═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-contact" role="dialog" aria-modal="true"
+     aria-labelledby="contact-heading" hidden>
+  <div class="modal-panel modal-panel-legal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="contact-heading">Contacto y Soporte</h2>
+      <button class="modal-close" id="contact-close" aria-label="Cerrar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-legal-content">
+      <p>¿Tienes dudas o necesitas asistencia sobre GarantíasPro? Envía tu consulta directamente al responsable del proyecto.</p>
+
+      <form id="contact-form" style="display:flex;flex-direction:column;gap:12px;margin-top:12px;">
+        <div>
+          <label style="font-size:12px;color:var(--t-muted);display:block;margin-bottom:4px;">Tu nombre</label>
+          <input type="text" id="contact-name" class="form-input" style="width:100%;box-sizing:border-box;" required placeholder="Ej: Ana Pérez" />
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--t-muted);display:block;margin-bottom:4px;">Asunto</label>
+          <input type="text" id="contact-subject" class="form-input" style="width:100%;box-sizing:border-box;" required placeholder="Consulta o sugerencia" />
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--t-muted);display:block;margin-bottom:4px;">Mensaje</label>
+          <textarea id="contact-msg" class="form-input" style="width:100%;box-sizing:border-box;min-height:90px;" required placeholder="Describe tu consulta con detalle..."></textarea>
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top:6px;">Enviar consulta</button>
+      </form>
+
+      <div class="contact-domain-tip">
+        <strong>💡 Consejo sobre dominio propio y confianza comercial:</strong><br />
+        GarantíasPro puede funcionar en un dominio personalizado (como <code>garantiaspro.es</code>) por unos 8 €/año. Conectarlo a Cloudflare aporta la máxima confianza a tus clientes y evita bloqueos de operadoras.
+      </div>
+    </div>
+  </div>
 </div>
 
 <script src="vendor/supabase.js"></script>

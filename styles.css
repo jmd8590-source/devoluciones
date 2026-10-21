@@ -1448,18 +1448,371 @@ ul, ol { list-style: none; }
   font-size: 12px;
   color: var(--t-muted);
 }
-.app-legal-footer a {
+.app-legal-footer a,
+.app-legal-footer .legal-btn {
   color: var(--t-secondary);
   text-decoration: underline;
   text-underline-offset: 2px;
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
 }
-.app-legal-footer a:hover {
+.app-legal-footer a:hover,
+.app-legal-footer .legal-btn:hover {
   color: var(--t-primary);
 }
 .app-legal-footer nav {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 16px;
+}
+
+/* ── Cloud Sync / Demo Badge in Header ────────────────────── */
+.session-sync-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+.sync-pill-cloud {
+  background: rgba(74, 125, 255, 0.12);
+  color: #7ca2ff;
+  border: 1px solid rgba(74, 125, 255, 0.28);
+}
+.sync-pill-demo {
+  background: rgba(229, 160, 58, 0.12);
+  color: #f5b041;
+  border: 1px solid rgba(229, 160, 58, 0.28);
+}
+.sync-pill-demo .pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f5b041;
+}
+.sync-pill-demo .pill-link {
+  color: inherit;
+  text-decoration: underline;
+  margin-left: 3px;
+  font-weight: 600;
+}
+
+/* ── Onboarding / Landing Hero on Dashboard ────────────────── */
+.onboarding-hero {
+  background: linear-gradient(135deg, rgba(20, 29, 47, 0.95), rgba(15, 23, 42, 0.98));
+  border: 1px solid rgba(74, 125, 255, 0.22);
+  border-radius: var(--radius-lg, 16px);
+  padding: 32px 28px;
+  margin-bottom: 28px;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+.onboarding-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-primary, #4a7dff);
+  margin-bottom: 12px;
+}
+.onboarding-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--t-primary);
+  margin: 0 0 12px 0;
+  line-height: 1.3;
+}
+.onboarding-desc {
+  font-size: 15px;
+  color: var(--t-secondary);
+  max-width: 760px;
+  line-height: 1.6;
+  margin: 0 0 24px 0;
+}
+.onboarding-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 26px;
+}
+.onboarding-feature-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.feat-icon {
+  font-size: 24px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.feat-content h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--t-primary);
+  margin: 0 0 6px 0;
+}
+.feat-content p {
+  font-size: 12px;
+  color: var(--t-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+.onboarding-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.btn-hero-primary {
+  background: var(--c-primary, #4a7dff);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.15s, opacity 0.15s;
+}
+.btn-hero-primary:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+.btn-hero-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--t-primary);
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 13px;
+  border: 1px solid var(--c-border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-hero-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.btn-hero-outline {
+  background: transparent;
+  color: var(--c-primary, #4a7dff);
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 13px;
+  border: 1px solid rgba(74, 125, 255, 0.4);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: background 0.15s;
+}
+.btn-hero-outline:hover {
+  background: rgba(74, 125, 255, 0.08);
+}
+
+/* ── Backup Tools in Products View ────────────────────────── */
+.products-tools-bar {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--c-border);
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.btn-tool {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--c-border);
+  color: var(--t-secondary);
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-tool:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--t-primary);
+}
+
+/* ── Notification Channels in Alerts View ─────────────────── */
+.alerts-notification-card {
+  background: linear-gradient(135deg, rgba(20, 29, 47, 0.9), rgba(15, 23, 42, 0.9));
+  border: 1px solid rgba(74, 125, 255, 0.25);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+.notif-card-header {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+.notif-card-icon {
+  font-size: 26px;
+  line-height: 1;
+}
+.notif-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--t-primary);
+  margin: 0 0 4px 0;
+}
+.notif-card-desc {
+  font-size: 13px;
+  color: var(--t-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+.notif-channels-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.notif-channel-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.channel-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+  color: var(--t-primary);
+}
+.channel-status {
+  font-size: 11px;
+  color: var(--t-muted);
+}
+.channel-status.status-granted {
+  color: var(--c-green, #30a46c);
+}
+.btn-channel-action {
+  background: var(--c-primary, #4a7dff);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-channel-action:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ── External Actions in Product Detail Modal ─────────────── */
+.detail-external-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+.btn-detail-action {
+  padding: 9px 15px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid transparent;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.btn-detail-action:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.btn-detail-cal {
+  background: rgba(74, 125, 255, 0.15);
+  color: #8bb1ff;
+  border-color: rgba(74, 125, 255, 0.35);
+}
+.btn-detail-wa {
+  background: rgba(37, 211, 102, 0.15);
+  color: #48e285;
+  border-color: rgba(37, 211, 102, 0.35);
+}
+
+/* ── Modals: Legal & Contact ──────────────────────────────── */
+.modal-panel-legal {
+  max-width: 680px;
+}
+.modal-legal-content {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--t-secondary);
+}
+.modal-legal-content h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--t-primary);
+  margin: 16px 0 6px 0;
+}
+.modal-legal-content p {
+  margin: 0 0 10px 0;
+}
+.modal-legal-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0 16px;
+  font-size: 12px;
+}
+.modal-legal-content th,
+.modal-legal-content td {
+  padding: 8px 10px;
+  border: 1px solid var(--c-border);
+  text-align: left;
+}
+.modal-legal-content th {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--t-primary);
+}
+.contact-domain-tip {
+  background: rgba(229, 160, 58, 0.08);
+  border: 1px solid rgba(229, 160, 58, 0.25);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-top: 18px;
+  font-size: 12px;
+  color: var(--t-secondary);
+  line-height: 1.5;
+}
+.contact-domain-tip strong {
+  color: #f5b041;
 }
 
 
