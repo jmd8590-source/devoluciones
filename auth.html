@@ -6,6 +6,7 @@
   <meta name="description" content="GarantíasPro — Accede a tu cuenta para gestionar garantías y devoluciones." />
   <meta name="theme-color" content="#0b1120" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <meta http-equiv="Content-Security-Policy"
         content="upgrade-insecure-requests;
                  default-src 'self';
@@ -13,11 +14,16 @@
                  style-src 'self' https://fonts.googleapis.com;
                  font-src 'self' https://fonts.gstatic.com;
                  img-src 'self' data:;
-                 connect-src https://ynmqlzpqsyvhzlspzfkd.supabase.co wss://ynmqlzpqsyvhzlspzfkd.supabase.co;
+                 connect-src 'self' https://ynmqlzpqsyvhzlspzfkd.supabase.co wss://ynmqlzpqsyvhzlspzfkd.supabase.co;
                  object-src 'none';
                  base-uri 'self';
                  form-action 'self';" />
   <script>
+    /* Anti-clickjacking: impedir incrustación no autorizada en iframes maliciosos */
+    if (window.top !== window.self) {
+      window.top.location = window.self.location;
+    }
+    /* Forzar siempre HTTPS en producción */
     if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
       location.replace('https://' + location.host + location.pathname + location.search + location.hash);
     }

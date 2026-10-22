@@ -9,3 +9,31 @@ npm-debug.log*
 
 # Servidor local de desarrollo
 server.js
+
+# Entorno y credenciales sensibles
+.env
+.env.*
+*.env
+*.key
+*.pem
+*.cert
+*.crt
+id_rsa*
+*.id_rsa*
+secrets.*
+
+# Archivos de depuración y temporales
+*.tmp
+*.bak
+*.swp
+*.orig
+*~
+
+# IDE y editores
+.idea/
+.vscode/
+*.suo
+
+# Dependencias y caches
+node_modules/
+.wrangler/

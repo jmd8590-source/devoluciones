@@ -1337,10 +1337,9 @@ Responde ÚNICAMENTE con el objeto JSON sin formato markdown ni explicaciones ad
       alertBox.hidden = false;
       const storeName = extracted.store || 'Comercio detectado';
       const priceText = extracted.price ? `${Number(extracted.price).toFixed(2)} €` : 'Comprobado';
-      const retDays = extracted.returnDays || 30;
-      alertSummary.innerHTML = `<strong>${safeText(storeName)}</strong> · Importe: <strong>${priceText}</strong> · Compra: <strong>${extracted.purchaseDate || 'Registrada'}</strong><br />` +
-        `🛡️ <strong>Garantía legal España calculada:</strong> 3 años (RDL 1/2007) · ⏱️ <strong>Plazo de devolución:</strong> ${retDays} días.<br />` +
-        `<small style="color:var(--t-muted);display:inline-block;margin-top:2px;">Fuente: ${extracted._source}</small>`;
+      alertSummary.innerHTML = `<strong>${escHtml(safeText(storeName, 60))}</strong> · Importe: <strong>${escHtml(priceText)}</strong> · Compra: <strong>${escHtml(safeDate(extracted.purchaseDate) || 'Registrada')}</strong><br />` +
+        `🛡️ <strong>Garantía legal España calculada:</strong> 3 años (RDL 1/2007) · ⏱️ <strong>Plazo de devolución:</strong> ${safeInt(retDays, 1, 3650, 30)} días.<br />` +
+        `<small style="color:var(--t-muted);display:inline-block;margin-top:2px;">Fuente: ${escHtml(extracted._source || 'Escáner')}</small>`;
     }
 
     if (rescanBtn) rescanBtn.hidden = false;
@@ -2470,11 +2469,21 @@ async function init() {
         <body>
           <h2>GarantíasPro · Copia de Custodia Digital</h2>
           <p>Documento de compra con validez legal según RDL 1/2007 (España)</p>
-          <img src="${currentViewerTicketUrl}" onload="window.print();" />
+          <div id="print-container"></div>
         </body>
         </html>
       `);
       printWin.document.close();
+      const container = printWin.document.getElementById('print-container');
+      if (container) {
+        const printImg = printWin.document.createElement('img');
+        printImg.src = currentViewerTicketUrl;
+        printImg.alt = 'Ticket de compra';
+        printImg.onload = () => {
+          try { printWin.print(); } catch {}
+        };
+        container.appendChild(printImg);
+      }
     } else {
       window.print();
     }
