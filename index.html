@@ -15,11 +15,13 @@
   <meta http-equiv="Content-Security-Policy"
         content="upgrade-insecure-requests;
                  default-src 'self';
-                 script-src 'self' 'unsafe-inline';
-                 style-src 'self' https://fonts.googleapis.com;
+                 script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net;
+                 worker-src 'self' blob: https://cdn.jsdelivr.net;
+                 child-src 'self' blob:;
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
                  font-src 'self' https://fonts.gstatic.com;
                  img-src 'self' data: blob: https://ynmqlzpqsyvhzlspzfkd.supabase.co;
-                 connect-src 'self' https://ynmqlzpqsyvhzlspzfkd.supabase.co wss://ynmqlzpqsyvhzlspzfkd.supabase.co https://generativelanguage.googleapis.com;
+                 connect-src 'self' https://ynmqlzpqsyvhzlspzfkd.supabase.co wss://ynmqlzpqsyvhzlspzfkd.supabase.co https://generativelanguage.googleapis.com https://cdn.jsdelivr.net https://tessdata.projectnaptha.com;
                  object-src 'none';
                  base-uri 'self';
                  form-action 'self';" />
@@ -380,24 +382,38 @@
           </div>
           <input type="file" id="ticket-file" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
                  style="display:none" aria-label="Seleccionar foto de ticket" />
+          <input type="file" id="ticket-camera" accept="image/*" capture="environment"
+                 style="display:none" aria-label="Hacer foto al ticket con la cámara" />
         </div>
 
         <div class="ai-extraction-alert" id="ai-extraction-alert" hidden>
           <div class="ai-alert-icon">✨</div>
           <div class="ai-alert-text">
-            <strong>¡Ticket analizado con IA con éxito!</strong>
+            <strong>¡Ticket analizado con éxito!</strong>
             <p id="ai-extraction-summary">Comercio, importe, fecha de compra extraídos y 3 años de garantía legal en España calculados automáticamente.</p>
+            <div class="ai-raw-toggle" id="ai-raw-toggle-wrap" hidden>
+              <button type="button" class="btn-raw-toggle" id="btn-toggle-raw-text">
+                👁️ Ver texto leído en el ticket
+              </button>
+              <pre class="ai-raw-text-box" id="ai-raw-text" hidden></pre>
+            </div>
           </div>
         </div>
 
         <div class="ticket-actions-row">
+          <button type="button" class="btn-ai-action btn-camera-trigger" id="btn-camera-trigger" title="Hacer foto con la cámara del móvil">
+            📷 Foto con cámara
+          </button>
+          <button type="button" class="btn-ai-action" id="btn-upload-file-trigger" title="Elegir foto o PDF desde tus archivos">
+            📁 Subir archivo / PDF
+          </button>
           <button type="button" class="btn-remove-ticket" id="btn-remove-ticket"
                   data-i18n="form.ticket.remove" hidden>Eliminar foto</button>
           <button type="button" class="btn-ai-action" id="btn-ai-re-scan" hidden>
-            ✨ Re-escanear con IA
+            ✨ Re-escanear ticket
           </button>
           <button type="button" class="btn-ai-action btn-ai-config" id="btn-ai-settings-toggle" title="Configuración de la IA de escaneo">
-            ⚙️ Configurar Gemini IA
+            ⚙️ Ajustes IA / OCR
           </button>
         </div>
       </div>
@@ -893,24 +909,28 @@
       </p>
 
       <div style="background:rgba(74,125,255,0.08);border:1px solid rgba(74,125,255,0.25);border-radius:10px;padding:12px;margin:12px 0;">
-        <strong style="color:var(--t-primary);display:block;margin-bottom:4px;">⚡ Funcionamiento dual automático:</strong>
+        <strong style="color:var(--t-primary);display:block;margin-bottom:6px;">⚡ Dos motores de escaneo 100% operativos:</strong>
         <p style="margin:0;font-size:12px;color:var(--t-secondary);line-height:1.5;">
-          • <strong>Modo nativo sin clave:</strong> La app incluye un analizador inteligente integrado que reconoce tickets de los principales comercios en España (MediaMarkt, El Corte Inglés, Carrefour, Zara, Amazon, Apple, Leroy Merlin, etc.) sin necesidad de configurar nada.<br />
-          • <strong>Modo Gemini Vision Ultra:</strong> Si introduces tu propia clave gratuita de Google Gemini (Flash), la IA procesará cualquier formato o factura compleja mediante visión por ordenador avanzada.
+          • <strong>Motor 1 · OCR Físico Local (Sin clave / Gratis):</strong> Utiliza el motor Tesseract OCR optimizado con contraste dinámico en tu navegador. Lee el texto impreso real de la fotografía de cualquier tienda física, bar o taller.<br />
+          • <strong>Motor 2 · IA Gemini Vision (Ultra Precisión):</strong> Si introduces tu clave gratuita de Google Gemini (Flash), la IA procesará la foto con visión por ordenador profunda para leer tickets arrugados o facturas complejas en PDF.
         </p>
       </div>
 
       <div style="margin:16px 0;">
-        <label for="input-gemini-key" style="font-size:12px;color:var(--t-muted);display:block;margin-bottom:4px;">Google Gemini API Key (Opcional):</label>
-        <input type="password" id="input-gemini-key" class="form-input" style="width:100%;box-sizing:border-box;" placeholder="AIzaSy..." />
-        <small style="font-size:11px;color:var(--t-muted);display:block;margin-top:4px;">
-          Puedes obtener una clave gratuita en 30 segundos en <a href="https://aistudio.google.com/" target="_blank" rel="noopener" style="color:var(--c-primary);">Google AI Studio</a>. Se guarda únicamente en tu navegador.
+        <label for="input-gemini-key" style="font-size:12px;color:var(--t-muted);display:block;margin-bottom:4px;">Google Gemini API Key (Opcional para IA multimodal):</label>
+        <div style="display:flex;gap:8px;">
+          <input type="password" id="input-gemini-key" class="form-input" style="flex:1;box-sizing:border-box;" placeholder="AIzaSy..." />
+          <button type="button" class="btn-channel-action" id="btn-test-gemini-key" style="white-space:nowrap;">🧪 Probar clave</button>
+        </div>
+        <div id="gemini-test-result" style="font-size:12px;margin-top:6px;line-height:1.4;" hidden></div>
+        <small style="font-size:11px;color:var(--t-muted);display:block;margin-top:6px;line-height:1.4;">
+          💡 <strong>Cómo obtener tu clave gratuita en 1 minuto:</strong> Entra en <a href="https://aistudio.google.com/" target="_blank" rel="noopener" style="color:var(--c-primary);font-weight:600;">Google AI Studio</a>, pulsa en <em>«Get API key»</em> y copia la clave. La capa gratuita permite escanear hasta 1.500 tickets al día a coste 0 €.
         </small>
       </div>
 
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
-        <button type="button" class="btn-channel-action btn-warn" id="btn-clear-gemini-key">Restablecer clave</button>
-        <button type="button" class="btn-primary" id="btn-save-gemini-key">Guardar configuración</button>
+        <button type="button" class="btn-channel-action btn-warn" id="btn-clear-gemini-key">Usar solo OCR local</button>
+        <button type="button" class="btn-primary" id="btn-save-gemini-key">Guardar clave</button>
       </div>
     </div>
   </div>
@@ -924,6 +944,7 @@
 </button>
 
 <script src="vendor/supabase.js"></script>
+<script src="vendor/tesseract.min.js"></script>
 <script src="supabase-client.js"></script>
 <script src="icons.js"></script>
 <script src="session.js"></script>

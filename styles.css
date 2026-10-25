@@ -1984,6 +1984,51 @@ ul, ol { list-style: none; }
   background: rgba(255, 255, 255, 0.1);
 }
 
+.btn-camera-trigger {
+  background: rgba(48, 164, 108, 0.15);
+  color: #30a46c;
+  border-color: rgba(48, 164, 108, 0.4);
+}
+.btn-camera-trigger:hover {
+  background: rgba(48, 164, 108, 0.25);
+  border-color: rgba(48, 164, 108, 0.6);
+}
+
+.ai-raw-toggle {
+  margin-top: 8px;
+  width: 100%;
+}
+.btn-raw-toggle {
+  background: none;
+  border: none;
+  color: #38bdf8;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-raw-toggle:hover {
+  color: #7dd3fc;
+}
+.ai-raw-text-box {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-top: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  color: var(--t-secondary);
+  max-height: 140px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 /* Field AI Highlight */
 .field-ai-highlight {
   border-color: rgba(48, 164, 108, 0.8) !important;

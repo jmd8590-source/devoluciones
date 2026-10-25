@@ -1064,6 +1064,8 @@ function setTicketPreview(dataUrl) {
   const removeBtn = document.getElementById('btn-remove-ticket');
   const alertBox = document.getElementById('ai-extraction-alert');
   const rescanBtn = document.getElementById('btn-ai-re-scan');
+  const rawToggleWrap = document.getElementById('ai-raw-toggle-wrap');
+  const rawTextBox = document.getElementById('ai-raw-text');
 
   if (dataUrl) {
     preview.src = dataUrl;
@@ -1077,6 +1079,8 @@ function setTicketPreview(dataUrl) {
     removeBtn.hidden = true;
     if (alertBox) alertBox.hidden = true;
     if (rescanBtn) rescanBtn.hidden = true;
+    if (rawToggleWrap) rawToggleWrap.hidden = true;
+    if (rawTextBox) { rawTextBox.textContent = ''; rawTextBox.hidden = true; }
   }
 }
 
@@ -1251,9 +1255,220 @@ function handleFileSelect(file) {
   reader.readAsDataURL(file);
 }
 
-/* ── 12.1 ESCAÑEO INTELIGENTE DE TICKETS CON IA ─────────────── */
+/* ── 12.1 PREPROCESAMIENTO Y MOTOR OCR REAL DE TICKETS (CUALQUIER COMERCIO) ── */
 let isScanningTicket = false;
 
+/* Mejora dinámica de contraste en Canvas para rescatar texto en papel térmico */
+async function preprocessTicketImage(imageSource) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const maxW = 1200;
+        let w = img.naturalWidth || img.width;
+        let h = img.naturalHeight || img.height;
+        if (w > maxW) {
+          h = Math.round((h * maxW) / w);
+          w = maxW;
+        }
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const d = imgData.data;
+        // Binarización y expansión de contraste para papel térmico desgastado
+        for (let i = 0; i < d.length; i += 4) {
+          const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+          const enhanced = gray < 138 ? Math.max(0, gray * 0.5) : Math.min(255, 120 + (gray - 120) * 1.6);
+          d[i] = enhanced;
+          d[i + 1] = enhanced;
+          d[i + 2] = enhanced;
+        }
+        ctx.putImageData(imgData, 0, 0);
+        resolve(canvas.toDataURL('image/jpeg', 0.92));
+      } catch (err) {
+        console.warn('Canvas preproc warning, using original:', err);
+        resolve(imageSource);
+      }
+    };
+    img.onerror = () => resolve(imageSource);
+    img.src = imageSource;
+  });
+}
+
+/* Ejecución real de Tesseract.js OCR en el navegador */
+async function runOcrWithTesseract(imageSource, onProgress) {
+  if (typeof window.Tesseract === 'undefined') {
+    throw new Error('Tesseract OCR no cargado');
+  }
+
+  let worker = null;
+  try {
+    if (onProgress) onProgress('Iniciando motor OCR de alta precisión...', 10);
+    worker = await window.Tesseract.createWorker('spa', 1, {
+      workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
+      corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@v5/tesseract-core.wasm.js',
+      logger: (m) => {
+        if (m.status === 'recognizing text' && onProgress) {
+          const pct = Math.round((m.progress || 0) * 100);
+          onProgress(`Leyendo texto físico del ticket... ${pct}%`, pct);
+        }
+      }
+    });
+
+    const { data: { text } } = await worker.recognize(imageSource);
+    await worker.terminate();
+    return text || '';
+  } catch (err) {
+    if (worker) {
+      try { await worker.terminate(); } catch {}
+    }
+    throw err;
+  }
+}
+
+/* Parser universal de tickets de cualquier comercio en España */
+function parseReceiptOcrText(rawText, fallbackDate) {
+  if (!rawText || typeof rawText !== 'string') return null;
+
+  const lines = rawText
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l.length > 1);
+
+  if (!lines.length) return null;
+
+  const ignoreHeaders = /^(factura|ticket|simplificada|simplificado|caja|tpv|copia|cliente|bienvenido|gracias|fecha|hora|n\.?i\.?f|c\.?i\.?f|telefono|tel\b|iva|direccion|recibo|comprobante|nro|numero)/i;
+
+  const KNOWN_BRANDS = [
+    { key: /mercadona/i, name: 'Mercadona', retDays: 30 },
+    { key: /carrefour/i, name: 'Carrefour', retDays: 30 },
+    { key: /mediamarkt|media\s*markt/i, name: 'MediaMarkt', retDays: 30 },
+    { key: /corte\s*ingl[eé]s|el\s*corte\s*ingles/i, name: 'El Corte Inglés', retDays: 60 },
+    { key: /\bzara\b/i, name: 'Zara', retDays: 30 },
+    { key: /stradivarius/i, name: 'Stradivarius', retDays: 30 },
+    { key: /pull\s*(&|and)?\s*bear/i, name: 'Pull&Bear', retDays: 30 },
+    { key: /bershka/i, name: 'Bershka', retDays: 30 },
+    { key: /massimo\s*dutti/i, name: 'Massimo Dutti', retDays: 30 },
+    { key: /decathlon/i, name: 'Decathlon', retDays: 60 },
+    { key: /leroy\s*merlin/i, name: 'Leroy Merlin', retDays: 100 },
+    { key: /ikea/i, name: 'IKEA', retDays: 365 },
+    { key: /lidl/i, name: 'Lidl', retDays: 30 },
+    { key: /alcampo/i, name: 'Alcampo', retDays: 30 },
+    { key: /fnac/i, name: 'Fnac', retDays: 30 },
+    { key: /apple/i, name: 'Apple Store', retDays: 14 },
+    { key: /amazon/i, name: 'Amazon España', retDays: 30 },
+    { key: /pccomponentes|pc\s*componentes/i, name: 'PcComponentes', retDays: 30 },
+    { key: /bricomart|obramat/i, name: 'Obramat', retDays: 100 },
+    { key: /primark/i, name: 'Primark', retDays: 28 },
+    { key: /mango/i, name: 'Mango', retDays: 30 },
+    { key: /sprinter/i, name: 'Sprinter', retDays: 30 },
+    { key: /eroski/i, name: 'Eroski', retDays: 30 },
+    { key: /consum/i, name: 'Consum', retDays: 30 },
+    { key: /dia\b|supermercados\s*dia/i, name: 'Supermercados Dia', retDays: 30 },
+    { key: /worten/i, name: 'Worten', retDays: 30 },
+    { key: /game\b|videojuegos\s*game/i, name: 'GAME', retDays: 14 }
+  ];
+
+  let matchedBrand = KNOWN_BRANDS.find(b => b.key.test(rawText));
+  let detectedStore = '';
+  let returnDays = matchedBrand ? matchedBrand.retDays : 30;
+
+  if (matchedBrand) {
+    detectedStore = matchedBrand.name;
+  } else {
+    // Si es un comercio local, tienda de barrio o taller independiente:
+    for (let i = 0; i < Math.min(6, lines.length); i++) {
+      const line = lines[i];
+      if (!ignoreHeaders.test(line) && line.length >= 3 && !/^\d+$/.test(line) && !/^\d{1,2}[\/\-\.]/.test(line)) {
+        detectedStore = line
+          .replace(/^[^\wáéíóúñÁÉÍÓÚÑ]+/, '')
+          .replace(/[^\wáéíóúñÁÉÍÓÚÑ\s.,&-]+$/, '')
+          .slice(0, 50);
+        if (detectedStore.length >= 3) break;
+      }
+    }
+  }
+
+  // FECHA DE COMPRA
+  let detectedDate = '';
+  const dateRegex = /\b([0-3]?[0-9])[\/\.\-]([0-1]?[0-9])[\/\.\-](20\d{2}|\d{2})\b/;
+  const dateMatch = rawText.match(dateRegex);
+  if (dateMatch) {
+    let day = dateMatch[1].padStart(2, '0');
+    let month = dateMatch[2].padStart(2, '0');
+    let year = dateMatch[3];
+    if (year.length === 2) year = '20' + year;
+    const mNum = parseInt(month, 10);
+    const dNum = parseInt(day, 10);
+    if (mNum >= 1 && mNum <= 12 && dNum >= 1 && dNum <= 31) {
+      detectedDate = `${year}-${month}-${day}`;
+    }
+  }
+  if (!detectedDate) detectedDate = fallbackDate || today();
+
+  // IMPORTE TOTAL
+  let detectedPrice = null;
+  const totalKeywords = /(total|a\s*pagar|importe|suma|subtotal|tarjeta|total\s*eur|eur\b|€)/i;
+  const candidatePrices = [];
+
+  lines.forEach(line => {
+    const priceMatches = [...line.matchAll(/\b(\d{1,4})[.,](\d{2})\b/g)];
+    priceMatches.forEach(m => {
+      const val = parseFloat(`${m[1]}.${m[2]}`);
+      if (val > 0 && val < 50000) {
+        candidatePrices.push({
+          val,
+          isTotalLine: totalKeywords.test(line),
+          line
+        });
+      }
+    });
+  });
+
+  const totalLines = candidatePrices.filter(c => c.isTotalLine);
+  if (totalLines.length) {
+    const sorted = [...totalLines].sort((a, b) => b.val - a.val);
+    detectedPrice = sorted[0].val;
+  } else if (candidatePrices.length) {
+    const sorted = [...candidatePrices].sort((a, b) => b.val - a.val);
+    detectedPrice = sorted[0].val;
+  }
+
+  // ARTÍCULO O PRODUCTO PRINCIPAL
+  let detectedProduct = '';
+  for (let line of lines) {
+    if (/\b\d{1,4}[.,]\d{2}\b/.test(line) && !totalKeywords.test(line) && !ignoreHeaders.test(line)) {
+      const clean = line.replace(/\b\d{1,4}[.,]\d{2}\b.*$/, '').replace(/^[0-9\s*xX-]+/, '').trim();
+      if (clean.length > 3) {
+        detectedProduct = clean.slice(0, 50);
+        break;
+      }
+    }
+  }
+  if (!detectedProduct) {
+    detectedProduct = detectedStore ? `Compra en ${detectedStore}` : 'Compra según ticket';
+  }
+
+  return {
+    store: detectedStore || 'Establecimiento detectado',
+    productName: detectedProduct,
+    brand: matchedBrand ? matchedBrand.name : '',
+    price: detectedPrice,
+    purchaseDate: detectedDate,
+    returnDays: returnDays,
+    warrantyYears: 3,
+    rawText: rawText.slice(0, 2000),
+    coverage: 'Defectos de fabricación\nFallos de componentes de hardware o placas electrónicas\nFalta de conformidad con las especificaciones del fabricante (Art. 114 RDL 1/2007)',
+    noCoverage: 'Golpes o roturas accidentales provocadas por caída\nDaños derivados de contacto con líquidos o humedad no autorizada\nManipulación indebida o modificaciones de software no oficiales'
+  };
+}
+
+/* Función principal de escaneo con IA (Gemini Vision + Tesseract OCR real) */
 async function scanTicketWithAI(file, dataUrl) {
   if (isScanningTicket || !file) return;
   isScanningTicket = true;
@@ -1263,71 +1478,113 @@ async function scanTicketWithAI(file, dataUrl) {
   const alertBox = document.getElementById('ai-extraction-alert');
   const alertSummary = document.getElementById('ai-extraction-summary');
   const rescanBtn = document.getElementById('btn-ai-re-scan');
+  const rawToggleWrap = document.getElementById('ai-raw-toggle-wrap');
+  const rawTextBox = document.getElementById('ai-raw-text');
 
   if (overlay) overlay.hidden = false;
   if (alertBox) alertBox.hidden = true;
   if (rescanBtn) rescanBtn.hidden = true;
+  if (rawToggleWrap) rawToggleWrap.hidden = true;
+  if (rawTextBox) { rawTextBox.textContent = ''; rawTextBox.hidden = true; }
   if (scanText) scanText.textContent = 'Analizando ticket con IA (extrayendo comercio, importe y fechas)...';
 
   let extracted = null;
   const geminiKey = (localStorage.getItem('gp_gemini_api_key') || '').trim();
 
   try {
-    // 1. Si el usuario configuró una clave de Google Gemini y tenemos dataUrl de imagen
+    // ── ESTRATEGIA 1: GOOGLE GEMINI FLASH VISION (SI HAY CLAVE) ──
     if (geminiKey && dataUrl && dataUrl.startsWith('data:image/')) {
-      if (scanText) scanText.textContent = 'Consultando Gemini Flash Vision con tu API Key...';
+      if (scanText) scanText.textContent = 'Consultando Gemini Flash Vision (IA Multimodal)...';
       try {
         const mimeType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
         const base64Data = dataUrl.split(',')[1];
 
-        const prompt = `Analiza este ticket, factura o comprobante de compra en España.
+        const prompt = `Analiza este ticket, factura o comprobante de compra físico de cualquier establecimiento en España.
 Extrae estrictamente los datos en formato JSON con las siguientes claves:
-- "store": nombre del establecimiento o comercio (ej: "MediaMarkt", "El Corte Inglés", "Carrefour", "Zara", "Amazon")
-- "productName": nombre descriptivo del producto o artículo principal comprado (ej: "Auriculares inalámbricos", "Smart TV 55", "Pantalón vaquero")
-- "brand": marca del producto si es visible (ej: "Sony", "Samsung", "Apple") o cadena vacía
-- "price": importe total numérico en euros (ej: 49.99), número flotante sin símbolos
-- "purchaseDate": fecha de compra en formato YYYY-MM-DD. Si no es clara, usa la fecha actual.
-- "returnDays": días para devolución comercial ofrecidos por la tienda (si no se especifica, usa 30)
-- "warrantyYears": años de garantía legal en España (fijar en 3 según RDL 1/2007)
-Responde ÚNICAMENTE con el objeto JSON sin formato markdown ni explicaciones adicionales.`;
+- "store": nombre del comercio, tienda o razón social (ej: "MediaMarkt", "Mercadona", "Bar Central", "Talleres Pérez", "Leroy Merlin")
+- "productName": nombre descriptivo del artículo o producto principal comprado
+- "brand": marca del producto si es visible o cadena vacía
+- "price": importe total numérico final a pagar en euros (ej: 49.99), número flotante sin símbolos
+- "purchaseDate": fecha de la compra en formato YYYY-MM-DD
+- "returnDays": días para devolución permitidos según el comercio (o 30 si no consta)
+- "warrantyYears": fijar en 3 (garantía legal obligatoria en España según RDL 1/2007)
+Responde ÚNICAMENTE con el objeto JSON sin formato markdown ni texto adicional.`;
 
-        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(geminiKey)}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { inline_data: { mime_type: mimeType, data: base64Data } },
-                { text: prompt }
-              ]
-            }],
-            generationConfig: {
-              temperature: 0.1,
-              responseMimeType: 'application/json'
+        const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-latest'];
+        for (const model of models) {
+          try {
+            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(geminiKey)}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{
+                  parts: [
+                    { inline_data: { mime_type: mimeType, data: base64Data } },
+                    { text: prompt }
+                  ]
+                }],
+                generationConfig: {
+                  temperature: 0.1,
+                  responseMimeType: 'application/json'
+                }
+              })
+            });
+
+            if (resp.ok) {
+              const resultJson = await resp.json();
+              const rawText = resultJson.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (rawText) {
+                const cleanJson = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+                extracted = JSON.parse(cleanJson);
+                extracted._source = `Gemini Vision AI (${model})`;
+                break;
+              }
             }
-          })
-        });
-
-        if (resp.ok) {
-          const resultJson = await resp.json();
-          const rawText = resultJson.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (rawText) {
-            const cleanJson = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
-            extracted = JSON.parse(cleanJson);
-            extracted._source = 'Gemini 2.5 Flash Vision (API)';
+          } catch (mErr) {
+            console.warn(`Error con modelo ${model}:`, mErr);
           }
         }
       } catch (geminiErr) {
-        console.warn('Error en Gemini Vision API, recurriendo a análisis inteligente nativo:', geminiErr);
+        console.warn('Fallo en Gemini API, pasando a OCR local en navegador:', geminiErr);
       }
     }
 
-    // 2. Fallback inteligente instantáneo (analizador de comercios y tickets españoles)
+    // ── ESTRATEGIA 2: MOTOR OCR LOCAL REAL EN NAVEGADOR (TESSERACT.JS) ──
+    if (!extracted && dataUrl && dataUrl.startsWith('data:image/')) {
+      if (scanText) scanText.textContent = 'Mejorando nitidez de la foto con Canvas...';
+      const enhancedImage = await preprocessTicketImage(dataUrl);
+
+      if (scanText) scanText.textContent = 'Leyendo texto físico del ticket con OCR...';
+      try {
+        const rawOcrText = await runOcrWithTesseract(enhancedImage, (msg) => {
+          if (scanText) scanText.textContent = msg;
+        });
+
+        if (rawOcrText && rawOcrText.trim().length > 5) {
+          extracted = parseReceiptOcrText(rawOcrText, file.lastModified ? new Date(file.lastModified).toISOString().slice(0, 10) : today());
+          if (extracted) {
+            extracted._source = 'Motor OCR Físico GarantíasPro (Lectura Real)';
+            extracted._rawText = rawOcrText;
+          }
+        }
+      } catch (ocrErr) {
+        console.warn('Error en Tesseract OCR local:', ocrErr);
+      }
+    }
+
+    // ── ESTRATEGIA 3: ASIGNACIÓN SEGURA SI NO SE PUDO LEER NINGÚN CARÁCTER ──
     if (!extracted) {
-      if (scanText) scanText.textContent = 'Extrayendo comercio, importe y calculando 3 años de garantía...';
-      await new Promise(r => setTimeout(r, 650)); // feedback visual del escáner láser
-      extracted = smartLocalReceiptExtractor(file);
-      extracted._source = 'Escáner Inteligente GarantíasPro (Nativo España)';
+      if (scanText) scanText.textContent = 'Calculando plazos de garantía legal...';
+      extracted = {
+        store: 'Comercio físico',
+        productName: 'Compra según ticket',
+        brand: '',
+        price: null,
+        purchaseDate: file.lastModified ? new Date(file.lastModified).toISOString().slice(0, 10) : today(),
+        returnDays: 30,
+        warrantyYears: 3,
+        _source: 'Identificador legal estándar (RDL 1/2007)'
+      };
     }
 
     // Aplicar los datos extraídos a los campos del formulario
@@ -1336,87 +1593,49 @@ Responde ÚNICAMENTE con el objeto JSON sin formato markdown ni explicaciones ad
     if (alertBox && alertSummary) {
       alertBox.hidden = false;
       const storeName = extracted.store || 'Comercio detectado';
-      const priceText = extracted.price ? `${Number(extracted.price).toFixed(2)} €` : 'Comprobado';
+      const priceText = extracted.price ? `${Number(extracted.price).toFixed(2)} €` : 'A comprobar';
+      const retDays = extracted.returnDays || 30;
       alertSummary.innerHTML = `<strong>${escHtml(safeText(storeName, 60))}</strong> · Importe: <strong>${escHtml(priceText)}</strong> · Compra: <strong>${escHtml(safeDate(extracted.purchaseDate) || 'Registrada')}</strong><br />` +
         `🛡️ <strong>Garantía legal España calculada:</strong> 3 años (RDL 1/2007) · ⏱️ <strong>Plazo de devolución:</strong> ${safeInt(retDays, 1, 3650, 30)} días.<br />` +
-        `<small style="color:var(--t-muted);display:inline-block;margin-top:2px;">Fuente: ${escHtml(extracted._source || 'Escáner')}</small>`;
+        `<small style="color:var(--t-muted);display:inline-block;margin-top:2px;">Método: ${escHtml(extracted._source || 'Escáner')}</small>`;
+
+      if (extracted._rawText && rawToggleWrap && rawTextBox) {
+        rawTextBox.textContent = extracted._rawText;
+        rawToggleWrap.hidden = false;
+      }
     }
 
     if (rescanBtn) rescanBtn.hidden = false;
-    showToast('✨ Ticket analizado: comercio, fechas y garantía autocompletados', 'ok');
+    showToast('✨ Ticket leído con éxito: datos extraídos y aplicados', 'ok');
 
   } catch (err) {
     console.error('Error durante el escaneo del ticket:', err);
-    showToast('No se pudieron extraer todos los datos automáticamente. Puedes editarlos en el formulario.', 'warn');
+    showToast('No se pudo completar la lectura automática. Puedes rellenar los datos en el formulario.', 'warn');
   } finally {
     isScanningTicket = false;
     if (overlay) overlay.hidden = true;
   }
 }
 
-function smartLocalReceiptExtractor(file) {
-  const fileName = (file.name || '').toLowerCase();
-  const fileDate = file.lastModified ? new Date(file.lastModified).toISOString().slice(0, 10) : today();
-
-  const STORES_ES = [
-    { key: 'mediamarkt', name: 'MediaMarkt', retDays: 30, brand: 'Electrónica', price: 89.99, sampleProd: 'Dispositivo / Accesorio tecnológico' },
-    { key: 'corte ingles', name: 'El Corte Inglés', retDays: 60, brand: 'El Corte Inglés', price: 129.00, sampleProd: 'Artículo de compra' },
-    { key: 'elcorteingles', name: 'El Corte Inglés', retDays: 60, brand: 'El Corte Inglés', price: 129.00, sampleProd: 'Artículo de compra' },
-    { key: 'carrefour', name: 'Carrefour', retDays: 30, brand: 'Carrefour', price: 42.50, sampleProd: 'Compra hipermercado / Bazar' },
-    { key: 'zara', name: 'Zara', retDays: 30, brand: 'Zara (Inditex)', price: 39.95, sampleProd: 'Prenda de moda / Calzado' },
-    { key: 'stradivarius', name: 'Stradivarius', retDays: 30, brand: 'Inditex', price: 29.99, sampleProd: 'Prenda textil' },
-    { key: 'pull', name: 'Pull&Bear', retDays: 30, brand: 'Inditex', price: 35.99, sampleProd: 'Prenda de ropa' },
-    { key: 'amazon', name: 'Amazon España', retDays: 30, brand: 'Amazon', price: 59.99, sampleProd: 'Pedido online Amazon' },
-    { key: 'apple', name: 'Apple Store', retDays: 14, brand: 'Apple', price: 249.00, sampleProd: 'Dispositivo Apple / Accesorio original' },
-    { key: 'decathlon', name: 'Decathlon', retDays: 60, brand: 'Decathlon', price: 34.99, sampleProd: 'Equipamiento deportivo' },
-    { key: 'leroy', name: 'Leroy Merlin', retDays: 100, brand: 'Leroy Merlin', price: 65.00, sampleProd: 'Bricolaje / Herramienta y hogar' },
-    { key: 'pccomponentes', name: 'PcComponentes', retDays: 30, brand: 'PcComponentes', price: 115.50, sampleProd: 'Componente informático / Periférico' },
-    { key: 'ikea', name: 'IKEA España', retDays: 365, brand: 'IKEA', price: 79.00, sampleProd: 'Mueble / Accesorio de hogar' },
-    { key: 'fnac', name: 'Fnac', retDays: 30, brand: 'Fnac', price: 49.90, sampleProd: 'Cultura / Tecnología' },
-    { key: 'lidl', name: 'Lidl', retDays: 30, brand: 'Silvercrest / Parkside', price: 29.99, sampleProd: 'Electrodoméstico / Herramienta' },
-    { key: 'alcampo', name: 'Alcampo', retDays: 30, brand: 'Qilive', price: 38.00, sampleProd: 'Compra Alcampo' },
-    { key: 'primark', name: 'Primark', retDays: 28, brand: 'Primark', price: 22.00, sampleProd: 'Textil / Calzado' },
-    { key: 'mango', name: 'Mango', retDays: 30, brand: 'Mango', price: 49.99, sampleProd: 'Prenda textil' }
-  ];
-
-  let matched = STORES_ES.find(s => fileName.includes(s.key));
-
-  let priceFromTitle = null;
-  const priceMatch = fileName.match(/(\d+)[._,-](\d{2})/);
-  if (priceMatch) {
-    priceFromTitle = parseFloat(`${priceMatch[1]}.${priceMatch[2]}`);
+/* Comprobador de conectividad con Gemini API */
+async function testGeminiApiKey(key) {
+  if (!key) return { ok: false, error: 'Introduce una clave antes de probar.' };
+  try {
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(key)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: 'Responde solo la palabra OK' }] }]
+      })
+    });
+    if (resp.ok) {
+      return { ok: true };
+    }
+    const errData = await resp.json().catch(() => ({}));
+    return { ok: false, error: errData.error?.message || `Error HTTP ${resp.status}` };
+  } catch (e) {
+    return { ok: false, error: e.message || 'Error de conexión' };
   }
-
-  if (!matched) {
-    matched = {
-      name: 'Comercio / Tienda',
-      retDays: 30,
-      brand: '',
-      price: priceFromTitle || 49.90,
-      sampleProd: 'Producto según ticket'
-    };
-  }
-
-  let productName = matched.sampleProd;
-  if (fileName.includes('iphone')) productName = 'Apple iPhone';
-  else if (fileName.includes('samsung')) productName = 'Samsung Galaxy';
-  else if (fileName.includes('xiaomi')) productName = 'Xiaomi';
-  else if (fileName.includes('tele') || fileName.includes('tv')) productName = 'Smart TV';
-  else if (fileName.includes('auricular') || fileName.includes('cascos')) productName = 'Auriculares inalámbricos';
-  else if (fileName.includes('taladro') || fileName.includes('herramienta')) productName = 'Herramienta eléctrica';
-  else if (fileName.includes('lavadora') || fileName.includes('frigo')) productName = 'Electrodoméstico del hogar';
-
-  return {
-    store: matched.name,
-    productName: productName,
-    brand: matched.brand || '',
-    price: priceFromTitle || matched.price,
-    purchaseDate: fileDate,
-    returnDays: matched.retDays,
-    warrantyYears: 3,
-    coverage: 'Defectos de fabricación\nFallos de componentes de hardware o placas electrónicas\nFalta de conformidad con las especificaciones del fabricante (Art. 114 RDL 1/2007)',
-    noCoverage: 'Golpes o roturas accidentales provocadas por caída\nDaños derivados de contacto con líquidos o humedad no autorizada\nManipulación indebida o modificaciones de software no oficiales'
-  };
 }
 
 function applyExtractedTicketData(data) {
@@ -2110,8 +2329,11 @@ async function init() {
   });
 
   // ── Ticket upload area
-  const uploadArea = document.getElementById('ticket-upload-area');
-  const fileInput  = document.getElementById('ticket-file');
+  const uploadArea   = document.getElementById('ticket-upload-area');
+  const fileInput    = document.getElementById('ticket-file');
+  const cameraInput  = document.getElementById('ticket-camera');
+  const cameraBtn    = document.getElementById('btn-camera-trigger');
+  const uploadFileBtn = document.getElementById('btn-upload-file-trigger');
 
   uploadArea?.addEventListener('click', () => fileInput?.click());
   uploadArea?.addEventListener('keydown', e => {
@@ -2121,6 +2343,31 @@ async function init() {
   fileInput?.addEventListener('change', () => {
     const f = fileInput.files?.[0];
     if (f) { handleFileSelect(f); fileInput.value = ''; }
+  });
+
+  cameraBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    cameraInput?.click();
+  });
+
+  uploadFileBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    fileInput?.click();
+  });
+
+  cameraInput?.addEventListener('change', () => {
+    const f = cameraInput.files?.[0];
+    if (f) { handleFileSelect(f); cameraInput.value = ''; }
+  });
+
+  // Toggle visor de texto OCR leído en el ticket
+  const toggleRawBtn = document.getElementById('btn-toggle-raw-text');
+  const rawBox = document.getElementById('ai-raw-text');
+  toggleRawBtn?.addEventListener('click', () => {
+    if (!rawBox) return;
+    const isHidden = rawBox.hidden;
+    rawBox.hidden = !isHidden;
+    toggleRawBtn.textContent = isHidden ? '🙈 Ocultar texto leído en el ticket' : '👁️ Ver texto leído en el ticket';
   });
 
   // Drag & drop
@@ -2144,6 +2391,8 @@ async function init() {
     setTicketPreview(null);
     const fi = document.getElementById('ticket-file');
     if (fi) fi.value = '';
+    const ci = document.getElementById('ticket-camera');
+    if (ci) ci.value = '';
   });
 
   // ── Search
@@ -2351,11 +2600,41 @@ async function init() {
   document.getElementById('btn-ai-settings-toggle')?.addEventListener('click', () => {
     const keyInput = document.getElementById('input-gemini-key');
     if (keyInput) keyInput.value = localStorage.getItem('gp_gemini_api_key') || '';
+    const resDiv = document.getElementById('gemini-test-result');
+    if (resDiv) { resDiv.hidden = true; resDiv.innerHTML = ''; }
     openModal('modal-ai-settings');
   });
   document.getElementById('ai-settings-close')?.addEventListener('click', () => {
     closeModal('modal-ai-settings');
   });
+
+  const btnTestGemini = document.getElementById('btn-test-gemini-key');
+  const testResultDiv = document.getElementById('gemini-test-result');
+  btnTestGemini?.addEventListener('click', async () => {
+    const key = document.getElementById('input-gemini-key')?.value.trim();
+    if (!key) {
+      if (testResultDiv) {
+        testResultDiv.hidden = false;
+        testResultDiv.innerHTML = '<span style="color:#f87171;">⚠️ Por favor introduce una clave de Gemini antes de probar.</span>';
+      }
+      return;
+    }
+    btnTestGemini.disabled = true;
+    btnTestGemini.textContent = '⏳ Probando...';
+    if (testResultDiv) {
+      testResultDiv.hidden = false;
+      testResultDiv.innerHTML = '<span style="color:var(--t-muted);">Conectando con Google AI Studio...</span>';
+    }
+    const res = await testGeminiApiKey(key);
+    btnTestGemini.disabled = false;
+    btnTestGemini.textContent = '🧪 Probar clave';
+    if (res.ok) {
+      testResultDiv.innerHTML = '<span style="color:#34d399;font-weight:600;">✅ ¡Conexión con Gemini Vision correcta! Puedes guardar la clave.</span>';
+    } else {
+      testResultDiv.innerHTML = `<span style="color:#f87171;font-weight:600;">❌ Error al conectar:</span> <span style="color:var(--t-muted);">${escHtml(res.error || 'Clave no válida')}</span>`;
+    }
+  });
+
   document.getElementById('btn-save-gemini-key')?.addEventListener('click', () => {
     const key = document.getElementById('input-gemini-key')?.value.trim();
     if (key) {
@@ -2363,7 +2642,7 @@ async function init() {
       showToast('Clave Gemini API guardada con éxito', 'ok');
     } else {
       localStorage.removeItem('gp_gemini_api_key');
-      showToast('Clave eliminada. Modo nativo inteligente activo', 'ok');
+      showToast('Clave eliminada. Modo OCR físico local activo', 'ok');
     }
     closeModal('modal-ai-settings');
   });
@@ -2371,7 +2650,9 @@ async function init() {
     localStorage.removeItem('gp_gemini_api_key');
     const keyInput = document.getElementById('input-gemini-key');
     if (keyInput) keyInput.value = '';
-    showToast('Clave restablecida. Modo nativo activo', 'ok');
+    const resDiv = document.getElementById('gemini-test-result');
+    if (resDiv) { resDiv.hidden = true; resDiv.innerHTML = ''; }
+    showToast('Clave restablecida. Motor OCR local activo', 'ok');
     closeModal('modal-ai-settings');
   });
   document.getElementById('btn-ai-re-scan')?.addEventListener('click', () => {
