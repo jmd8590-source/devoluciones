@@ -57,6 +57,10 @@
   --dur-normal:  260ms;
   --dur-slow:    420ms;
 
+  /* Typography Tokens (Inspirado en Fontjoy: Sora Titulares + Plus Jakarta Sans Cuerpo) */
+  --font-display: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body:    'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
   /* Layout */
   --header-h: 64px;
 }
@@ -65,12 +69,32 @@
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 16px; scroll-behavior: smooth; }
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-body);
   background: var(--c-bg);
   color: var(--t-primary);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  letter-spacing: -0.011em;
+}
+
+/* Tipografía de display/titulares con carácter firme y elegante */
+h1, h2, h3, h4, h5, h6,
+.logo-text,
+.view-title,
+.section-title,
+.stat-num,
+.modal-title,
+.onboarding-title,
+.onboarding-eyebrow,
+.detail-name,
+.card-name,
+.btn-add-main,
+.btn-hero-primary,
+.badge-count,
+.product-card-title {
+  font-family: var(--font-display);
 }
 img { display: block; max-width: 100%; }
 button { cursor: pointer; border: none; background: none; font: inherit; color: inherit; }

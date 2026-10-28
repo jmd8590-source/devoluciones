@@ -24,15 +24,22 @@
   <link rel="canonical" href="https://devoluciones.jmd8590.workers.dev/privacidad.html" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="site.css" />
+  <link rel="stylesheet" href="cookies.css" />
   <style>
     body {
       margin: 0;
       background: #0b1120;
       color: #e2e8f0;
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
       line-height: 1.6;
+      letter-spacing: -0.011em;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .brand, .legal h1, .legal h2, .legal h3, .btn {
+      font-family: 'Sora', sans-serif;
     }
     .container {
       max-width: 860px;
@@ -159,6 +166,7 @@
     </a>
     <nav class="header-actions" aria-label="Acceso">
       <a class="btn btn-ghost" href="./">Volver a la App</a>
+      <a class="btn btn-ghost" href="cookies.html">Cookies</a>
       <a class="btn btn-primary" href="auth.html">Acceder / Registro</a>
     </nav>
   </div>
@@ -214,8 +222,10 @@
 
   <h2>6. Cookies y almacenamiento local</h2>
   <p>
-    GarantíasPro no usa cookies publicitarias ni de seguimiento de terceros. Solo almacena en tu navegador
-    el token de autenticación para mantener tu sesión activa y tu preferencia de idioma.
+    GarantíasPro no usa cookies publicitarias ni de seguimiento de terceros. Únicamente almacena en tu navegador el token de autenticación para mantener tu sesión activa y tu preferencia de idioma. Puedes consultar el inventario completo, finalidades, plazos de conservación y configurar o revocar tus preferencias en nuestra <a href="cookies.html"><strong>Política de cookies detallada</strong></a>.
+  </p>
+  <p>
+    <button type="button" class="btn btn-primary" onclick="window.openCookieSettings()" style="font-size:12px;padding:6px 12px;">⚙️ Gestionar preferencias de cookies</button>
   </p>
 
   <h2>7. Conservación de datos y copia de seguridad</h2>
@@ -242,6 +252,7 @@
     <span>© 2026 GarantíasPro · Responsable: Jesús Mendoza Domínguez</span>
     <nav class="footer-links" aria-label="Información legal">
       <a href="./">Volver a la App</a>
+      <a href="cookies.html">Política de cookies</a>
       <a href="#" class="js-contact-link">Contacto</a>
       <a href="auth.html">Acceso / Registro</a>
     </nav>
@@ -249,6 +260,7 @@
 </footer>
 
 <script src="icons.js"></script>
+<script src="cookies.js"></script>
 <script>
   (function() {
     const emailParts = ['jemendo90', 'gmail.com'];

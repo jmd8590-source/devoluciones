@@ -19,17 +19,23 @@
   --r-sm: 10px; --r-md: 14px; --r-lg: 18px; --r-full: 999px;
   --ease-out: cubic-bezier(0.22,1,0.36,1);
   --dur: 180ms;
+
+  /* Typography Tokens (Fontjoy: Sora Titulares + Plus Jakarta Sans Cuerpo) */
+  --font-display: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body:    'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 html { font-size:16px; }
 body {
-  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  font-family: var(--font-body);
   background: var(--c-bg);
   color: var(--t-primary);
   min-height: 100vh;
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.011em;
 }
 button { font: inherit; color: inherit; }
 [hidden] { display: none !important; }
@@ -68,9 +74,10 @@ button { font: inherit; color: inherit; }
   color: #fff;
 }
 .logo-name {
+  font-family: var(--font-display);
   font-size: 20px;
   font-weight: 700;
-  letter-spacing: -0.4px;
+  letter-spacing: -0.025em;
   color: var(--t-primary);
 }
 
@@ -88,9 +95,10 @@ button { font: inherit; color: inherit; }
 /* ── Auth header ───────────────────────────────────────────── */
 .auth-header { margin-bottom: 24px; text-align: center; }
 .auth-title {
+  font-family: var(--font-display);
   font-size: 24px;
   font-weight: 700;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.03em;
   line-height: 1.25;
 }
 .auth-sub { font-size: 14px; color: var(--t-secondary); margin-top: 6px; line-height: 1.5; }
@@ -202,6 +210,7 @@ button { font: inherit; color: inherit; }
 
 /* ── Auth button ───────────────────────────────────────────── */
 .btn-auth {
+  font-family: var(--font-display);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -214,6 +223,7 @@ button { font: inherit; color: inherit; }
   color: #fff;
   font-size: 15px;
   font-weight: 600;
+  letter-spacing: -0.01em;
   border: none;
   cursor: pointer;
   transition: background var(--dur), transform var(--dur);
@@ -297,6 +307,7 @@ button { font: inherit; color: inherit; }
 
 /* ── Secondary button ──────────────────────────────────────── */
 .btn-demo {
+  font-family: var(--font-display);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -310,6 +321,7 @@ button { font: inherit; color: inherit; }
   color: var(--t-primary);
   font-size: 14px;
   font-weight: 600;
+  letter-spacing: -0.01em;
   cursor: pointer;
   transition: background var(--dur), border-color var(--dur);
 }
