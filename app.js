@@ -2306,7 +2306,7 @@ async function init() {
   document.getElementById('confirm-ok')?.addEventListener('click', executeDelete);
 
   // ── Close modals on overlay click
-  ['modal-overlay', 'detail-overlay', 'confirm-overlay', 'modal-privacy', 'modal-contact', 'modal-calendar-demo', 'modal-push-help', 'modal-claim-generator', 'modal-ticket-viewer', 'modal-ai-settings'].forEach(id => {
+  ['modal-overlay', 'detail-overlay', 'confirm-overlay', 'modal-privacy', 'modal-contact', 'modal-calendar-demo', 'modal-claim-generator', 'modal-ticket-viewer', 'modal-ai-settings'].forEach(id => {
     const el = document.getElementById(id);
     el?.addEventListener('click', (e) => {
       if (e.target === el) closeModal(id);
@@ -2318,7 +2318,7 @@ async function init() {
     if (e.key === 'Escape') {
       const allModals = [
         'confirm-overlay', 'modal-claim-generator', 'modal-ticket-viewer',
-        'modal-ai-settings', 'modal-calendar-demo', 'modal-push-help',
+        'modal-ai-settings', 'modal-calendar-demo',
         'modal-privacy', 'modal-contact', 'detail-overlay', 'modal-overlay'
       ];
       for (const mId of allModals) {
@@ -2480,59 +2480,6 @@ async function init() {
     e.target.value = '';
   });
 
-  // ── Push Notifications Channel
-  updatePushStatusLabel();
-  document.getElementById('btn-toggle-push')?.addEventListener('click', async () => {
-    // Si estamos en HTTP remoto no seguro, recargar directamente en HTTPS
-    if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-      location.replace('https://' + location.host + location.pathname + location.search + location.hash);
-      return;
-    }
-
-    // Si el navegador no soporta Notification (móviles / iOS), abrir modal de alternativas en calendario
-    if (!('Notification' in window)) {
-      openModal('modal-calendar-demo');
-      return;
-    }
-
-    if (Notification.permission === 'denied') {
-      openModal('modal-push-help');
-      return;
-    }
-
-    if (Notification.permission === 'granted') {
-      try {
-        new Notification('GarantíasPro', {
-          body: '🔔 ¡Notificaciones activadas y funcionando! Te avisaremos 3 días antes de cualquier vencimiento.'
-        });
-        showToast('Notificación de prueba enviada a tu pantalla');
-      } catch {
-        showToast('Las notificaciones ya están activas en este navegador');
-      }
-      return;
-    }
-
-    try {
-      const res = await Notification.requestPermission();
-      updatePushStatusLabel();
-      if (res === 'granted') {
-        showToast('✅ Notificaciones activadas con éxito');
-        try {
-          new Notification('GarantíasPro', {
-            body: '¡Notificaciones activadas! Te avisaremos 3 días antes de que venzan tus devoluciones o garantías.'
-          });
-        } catch {}
-      } else {
-        showToast('Permiso bloqueado. En pestañas de incógnito están desactivadas por defecto.', 'warn');
-        openModal('modal-push-help');
-      }
-    } catch (err) {
-      console.warn('Error en requestPermission:', err);
-      updatePushStatusLabel();
-      openModal('modal-push-help');
-    }
-  });
-
   // ── Calendar Demo Button & Modal
   document.getElementById('btn-demo-calendar')?.addEventListener('click', () => {
     openModal('modal-calendar-demo');
@@ -2556,19 +2503,7 @@ async function init() {
     showToast('Alarma descargada (.ics). Al abrirla se añadirá a tu calendario habitual con aviso a 3 días.');
   });
 
-  // ── Push Help Modal (Especial incógnito)
-  document.getElementById('push-help-close')?.addEventListener('click', () => {
-    closeModal('modal-push-help');
-  });
-  document.getElementById('btn-push-help-ok')?.addEventListener('click', () => {
-    closeModal('modal-push-help');
-  });
-  document.getElementById('btn-push-switch-cal')?.addEventListener('click', () => {
-    closeModal('modal-push-help');
-    openModal('modal-calendar-demo');
-  });
-
-  // ── Modales: Privacidad y Aviso Legal
+// ── Modales: Privacidad y Aviso Legal
   document.getElementById('btn-open-privacy')?.addEventListener('click', () => {
     openModal('modal-privacy');
   });
@@ -2934,64 +2869,6 @@ function importProductsJson(file) {
     }
   };
   reader.readAsText(file);
-}
-
-function updatePushStatusLabel() {
-  const lbl = document.getElementById('push-status-label');
-  const btn = document.getElementById('btn-toggle-push');
-  if (!lbl) return;
-
-  // 1. Contexto no seguro (HTTP no localhost)
-  if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-    lbl.textContent = '🔒 Requiere conexión segura HTTPS para notificaciones';
-    lbl.className = 'channel-status status-denied';
-    if (btn) {
-      btn.textContent = 'Cambiar a HTTPS (Seguro)';
-      btn.disabled = false;
-      btn.className = 'btn-channel-action btn-warn';
-    }
-    return;
-  }
-
-  // 2. Dispositivo / navegador sin soporte de Notification API (p. ej. iOS Chrome/Safari sin PWA)
-  if (!('Notification' in window)) {
-    lbl.textContent = '📱 Navegador móvil sin Web Push nativo';
-    lbl.className = 'channel-status status-denied';
-    if (btn) {
-      btn.textContent = 'Ver Alarmas Calendario (.ics)';
-      btn.disabled = false;
-      btn.className = 'btn-channel-action';
-    }
-    return;
-  }
-
-  // 3. Permisos
-  const perm = Notification.permission;
-  if (perm === 'granted') {
-    lbl.textContent = '✅ Notificaciones activas en este navegador';
-    lbl.className = 'channel-status status-granted';
-    if (btn) {
-      btn.textContent = 'Avisos activos (Probar)';
-      btn.disabled = false;
-      btn.className = 'btn-channel-action btn-granted';
-    }
-  } else if (perm === 'denied') {
-    lbl.textContent = '⚠️ Bloqueadas en navegador o modo incógnito';
-    lbl.className = 'channel-status status-denied';
-    if (btn) {
-      btn.textContent = '¿Por qué? / Ayuda';
-      btn.disabled = false;
-      btn.className = 'btn-channel-action btn-warn';
-    }
-  } else {
-    lbl.textContent = '🔔 Permiso desactivado (pulsa para activar)';
-    lbl.className = 'channel-status';
-    if (btn) {
-      btn.textContent = 'Activar notificaciones';
-      btn.disabled = false;
-      btn.className = 'btn-channel-action';
-    }
-  }
 }
 
 if (document.readyState === 'loading') {

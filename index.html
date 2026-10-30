@@ -293,24 +293,17 @@
     <!-- Notification & External Alarms Hub -->
     <div class="alerts-notification-card">
       <div class="notif-card-header">
-        <div class="notif-card-icon">🔔</div>
+        <div class="notif-card-icon">🗓️</div>
         <div>
-          <h3 class="notif-card-title">Canales de aviso externo</h3>
-          <p class="notif-card-desc">No necesitas entrar a la web todos los días. Activa avisos automáticos en tu navegador o añade alarmas a tu Google Calendar o Apple Calendar 3 días antes de que venza cualquier plazo.</p>
+          <h3 class="notif-card-title">Alarmas en tu Calendario Móvil</h3>
+          <p class="notif-card-desc">No necesitas entrar a la web todos los días. Guarda alarmas automáticas en Google Calendar, Apple Calendar o WhatsApp 3 días antes de que venza cualquier plazo de devolución o garantía.</p>
         </div>
       </div>
       <div class="notif-channels-grid">
         <div class="notif-channel-item">
           <div class="channel-text">
-            <strong>Notificaciones Push en Navegador</strong>
-            <span id="push-status-label" class="channel-status">Comprobando permisos...</span>
-          </div>
-          <button type="button" class="btn-channel-action" id="btn-toggle-push">Activar notificaciones</button>
-        </div>
-        <div class="notif-channel-item">
-          <div class="channel-text">
-            <strong>Alarmas en Calendario Móvil (.ics / Google)</strong>
-            <span>Genera avisos con alarma a 3 días en cada producto</span>
+            <strong>Alarmas Automáticas (.ics / Google / Apple)</strong>
+            <span>Genera avisos con alarma a 3 días en cada producto con 1 solo clic</span>
           </div>
           <button type="button" class="btn-channel-action" id="btn-demo-calendar">Ver cómo funciona</button>
         </div>
@@ -717,48 +710,7 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     MODAL — PUSH PERMISSION HELP (ESPECIAL INCOGNITO)
-═══════════════════════════════════════════════ -->
-<div class="modal-overlay" id="modal-push-help" role="dialog" aria-modal="true"
-     aria-labelledby="push-help-heading" hidden>
-  <div class="modal-panel modal-panel-legal">
-    <div class="modal-header">
-      <h2 class="modal-title" id="push-help-heading">🔔 Estado de Notificaciones Push</h2>
-      <button class="modal-close" id="push-help-close" aria-label="Cerrar">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </button>
-    </div>
-    <div class="modal-legal-content">
-      <div style="background:rgba(247,104,8,0.1);border:1px solid rgba(247,104,8,0.3);border-radius:8px;padding:12px;margin-bottom:14px;color:var(--t-primary);font-size:13px;line-height:1.5;">
-        <strong>ℹ️ ¿Por qué no se activan las notificaciones o dice bloqueado?</strong><br />
-        En el <strong>Modo Incógnito de Google Chrome</strong>, el navegador desactiva por completo las notificaciones web para proteger tu privacidad e impedir el rastreo entre sesiones.
-      </div>
 
-      <h3 style="font-size:14px;color:var(--t-primary);margin:14px 0 6px 0;">Cómo activarlas en una ventana normal:</h3>
-      <ol style="font-size:13px;color:var(--t-secondary);line-height:1.6;padding-left:20px;margin:0 0 16px 0;">
-        <li>Abre GarantíasPro en una <strong>pestaña normal</strong> de Chrome (no en ventana de incógnito).</li>
-        <li>Haz clic en el <strong>icono de ajustes o candado</strong> a la izquierda de la dirección web (URL).</li>
-        <li>En la sección <strong>«Notificaciones»</strong>, selecciona <strong>«Permitir»</strong>.</li>
-        <li>Vuelve a pulsar <em>«Activar notificaciones»</em> y recibirás el aviso de prueba.</li>
-      </ol>
-
-      <div style="background:rgba(74,125,255,0.08);border:1px solid rgba(74,125,255,0.25);border-radius:10px;padding:12px;display:flex;gap:12px;align-items:center;">
-        <span style="font-size:26px;">💡</span>
-        <div style="font-size:13px;color:var(--t-primary);line-height:1.4;">
-          <strong>Alternativa 100% recomendada:</strong><br />
-          Las <strong>Alarmas en Calendario Móvil (.ics)</strong> funcionan siempre, incluso en modo incógnito, sin pedir permisos y avisándote 3 días antes directamente en tu teléfono.
-        </div>
-      </div>
-
-      <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;margin-top:16px;">
-        <button type="button" class="btn-channel-action" id="btn-push-switch-cal">Ver Alarmas de Calendario</button>
-        <button type="button" class="btn-primary" id="btn-push-help-ok">Cerrar</button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════
