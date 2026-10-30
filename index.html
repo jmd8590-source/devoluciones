@@ -90,6 +90,14 @@
         <span class="lang-code" id="lang-code">ES</span>
       </button>
 
+      <!-- Mi cuenta -->
+      <button class="btn-account" id="btn-account" aria-label="Mi cuenta" title="Mi cuenta">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>
+        </svg>
+        <span data-i18n="btn.account">Mi cuenta</span>
+      </button>
+
       <!-- Logout -->
       <button class="btn-logout" id="btn-logout" aria-label="Cerrar sesión" title="Cerrar sesión">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -148,7 +156,7 @@
             <div class="feat-icon">☁️</div>
             <div class="feat-content">
               <h3>Sincronización en la Nube (UE)</h3>
-              <p>Tus facturas y tickets se guardan en Supabase (Irlanda) con Row Level Security. No se pierden si cambias de móvil o limpias caché.</p>
+              <p>Tus facturas y tickets se guardan en servidores seguros en la Unión Europea con cifrado avanzado. No se pierden si cambias de móvil o limpias caché.</p>
             </div>
           </div>
 
@@ -319,13 +327,6 @@
 
   <footer class="app-legal-footer" role="contentinfo">
     <span>GarantíasPro · Responsable: Jesús Mendoza Domínguez</span>
-    <nav aria-label="Información legal">
-      <button type="button" class="legal-btn" id="btn-open-privacy">Privacidad y aviso legal</button>
-      <a href="cookies.html" target="_blank" rel="noopener" class="legal-btn">Política de cookies</a>
-      <button type="button" class="legal-btn" data-open-cookies>Configuración de cookies</button>
-      <button type="button" class="legal-btn" id="btn-open-contact">Contacto y Soporte</button>
-      <a href="privacidad.html" target="_blank" rel="noopener" class="legal-fallback">Ver página legal</a>
-    </nav>
   </footer>
 
 </main>
@@ -608,9 +609,9 @@
         </tbody>
       </table>
 
-      <h3>4. Alojamiento y seguridad de datos (Supabase UE)</h3>
+      <h3>4. Alojamiento y seguridad de datos</h3>
       <p>
-        Los datos de los usuarios registrados se almacenan en servidores de <strong>Supabase en la Unión Europea (región eu-west-1, Irlanda)</strong> con cifrado en tránsito (TLS) y en reposo (AES-256), bajo estrictas políticas de aislamiento por usuario (Row Level Security en PostgreSQL).
+        Los datos de los usuarios registrados se almacenan en servidores de <strong>la Unión Europea (región eu-west-1, Irlanda)</strong> con cifrado en tránsito (TLS) y en reposo (AES-256), bajo estrictas políticas de aislamiento por usuario (Row Level Security en PostgreSQL).
       </p>
 
       <h3>5. Ejercicio de derechos (RGPD / LOPD-GDD)</h3>
@@ -925,6 +926,130 @@
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
         <button type="button" class="btn-channel-action btn-warn" id="btn-clear-gemini-key">Usar solo OCR local</button>
         <button type="button" class="btn-primary" id="btn-save-gemini-key">Guardar clave</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MODAL — MI CUENTA Y AJUSTES
+═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-account" role="dialog" aria-modal="true"
+     aria-labelledby="account-modal-title" hidden>
+  <div class="modal-panel modal-panel-account">
+    <div class="modal-header">
+      <div class="modal-header-info">
+        <h2 class="modal-title" id="account-modal-title">Mi Cuenta y Ajustes</h2>
+        <p class="modal-subtitle">Gestiona tu perfil, seguridad y preferencias</p>
+      </div>
+      <button class="modal-close" id="account-modal-close" aria-label="Cerrar ventana">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-account-body">
+      <!-- Tarjeta de perfil del usuario -->
+      <div class="account-card-user">
+        <div class="account-user-avatar" id="account-user-avatar">U</div>
+        <div class="account-user-meta">
+          <div class="account-name-row">
+            <h3 class="account-user-name" id="account-user-name">Usuario</h3>
+            <span class="account-plan-badge" id="account-status-badge">Cuenta Activa</span>
+          </div>
+          <p class="account-user-email" id="account-user-email">usuario@correo.com</p>
+          <div class="account-sync-info" id="account-sync-info">
+            <span class="sync-dot"></span>
+            <span id="account-sync-text">Sincronización segura activa en la nube</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aviso para Modo Demo -->
+      <div class="account-demo-notice" id="account-demo-notice" hidden>
+        <div class="demo-notice-icon">⚠️</div>
+        <div class="demo-notice-text">
+          <strong>Estás usando GarantíasPro en Modo Demo</strong>
+          <p>Tus datos se guardan temporalmente en tu navegador. Para activar la sincronización permanente en la nube y cambiar tu contraseña, crea una cuenta gratuita.</p>
+          <a href="auth.html#registro" class="btn-demo-create">Crear cuenta gratis</a>
+        </div>
+      </div>
+
+      <!-- Sección: Seguridad y Cambio de contraseña -->
+      <div class="account-section" id="account-security-section">
+        <div class="account-section-header">
+          <div class="section-icon">🔒</div>
+          <div>
+            <h4 class="account-section-title">Cambiar contraseña</h4>
+            <p class="account-section-desc">Actualiza tu contraseña para mantener tu cuenta protegida en la nube.</p>
+          </div>
+        </div>
+
+        <form id="form-change-password" novalidate autocomplete="off">
+          <div class="field-group">
+            <label for="acc-new-pwd">Nueva contraseña</label>
+            <div class="field-wrap">
+              <span class="field-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </span>
+              <input type="password" id="acc-new-pwd" placeholder="Mínimo 8 caracteres" autocomplete="new-password" required minlength="8" maxlength="128" />
+              <button type="button" class="toggle-pwd-btn" id="acc-toggle-new-pwd" aria-label="Mostrar contraseña">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <!-- Medidor de fortaleza -->
+            <div class="pwd-strength" id="acc-pwd-strength" style="display:none;">
+              <div class="strength-bars">
+                <div class="s-bar" id="acc-sb1"></div>
+                <div class="s-bar" id="acc-sb2"></div>
+                <div class="s-bar" id="acc-sb3"></div>
+                <div class="s-bar" id="acc-sb4"></div>
+              </div>
+              <span class="strength-label" id="acc-strength-label"></span>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="acc-confirm-pwd">Confirmar nueva contraseña</label>
+            <div class="field-wrap">
+              <span class="field-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </span>
+              <input type="password" id="acc-confirm-pwd" placeholder="Repite la nueva contraseña" autocomplete="new-password" required minlength="8" maxlength="128" />
+              <button type="button" class="toggle-pwd-btn" id="acc-toggle-confirm-pwd" aria-label="Mostrar contraseña">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Mensajes de feedback -->
+          <div class="account-msg account-msg-error" id="acc-pwd-error" role="alert" hidden></div>
+          <div class="account-msg account-msg-success" id="acc-pwd-success" role="status" hidden></div>
+
+          <div class="account-form-actions">
+            <button type="submit" class="btn-primary" id="btn-submit-change-pwd">
+              <span id="btn-change-pwd-text">Actualizar contraseña</span>
+              <span class="btn-spinner" id="btn-change-pwd-spinner" hidden aria-hidden="true"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Resumen de almacenamiento / datos -->
+      <div class="account-storage-summary">
+        <div class="storage-item">
+          <span class="storage-label">Seguridad de cuenta</span>
+          <span class="storage-value">Cifrado de extremo a extremo (TLS / AES-256)</span>
+        </div>
+        <div class="storage-item">
+          <span class="storage-label">Protección de tickets</span>
+          <span class="storage-value">Aislamiento por usuario y custodia antiborrado</span>
+        </div>
       </div>
     </div>
   </div>

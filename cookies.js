@@ -131,7 +131,7 @@
               </label>
             </div>
             <p style="margin:0;font-size:12.5px;color:var(--t-muted,#8899bb);">
-              Imprescindibles para que la aplicación funcione. Permiten la autenticación segura mediante tokens cifrados (Supabase), la custodia digital de tickets y la protección contra ataques informáticos. No se pueden desactivar.
+              Imprescindibles para que la aplicación funcione. Permiten la autenticación segura mediante tokens cifrados (sesión en la nube), la custodia digital de tickets y la protección contra ataques informáticos. No se pueden desactivar.
             </p>
           </div>
 
@@ -213,7 +213,13 @@
     btn.className = 'cookie-reopen-trigger';
     btn.title = 'Configuración y preferencias de cookies';
     btn.setAttribute('aria-label', 'Abrir panel de configuración de cookies');
-    btn.innerHTML = `<span>🍪</span><span>Cookies</span>`;
+    btn.innerHTML = `
+      <span class="cookie-trigger-icon-wrap" aria-hidden="true">
+        <span class="cookie-trigger-icon">🍪</span>
+        <span class="cookie-status-dot" title="Privacidad activa"></span>
+      </span>
+      <span class="cookie-trigger-label">Cookies</span>
+    `;
 
     btn.addEventListener('click', openSettingsModal);
     document.body.appendChild(btn);
