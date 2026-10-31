@@ -145,7 +145,7 @@
 
         <div class="onboarding-features-grid">
           <div class="onboarding-feature-card">
-            <div class="feat-icon">⏱️</div>
+            <div class="feat-icon" data-icon="clock" data-icon-size="22"></div>
             <div class="feat-content">
               <h3>Avisos a 3 días y Calendario</h3>
               <p>Notificaciones push en navegador o móvil y alarmas automáticas directas a tu Google Calendar, Apple Calendar o WhatsApp.</p>
@@ -153,7 +153,7 @@
           </div>
 
           <div class="onboarding-feature-card">
-            <div class="feat-icon">☁️</div>
+            <div class="feat-icon" data-icon="cloud" data-icon-size="22"></div>
             <div class="feat-content">
               <h3>Sincronización en la Nube (UE)</h3>
               <p>Tus facturas y tickets se guardan en servidores seguros en la Unión Europea con cifrado avanzado. No se pierden si cambias de móvil o limpias caché.</p>
@@ -161,7 +161,7 @@
           </div>
 
           <div class="onboarding-feature-card">
-            <div class="feat-icon">🇪🇸</div>
+            <div class="feat-icon" data-icon="scale" data-icon-size="22"></div>
             <div class="feat-content">
               <h3>Adaptado a la Ley Española</h3>
               <p>Cálculo automático de plazos de desistimiento de comercios y los 3 años de garantía obligatorios en España.</p>
@@ -175,10 +175,10 @@
             Añadir mi primer producto
           </button>
           <button type="button" class="btn-hero-secondary" id="btn-hero-sample">
-            🧪 Probar con datos de muestra
+            <span data-icon="flask" data-icon-size="15"></span> Probar con datos de muestra
           </button>
           <a href="auth.html" class="btn-hero-outline" id="btn-hero-cloud">
-            ☁️ Crear cuenta en la nube
+            <span data-icon="cloud" data-icon-size="15"></span> Crear cuenta en la nube
           </a>
         </div>
       </div>
@@ -293,7 +293,7 @@
     <!-- Notification & External Alarms Hub -->
     <div class="alerts-notification-card">
       <div class="notif-card-header">
-        <div class="notif-card-icon">🗓️</div>
+        <div class="notif-card-icon" data-icon="calendar" data-icon-size="24"></div>
         <div>
           <h3 class="notif-card-title">Alarmas en tu Calendario Móvil</h3>
           <p class="notif-card-desc">No necesitas entrar a la web todos los días. Guarda alarmas automáticas en Google Calendar, Apple Calendar o WhatsApp 3 días antes de que venza cualquier plazo de devolución o garantía.</p>
@@ -346,11 +346,11 @@
       <div class="form-section">
         <div class="form-section-header-flex">
           <h3 class="form-section-title" data-i18n="form.ticket.section">Ticket de compra · Cofre Digital</h3>
-          <span class="vault-mini-tag">🛡️ Custodia antiborrado</span>
+          <span class="vault-mini-tag"><span data-icon="shield" data-icon-size="13"></span> Custodia permanente</span>
         </div>
 
         <div class="thermal-warning-tip">
-          <span>💡 <strong>El papel térmico se borra a los 6 meses:</strong> Sube una foto o factura en PDF. La IA extraerá los datos automáticamente en 2 segundos y tu ticket quedará custodiado de forma permanente.</span>
+          <span><span data-icon="lightbulb" data-icon-size="15" style="vertical-align:middle;margin-right:4px;"></span> <strong>El papel térmico se borra a los 6 meses:</strong> Sube una foto o factura en PDF. La IA extraerá los datos automáticamente en 2 segundos y tu ticket quedará custodiado de forma permanente.</span>
         </div>
 
         <div class="ticket-upload-area" id="ticket-upload-area" tabindex="0"
@@ -359,14 +359,14 @@
           <div class="ai-scan-overlay" id="ai-scan-overlay" hidden>
             <div class="ai-scan-laser"></div>
             <div class="ai-scan-status">
-              <span class="ai-sparkle">✨</span>
+              <span class="ai-sparkle" data-icon="sparkles" data-icon-size="16"></span>
               <span id="ai-scan-text">Analizando ticket con IA (extrayendo comercio, importe y fechas)...</span>
             </div>
           </div>
           <div class="ticket-placeholder" id="ticket-placeholder">
             <div class="upload-icon" data-icon="camera" data-icon-size="28"></div>
             <p class="upload-title">Arrastra la foto del ticket / factura o pulsa aquí</p>
-            <p class="upload-sub">✨ <strong>Escaneo automático con IA</strong> · JPG, PNG, WEBP o PDF — máx. 10 MB</p>
+            <p class="upload-sub"><span data-icon="sparkles" data-icon-size="14" style="vertical-align:middle;margin-right:3px;"></span><strong>Escaneo automático con IA</strong> · JPG, PNG, WEBP o PDF — máx. 10 MB</p>
           </div>
           <input type="file" id="ticket-file" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
                  style="display:none" aria-label="Seleccionar foto de ticket" />
@@ -375,13 +375,13 @@
         </div>
 
         <div class="ai-extraction-alert" id="ai-extraction-alert" hidden>
-          <div class="ai-alert-icon">✨</div>
+          <div class="ai-alert-icon" data-icon="sparkles" data-icon-size="20"></div>
           <div class="ai-alert-text">
             <strong>¡Ticket analizado con éxito!</strong>
             <p id="ai-extraction-summary">Comercio, importe, fecha de compra extraídos y 3 años de garantía legal en España calculados automáticamente.</p>
             <div class="ai-raw-toggle" id="ai-raw-toggle-wrap" hidden>
               <button type="button" class="btn-raw-toggle" id="btn-toggle-raw-text">
-                👁️ Ver texto leído en el ticket
+                <span data-icon="eye" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span>Ver texto leído en el ticket
               </button>
               <pre class="ai-raw-text-box" id="ai-raw-text" hidden></pre>
             </div>
@@ -390,18 +390,18 @@
 
         <div class="ticket-actions-row">
           <button type="button" class="btn-ai-action btn-camera-trigger" id="btn-camera-trigger" title="Hacer foto con la cámara del móvil">
-            📷 Foto con cámara
+            <span data-icon="camera" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span>Foto con cámara
           </button>
           <button type="button" class="btn-ai-action" id="btn-upload-file-trigger" title="Elegir foto o PDF desde tus archivos">
-            📁 Subir archivo / PDF
+            <span data-icon="folder" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span>Subir archivo / PDF
           </button>
           <button type="button" class="btn-remove-ticket" id="btn-remove-ticket"
                   data-i18n="form.ticket.remove" hidden>Eliminar foto</button>
           <button type="button" class="btn-ai-action" id="btn-ai-re-scan" hidden>
-            ✨ Re-escanear ticket
+            <span data-icon="sparkles" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span>Re-escanear ticket
           </button>
           <button type="button" class="btn-ai-action btn-ai-config" id="btn-ai-settings-toggle" title="Configuración de la IA de escaneo">
-            ⚙️ Ajustes IA / OCR
+            <span data-icon="settings" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span>Ajustes IA / OCR
           </button>
         </div>
       </div>
@@ -661,7 +661,7 @@
      aria-labelledby="cal-demo-heading" hidden>
   <div class="modal-panel modal-panel-legal">
     <div class="modal-header">
-      <h2 class="modal-title" id="cal-demo-heading">🗓️ Alarmas en tu Calendario Móvil</h2>
+      <h2 class="modal-title" id="cal-demo-heading">Alarmas en tu Calendario Móvil</h2>
       <button class="modal-close" id="cal-demo-close" aria-label="Cerrar">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -675,7 +675,7 @@
 
       <div style="display:flex;flex-direction:column;gap:12px;margin:16px 0;">
         <div style="display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;">
-          <div style="font-size:24px;line-height:1;">⏰</div>
+          <div class="feat-icon" data-icon="clock" data-icon-size="24"></div>
           <div>
             <strong style="color:var(--t-primary);display:block;margin-bottom:3px;font-size:13px;">Alarma automática a 3 días</strong>
             <p style="margin:0;font-size:12px;color:var(--t-muted);line-height:1.4;">El archivo de calendario (.ics) incluye una alerta programada exactamente <strong>3 días antes</strong> de que venza el plazo de devolución (14/30 días) o la garantía legal (3 años en España).</p>
@@ -683,7 +683,7 @@
         </div>
 
         <div style="display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;">
-          <div style="font-size:24px;line-height:1;">📱</div>
+          <div class="feat-icon" data-icon="smartphone" data-icon-size="24"></div>
           <div>
             <strong style="color:var(--t-primary);display:block;margin-bottom:3px;font-size:13px;">Universal: Móviles Android, iPhone y PC</strong>
             <p style="margin:0;font-size:12px;color:var(--t-muted);line-height:1.4;">Funciona directamente con <strong>Google Calendar, Apple Calendar (iOS/Mac)</strong> y <strong>Microsoft Outlook</strong>. No necesitas instalar aplicaciones de terceros.</p>
@@ -691,7 +691,7 @@
         </div>
 
         <div style="display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;">
-          <div style="font-size:24px;line-height:1;">👆</div>
+          <div class="feat-icon" data-icon="checkCircle" data-icon-size="24"></div>
           <div>
             <strong style="color:var(--t-primary);display:block;margin-bottom:3px;font-size:13px;">Disponible en cada producto registrado</strong>
             <p style="margin:0;font-size:12px;color:var(--t-muted);line-height:1.4;">Al hacer clic sobre cualquier producto de tu lista, verás el botón <strong>«📅 Alarma calendario (.ics)»</strong> y <strong>«💬 WhatsApp»</strong> para guardar el aviso en 1 segundo.</p>
@@ -721,7 +721,7 @@
   <div class="modal-panel modal-panel-claim">
     <div class="modal-header">
       <div>
-        <h2 class="modal-title" id="claim-gen-heading">⚖️ Reclamación Formal con 1 Clic</h2>
+        <h2 class="modal-title" id="claim-gen-heading">Reclamación Formal con 1 Clic</h2>
         <p class="modal-claim-sub">Redacción legal conforme al RDL 1/2007 (Ley de Consumidores y Usuarios y 3 años de garantía en España).</p>
       </div>
       <button class="modal-close" id="claim-gen-close" aria-label="Cerrar">
@@ -737,22 +737,22 @@
         <label class="claim-type-label">Tipo de reclamación:</label>
         <div class="claim-type-grid">
           <button type="button" class="btn-claim-type active" data-type="warranty">
-            <span class="type-icon">🛡️</span>
+            <span class="type-icon" data-icon="shield" data-icon-size="18"></span>
             <span class="type-title">Avería en Garantía Legal (3 años)</span>
             <span class="type-desc">Falta de conformidad según Art. 114 y 120 RDL 1/2007. Gratuidad total.</span>
           </button>
           <button type="button" class="btn-claim-type" data-type="return">
-            <span class="type-icon">⏱️</span>
+            <span class="type-icon" data-icon="return" data-icon-size="18"></span>
             <span class="type-title">Devolución / Desistimiento en plazo</span>
             <span class="type-desc">Desistimiento dentro del plazo comercial (14 o 30 días) y reembolso íntegro.</span>
           </button>
           <button type="button" class="btn-claim-type" data-type="replacement">
-            <span class="type-icon">🔄</span>
+            <span class="type-icon" data-icon="refresh" data-icon-size="18"></span>
             <span class="type-title">Exigencia de Sustitución directa</span>
             <span class="type-desc">Art. 118 RDL 1/2007: Entrega de un producto idéntico o superior nuevo.</span>
           </button>
           <button type="button" class="btn-claim-type" data-type="delay">
-            <span class="type-icon">⏳</span>
+            <span class="type-icon" data-icon="hourglass" data-icon-size="18"></span>
             <span class="type-title">Reembolso por retraso de reparación</span>
             <span class="type-desc">Art. 121 RDL 1/2007: Reparación dilatada o falta de piezas en plazo razonable.</span>
           </button>
@@ -775,8 +775,8 @@
       <!-- Vista previa del escrito legal generado -->
       <div class="claim-preview-container">
         <div class="claim-preview-header">
-          <span class="preview-badge">📄 Escrito Legal Listo para Enviar</span>
-          <span class="preview-law-cite">⚖️ RDL 1/2007 · RDL 7/2021 (BOE)</span>
+          <span class="preview-badge"><span data-icon="fileText" data-icon-size="13" style="vertical-align:middle;margin-right:4px;"></span>Escrito Legal Listo para Enviar</span>
+          <span class="preview-law-cite"><span data-icon="scale" data-icon-size="13" style="vertical-align:middle;margin-right:4px;"></span>RDL 1/2007 · RDL 7/2021 (BOE)</span>
         </div>
         <textarea id="claim-text-preview" class="claim-textarea" readonly spellcheck="false"></textarea>
       </div>
@@ -808,7 +808,7 @@
   <div class="modal-panel modal-panel-viewer">
     <div class="modal-header">
       <div>
-        <h2 class="modal-title" id="ticket-viewer-heading">🛡️ Ticket Custodiado en el Cofre Digital</h2>
+        <h2 class="modal-title" id="ticket-viewer-heading">Ticket Custodiado en el Cofre Digital</h2>
         <span class="vault-cert-tag">Copia Digital Permanente · Válida para Reclamaciones Legales en España</span>
       </div>
       <button class="modal-close" id="ticket-viewer-close" aria-label="Cerrar">
@@ -822,13 +822,13 @@
         <img id="ticket-viewer-img" src="" alt="Ticket de compra en alta resolución" />
       </div>
       <div class="ticket-viewer-footer">
-        <span class="ticket-vault-note">💡 El papel térmico original se borra con el tiempo. Muestra esta pantalla en el comercio o servicio técnico para justificar tu compra.</span>
+        <span class="ticket-vault-note"><span data-icon="lightbulb" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span>El papel térmico original se borra con el tiempo. Muestra esta pantalla en el comercio o servicio técnico para justificar tu compra.</span>
         <div class="ticket-viewer-btns">
           <button type="button" class="btn-channel-action" id="btn-download-viewer-ticket">
-            📥 Descargar ticket
+            <span data-icon="download" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span>Descargar ticket
           </button>
           <button type="button" class="btn-primary" id="btn-print-viewer-ticket">
-            🖨️ Imprimir ticket
+            <span data-icon="printer" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span>Imprimir ticket
           </button>
         </div>
       </div>
@@ -843,7 +843,7 @@
      aria-labelledby="ai-settings-heading" hidden>
   <div class="modal-panel modal-panel-legal">
     <div class="modal-header">
-      <h2 class="modal-title" id="ai-settings-heading">✨ Escáner Inteligente con IA (Gemini 2.5 Flash)</h2>
+      <h2 class="modal-title" id="ai-settings-heading">Escáner Inteligente con IA (Gemini 2.5 Flash)</h2>
       <button class="modal-close" id="ai-settings-close" aria-label="Cerrar">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -856,7 +856,7 @@
       </p>
 
       <div style="background:rgba(74,125,255,0.08);border:1px solid rgba(74,125,255,0.25);border-radius:10px;padding:12px;margin:12px 0;">
-        <strong style="color:var(--t-primary);display:block;margin-bottom:6px;">⚡ Dos motores de escaneo 100% operativos:</strong>
+        <strong style="color:var(--t-primary);display:block;margin-bottom:6px;"><span data-icon="sparkles" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span>Dos motores de escaneo 100% operativos:</strong>
         <p style="margin:0;font-size:12px;color:var(--t-secondary);line-height:1.5;">
           • <strong>Motor 1 · OCR Físico Local (Sin clave / Gratis):</strong> Utiliza el motor Tesseract OCR optimizado con contraste dinámico en tu navegador. Lee el texto impreso real de la fotografía de cualquier tienda física, bar o taller.<br />
           • <strong>Motor 2 · IA Gemini Vision (Ultra Precisión):</strong> Si introduces tu clave gratuita de Google Gemini (Flash), la IA procesará la foto con visión por ordenador profunda para leer tickets arrugados o facturas complejas en PDF.
@@ -867,11 +867,11 @@
         <label for="input-gemini-key" style="font-size:12px;color:var(--t-muted);display:block;margin-bottom:4px;">Google Gemini API Key (Opcional para IA multimodal):</label>
         <div style="display:flex;gap:8px;">
           <input type="text" id="input-gemini-key" class="form-input" style="flex:1;box-sizing:border-box;-webkit-text-security:disc;" placeholder="AIzaSy..." autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" />
-          <button type="button" class="btn-channel-action" id="btn-test-gemini-key" style="white-space:nowrap;">🧪 Probar clave</button>
+          <button type="button" class="btn-channel-action" id="btn-test-gemini-key" style="white-space:nowrap;"><span data-icon="flask" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span>Probar clave</button>
         </div>
         <div id="gemini-test-result" style="font-size:12px;margin-top:6px;line-height:1.4;" hidden></div>
         <small style="font-size:11px;color:var(--t-muted);display:block;margin-top:6px;line-height:1.4;">
-          💡 <strong>Cómo obtener tu clave gratuita en 1 minuto:</strong> Entra en <a href="https://aistudio.google.com/" target="_blank" rel="noopener" style="color:var(--c-primary);font-weight:600;">Google AI Studio</a>, pulsa en <em>«Get API key»</em> y copia la clave. La capa gratuita permite escanear hasta 1.500 tickets al día a coste 0 €.
+          <span data-icon="lightbulb" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span><strong>Cómo obtener tu clave gratuita en 1 minuto:</strong> Entra en <a href="https://aistudio.google.com/" target="_blank" rel="noopener" style="color:var(--c-primary);font-weight:600;">Google AI Studio</a>, pulsa en <em>«Get API key»</em> y copia la clave. La capa gratuita permite escanear hasta 1.500 tickets al día a coste 0 €.
         </small>
       </div>
 
@@ -918,20 +918,12 @@
         </div>
       </div>
 
-      <!-- Aviso para Modo Demo -->
-      <div class="account-demo-notice" id="account-demo-notice" hidden>
-        <div class="demo-notice-icon">⚠️</div>
-        <div class="demo-notice-text">
-          <strong>Estás usando GarantíasPro en Modo Demo</strong>
-          <p>Tus datos se guardan temporalmente en tu navegador. Para activar la sincronización permanente en la nube y cambiar tu contraseña, crea una cuenta gratuita.</p>
-          <a href="auth.html#registro" class="btn-demo-create">Crear cuenta gratis</a>
-        </div>
-      </div>
+      
 
       <!-- Sección: Seguridad y Cambio de contraseña -->
       <div class="account-section" id="account-security-section">
         <div class="account-section-header">
-          <div class="section-icon">🔒</div>
+          <div class="section-icon" data-icon="lock" data-icon-size="20"></div>
           <div>
             <h4 class="account-section-title">Cambiar contraseña</h4>
             <p class="account-section-desc">Actualiza tu contraseña para mantener tu cuenta protegida en la nube.</p>
@@ -939,6 +931,16 @@
         </div>
 
         <form id="form-change-password" novalidate autocomplete="off">
+          <div class="field-group">
+            <label for="acc-current-pwd">Contraseña actual (para verificar tu identidad)</label>
+            <div class="field-wrap">
+              <span class="field-icon" data-icon="key" data-icon-size="16"></span>
+              <input type="password" id="acc-current-pwd" placeholder="Introduce tu contraseña actual" autocomplete="current-password" required minlength="6" maxlength="128" />
+              <button type="button" class="toggle-pwd-btn" id="acc-toggle-current-pwd" aria-label="Mostrar contraseña actual" title="Mostrar/ocultar contraseña">
+                <span data-icon="eye" data-icon-size="16"></span>
+              </button>
+            </div>
+          </div>
           <div class="field-group">
             <label for="acc-new-pwd">Nueva contraseña</label>
             <div class="field-wrap">

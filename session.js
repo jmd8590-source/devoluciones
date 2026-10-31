@@ -175,8 +175,7 @@
       const emailEl = document.getElementById('account-user-email');
       const statusBadge = document.getElementById('account-status-badge');
       const syncText = document.getElementById('account-sync-text');
-      const demoNotice = document.getElementById('account-demo-notice');
-      const securitySection = document.getElementById('account-security-section');
+      const submitBtn = document.getElementById('btn-submit-change-pwd');
 
       const isEnglish = lang() === 'en';
       const displayName = info.name || (info.email ? info.email.split('@')[0] : (isEnglish ? 'User' : 'Usuario'));
@@ -185,16 +184,12 @@
       if (nameEl) nameEl.textContent = displayName;
 
       if (info.isDemo) {
-        if (emailEl) emailEl.textContent = isEnglish ? 'Demo mode (temporary)' : 'Modo Demo local (temporal)';
+        if (emailEl) emailEl.textContent = isEnglish ? 'Demo session (local)' : 'Modo Demo local';
         if (statusBadge) {
           statusBadge.textContent = 'Demo';
           statusBadge.className = 'account-plan-badge badge-demo';
         }
-        if (syncText) syncText.textContent = isEnglish ? 'Data stored only on this browser' : 'Datos guardados solo en este navegador';
-        if (demoNotice) demoNotice.hidden = false;
-        if (securitySection) securitySection.style.opacity = '0.45';
-        const submitBtn = document.getElementById('btn-submit-change-pwd');
-        if (submitBtn) submitBtn.disabled = true;
+        if (syncText) syncText.textContent = isEnglish ? 'Session active on this browser' : 'Sesión local en este navegador';
       } else {
         if (emailEl) emailEl.textContent = info.email || 'usuario@correo.com';
         if (statusBadge) {
@@ -202,15 +197,14 @@
           statusBadge.className = 'account-plan-badge';
         }
         if (syncText) syncText.textContent = isEnglish ? 'Secure cloud synchronization active' : 'Sincronización segura activa en la nube';
-        if (demoNotice) demoNotice.hidden = true;
-        if (securitySection) securitySection.style.opacity = '1';
-        const submitBtn = document.getElementById('btn-submit-change-pwd');
-        if (submitBtn) submitBtn.disabled = false;
       }
+
+      if (submitBtn) submitBtn.disabled = false;
 
       clearPasswordForm();
       modalEl.hidden = false;
       document.body.style.overflow = 'hidden';
+      hydrateIcons(modalEl);
     }
 
     function closeModal() {
@@ -243,18 +237,19 @@
     });
 
     // Toggle ver/ocultar contraseñas
+    setupPasswordToggle('acc-current-pwd', 'acc-toggle-current-pwd');
     setupPasswordToggle('acc-new-pwd', 'acc-toggle-new-pwd');
     setupPasswordToggle('acc-confirm-pwd', 'acc-toggle-confirm-pwd');
 
     // Medidor de fortaleza interactivo
     setupPasswordStrength();
 
-    // Formulario de cambio de contraseña sincronizado con backend
+    // Formulario de cambio de contraseña con verificación de contraseña actual
     const form = document.getElementById('form-change-password');
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (info.isDemo) return;
 
+      const currentPwd = document.getElementById('acc-current-pwd')?.value || '';
       const newPwd = document.getElementById('acc-new-pwd')?.value || '';
       const confirmPwd = document.getElementById('acc-confirm-pwd')?.value || '';
       const errEl = document.getElementById('acc-pwd-error');
@@ -268,39 +263,73 @@
 
       const isEnglish = lang() === 'en';
 
+      if (!currentPwd) {
+        errEl.textContent = isEnglish ? 'Please enter your current password to verify your identity.' : 'Por favor, introduce tu contraseña actual para verificar tu identidad.';
+        errEl.hidden = false;
+        return;
+      }
       if (!newPwd || !confirmPwd) {
-        errEl.textContent = isEnglish ? 'Please fill in both fields.' : 'Por favor, completa ambos campos.';
+        errEl.textContent = isEnglish ? 'Please fill in both new password fields.' : 'Por favor, completa los campos de nueva contraseña.';
         errEl.hidden = false;
         return;
       }
       if (newPwd.length < 8) {
-        errEl.textContent = isEnglish ? 'Password must be at least 8 characters.' : 'La contraseña debe tener al menos 8 caracteres.';
+        errEl.textContent = isEnglish ? 'New password must be at least 8 characters.' : 'La nueva contraseña debe tener al menos 8 caracteres.';
         errEl.hidden = false;
         return;
       }
       if (!(/[a-zA-Z]/.test(newPwd) && /[0-9]/.test(newPwd))) {
-        errEl.textContent = isEnglish ? 'Password must contain both letters and numbers.' : 'La contraseña debe contener letras y números.';
+        errEl.textContent = isEnglish ? 'New password must contain both letters and numbers.' : 'La nueva contraseña debe contener letras y números.';
+        errEl.hidden = false;
+        return;
+      }
+      if (newPwd === currentPwd) {
+        errEl.textContent = isEnglish ? 'New password cannot be the same as your current password.' : 'La nueva contraseña no puede ser idéntica a tu contraseña actual.';
         errEl.hidden = false;
         return;
       }
       if (newPwd !== confirmPwd) {
-        errEl.textContent = isEnglish ? 'Passwords do not match.' : 'Las contraseñas no coinciden.';
+        errEl.textContent = isEnglish ? 'New passwords do not match.' : 'Las contraseñas nuevas no coinciden.';
         errEl.hidden = false;
         return;
       }
 
       submitBtn.disabled = true;
       if (spinner) spinner.hidden = false;
-      if (btnText) btnText.textContent = isEnglish ? 'Updating...' : 'Actualizando...';
+      if (btnText) btnText.textContent = isEnglish ? 'Verifying...' : 'Verificando...';
 
       try {
+        // 1. Verificar identidad del usuario contra el servidor mediante su contraseña actual
+        if (!info.isDemo && info.email) {
+          const { error: signInErr } = await sb.auth.signInWithPassword({
+            email: info.email,
+            password: currentPwd,
+          });
+
+          if (signInErr) {
+            errEl.textContent = isEnglish
+              ? 'Current password is incorrect. Please verify and try again.'
+              : 'La contraseña actual no es correcta. Compruébala e inténtalo de nuevo.';
+            errEl.hidden = false;
+            submitBtn.disabled = false;
+            if (spinner) spinner.hidden = true;
+            if (btnText) btnText.textContent = isEnglish ? 'Update password' : 'Actualizar contraseña';
+            return;
+          }
+        }
+
+        if (btnText) btnText.textContent = isEnglish ? 'Updating...' : 'Actualizando...';
+
+        // 2. Si la contraseña actual es correcta, actualizar a la nueva
         const { data, error } = await sb.auth.updateUser({ password: newPwd });
 
         if (error) {
           errEl.textContent = error.message || (isEnglish ? 'Could not update password. Please try again.' : 'No se pudo actualizar la contraseña. Inténtalo de nuevo.');
           errEl.hidden = false;
         } else {
-          succEl.textContent = isEnglish ? 'Password updated and synchronized successfully!' : '¡Contraseña actualizada y sincronizada con éxito en la nube!';
+          succEl.textContent = isEnglish
+            ? 'Identity verified and password updated successfully in the cloud!'
+            : '¡Identidad verificada y contraseña actualizada con éxito en la nube!';
           succEl.hidden = false;
           form.reset();
           const meter = document.getElementById('acc-pwd-strength');

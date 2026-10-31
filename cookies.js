@@ -54,7 +54,7 @@
 
     banner.innerHTML = `
       <div class="cookie-banner-header">
-        <div class="cookie-banner-icon" aria-hidden="true">🍪</div>
+        <div class="cookie-banner-icon" data-icon="cookie" data-icon-size="22" aria-hidden="true"></div>
         <div>
           <h2 class="cookie-banner-title">Control de Privacidad y Cookies</h2>
         </div>
@@ -64,7 +64,7 @@
       </p>
       <div class="cookie-banner-actions">
         <button type="button" class="btn-cookie btn-cookie-settings" id="gp-cookie-btn-settings">
-          ⚙️ Configurar
+          <span data-icon="settings" data-icon-size="13" style="vertical-align:middle;margin-right:4px;"></span>Configurar
         </button>
         <button type="button" class="btn-cookie btn-cookie-reject" id="gp-cookie-btn-reject">
           Rechazar no esenciales
@@ -76,6 +76,7 @@
     `;
 
     document.body.appendChild(banner);
+    if (typeof hydrateIcons === "function") hydrateIcons(banner);
 
     // Eventos
     document.getElementById('gp-cookie-btn-accept')?.addEventListener('click', () => {
@@ -122,7 +123,7 @@
           <div class="cookie-category-item">
             <div class="cookie-category-top">
               <span class="cookie-category-title">
-                <span>🛡️ Cookies Técnicas y de Seguridad</span>
+                <span style="display:inline-flex;align-items:center;gap:6px;"><span data-icon="shield" data-icon-size="15"></span>Cookies Técnicas y de Seguridad</span>
                 <span class="cookie-badge-req">Obligatorias</span>
               </span>
               <label class="cookie-switch">
@@ -139,7 +140,7 @@
           <div class="cookie-category-item">
             <div class="cookie-category-top">
               <span class="cookie-category-title">
-                <span>🌐 Preferencias de Usuario</span>
+                <span style="display:inline-flex;align-items:center;gap:6px;"><span data-icon="globe" data-icon-size="15"></span>Preferencias de Usuario</span>
               </span>
               <label class="cookie-switch">
                 <input type="checkbox" id="gp-pref-cookies" ${current.preferences ? 'checked' : ''} />
@@ -155,7 +156,7 @@
           <div class="cookie-category-item">
             <div class="cookie-category-top">
               <span class="cookie-category-title">
-                <span>📊 Métricas de Rendimiento Anónimas</span>
+                <span style="display:inline-flex;align-items:center;gap:6px;"><span data-icon="clock" data-icon-size="15"></span>Métricas de Rendimiento Anónimas</span>
               </span>
               <label class="cookie-switch">
                 <input type="checkbox" id="gp-pref-analytics" ${current.analytics ? 'checked' : ''} />
@@ -180,6 +181,7 @@
     `;
 
     document.body.appendChild(modal);
+    if (typeof hydrateIcons === "function") hydrateIcons(modal);
 
     document.getElementById('gp-cookie-modal-close')?.addEventListener('click', closeSettingsModal);
     modal.addEventListener('click', (e) => {
@@ -215,7 +217,7 @@
     btn.setAttribute('aria-label', 'Abrir panel de configuración de cookies');
     btn.innerHTML = `
       <span class="cookie-trigger-icon-wrap" aria-hidden="true">
-        <span class="cookie-trigger-icon">🍪</span>
+        <span class="cookie-trigger-icon" data-icon="cookie" data-icon-size="15"></span>
         <span class="cookie-status-dot" title="Privacidad activa"></span>
       </span>
       <span class="cookie-trigger-label">Cookies</span>
@@ -223,6 +225,7 @@
 
     btn.addEventListener('click', openSettingsModal);
     document.body.appendChild(btn);
+    if (typeof hydrateIcons === "function") hydrateIcons(btn);
   }
 
   // Exponer API global
