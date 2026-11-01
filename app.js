@@ -1259,8 +1259,8 @@ function handleFileSelect(file) {
 /* ── 12.1 MOTOR DE EXTRACCIÓN EXACTA DE TICKETS Y FACTURAS (SIN INVENTAR DATOS) ── */
 let isScanningTicket = false;
 
-/* Normalización adaptativa de niveles (histogram stretching) sin destruir bordes ni sombras */
-async function preprocessTicketImage(imageSource) {
+/* Normalización de contraste preservando e intensificando la letra pequeña del pie de ticket */
+async function preprocessTicketImage(imageSource, cropFooterOnly = false) {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -1268,17 +1268,25 @@ async function preprocessTicketImage(imageSource) {
       try {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        const maxDim = 2200;
-        const minDim = 1200;
-        let w = img.naturalWidth || img.width;
-        let h = img.naturalHeight || img.height;
+        const origW = img.naturalWidth || img.width;
+        const origH = img.naturalHeight || img.height;
+
+        // Si cropFooterOnly = true, recortar el 45% inferior del ticket y ampliarlo x2 para leer la letra pequeña
+        const srcY = cropFooterOnly ? Math.floor(origH * 0.55) : 0;
+        const srcH = cropFooterOnly ? Math.max(1, origH - srcY) : origH;
+        const srcW = origW;
+
+        const maxDim = 2400;
+        const minDim = cropFooterOnly ? 1600 : 1400;
+        let w = srcW;
+        let h = srcH;
 
         if (w > maxDim || h > maxDim) {
           const scale = maxDim / Math.max(w, h);
           w = Math.round(w * scale);
           h = Math.round(h * scale);
         } else if (Math.max(w, h) < minDim && w > 0 && h > 0) {
-          const scale = Math.min(2.0, minDim / Math.max(w, h));
+          const scale = Math.min(2.4, minDim / Math.max(w, h));
           w = Math.round(w * scale);
           h = Math.round(h * scale);
         }
@@ -1287,7 +1295,7 @@ async function preprocessTicketImage(imageSource) {
         canvas.height = h;
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(img, 0, 0, w, h);
+        ctx.drawImage(img, 0, srcY, srcW, srcH, 0, 0, w, h);
 
         const imgData = ctx.getImageData(0, 0, w, h);
         const d = imgData.data;
@@ -1300,23 +1308,31 @@ async function preprocessTicketImage(imageSource) {
           hist[lum]++;
         }
 
-        // Percentiles 3% (tinta) y 90% (papel de fondo) para estirar el contraste suavemente
+        // Percentiles 2% (tinta más oscura) y 92% (blanco del papel)
         let low = 0, high = 255, acc = 0;
-        const lowTarget = totalPixels * 0.03;
-        const highTarget = totalPixels * 0.90;
+        const lowTarget = totalPixels * 0.02;
+        const highTarget = totalPixels * 0.92;
         for (let v = 0; v < 256; v++) {
           acc += hist[v];
           if (acc < lowTarget) low = v;
           if (acc < highTarget) high = v;
         }
-        const range = Math.max(40, high - low);
+        const range = Math.max(35, high - low);
 
         for (let i = 0; i < d.length; i += 4) {
           const lum = d[i];
           let norm = (lum - low) / range;
           norm = Math.max(0, Math.min(1, norm));
-          // Curva suave que limpia el fondo gris del papel térmico pero preserva los trazos finos
-          const val = norm > 0.78 ? Math.min(255, Math.round(200 + (norm - 0.78) * 250)) : Math.round(Math.pow(norm, 1.18) * 255);
+          // Oscurecer la tinta grisácea de la letra pequeña térmica (gamma 1.45 en tonos medios-oscuros)
+          // y limpiar únicamente el fondo claro del papel (> 0.88) para no borrar trazos finos
+          let val;
+          if (norm > 0.88) {
+            val = 255;
+          } else if (norm < 0.25) {
+            val = Math.round(norm * 120);
+          } else {
+            val = Math.round(Math.pow(norm, 1.35) * 245);
+          }
           d[i] = val;
           d[i + 1] = val;
           d[i + 2] = val;
@@ -1335,7 +1351,7 @@ async function preprocessTicketImage(imageSource) {
 }
 
 /* Ejecución real de Tesseract.js OCR en el navegador */
-async function runOcrWithTesseract(imageSource, onProgress) {
+async function runOcrWithTesseract(imageSource, onProgress, psm = '6') {
   if (typeof window.Tesseract === 'undefined') {
     throw new Error('Tesseract OCR no cargado');
   }
@@ -1356,7 +1372,7 @@ async function runOcrWithTesseract(imageSource, onProgress) {
 
     if (worker.setParameters) {
       await worker.setParameters({
-        tessedit_pageseg_mode: '6', // Bloque uniforme de texto alineado (óptimo para tickets y facturas)
+        tessedit_pageseg_mode: psm,
         preserve_interword_spaces: '1'
       }).catch(() => {});
     }
@@ -1380,7 +1396,6 @@ async function extractTextFromPdfFile(file) {
     const decoder = new TextDecoder('latin1');
     const raw = decoder.decode(bytes);
     const chunks = [];
-    // Extraer literales de texto entre paréntesis en streams PDF no comprimidos
     const regex = /\(([^()\\]{2,120})\)\s*T[jJ]/g;
     let m;
     while ((m = regex.exec(raw)) !== null) {
@@ -1585,15 +1600,12 @@ const KNOWN_PRODUCT_BRANDS = [
 /* Extrae todos los importes monetarios válidos de una línea de texto */
 function extractPricesFromLine(line) {
   if (!line) return [];
-  // Normalizar espacios accidentales del OCR junto a la coma/punto decimal (ej: "12 , 99" -> "12,99")
   const norm = line.replace(/(\d)\s*([,.])\s*(\d{2})(?!\d)/g, '$1$2$3');
   const results = [];
-  // Soporta "1.234,56", "1234,56", "123.45"
   const regex = /(?:^|[^\d.,/\-])((?:\d{1,3}(?:\.\d{3})+|\d{1,5})[,.]\d{2})(?!\s*%)(?!\s*(?:kg|g|l|ml|m|cm|mm|un|ud|uds)\b)(?=$|[^\d.,/\-])/gi;
   let m;
   while ((m = regex.exec(norm)) !== null) {
     const rawNum = m[1];
-    // Evitar confundir fechas DD.MM.YY (ej: 15.10.25)
     const afterIdx = m.index + m[0].length;
     if (norm.slice(afterIdx).match(/^[./-]\d{2,4}/)) continue;
 
@@ -1615,7 +1627,178 @@ function extractPricesFromLine(line) {
   return results;
 }
 
-/* Parser universal de tickets y facturas en España (CERO DATOS INVENTADOS) */
+/* Convierte números escritos en texto o meses a número entero de días */
+function parseSpanishDaysExpression(str) {
+  if (!str) return null;
+  const s = str.toLowerCase().trim();
+  const numMatch = s.match(/\b(\d{1,3})\b/);
+  if (numMatch) {
+    const n = parseInt(numMatch[1], 10);
+    if (/mes(?:es)?\b/.test(s)) return n * 30;
+    if (/semana[s]?\b/.test(s)) return n * 7;
+    if (/a[ñn]o[s]?\b/.test(s)) return n * 365;
+    return n;
+  }
+  const WORD_DAYS = [
+    { re: /\b(?:un|uno)\s+mes\b/, days: 30 },
+    { re: /\bdos\s+meses\b/, days: 60 },
+    { re: /\btres\s+meses\b/, days: 90 },
+    { re: /\bseis\s+meses\b/, days: 180 },
+    { re: /\bun\s+a[ñn]o\b/, days: 365 },
+    { re: /\buna\s+semana\b/, days: 7 },
+    { re: /\bdos\s+semanas\b/, days: 14 },
+    { re: /\bsiete\b/, days: 7 },
+    { re: /\bdiez\b/, days: 10 },
+    { re: /\bcatorce\b/, days: 14 },
+    { re: /\bquince\b/, days: 15 },
+    { re: /\bveinte\b/, days: 20 },
+    { re: /\bveintiocho\b/, days: 28 },
+    { re: /\btreinta\b/, days: 30 },
+    { re: /\bcuarenta\s+y\s+cinco\b/, days: 45 },
+    { re: /\bsesenta\b/, days: 60 },
+    { re: /\bnoventa\b/, days: 90 },
+    { re: /\bcien\b/, days: 100 }
+  ];
+  for (const w of WORD_DAYS) {
+    if (w.re.test(s)) return w.days;
+  }
+  return null;
+}
+
+/* Extrae plazo de devolución, condiciones de devolución/reembolso/vale y garantía de un texto */
+function extractPoliciesFromText(lines, fullText, purchaseDate) {
+  let detectedReturnDays = null;
+  let detectedReturnConditions = '';
+  let detectedWarrantyYears = null;
+  let detectedCoverage = '';
+  let detectedNoCoverage = '';
+
+  // Unir líneas con espacios para poder detectar frases que saltan de renglón en tickets estrechos (58mm / 80mm)
+  const continuousText = lines.join(' ').replace(/\s+/g, ' ');
+
+  // ── A. DÍAS DE DEVOLUCIÓN / CAMBIO ──
+  // Buscar tanto en las condiciones extraídas como en el texto continuo completo
+  const retPatterns = [
+    // "el plazo para devolver es de 15 días", "plazo máximo de devolución: 15 días", "para cambios o devoluciones dispone de 15 días"
+    /(?:plazo|periodo|per[ií]odo|tiempo|dispone(?:n)?|tienes?|m[aá]ximo|dentro)\s*(?:m[aá]ximo\s*)?(?:para\s+|de\s+)?(?:poder\s+)?(?:realizar\s+|efectuar\s+|hacer\s+)?(?:cambios?\s*(?:o|y|\/)?\s*)?(?:devolver|devoluci[oó]n(?:es)?|cambiar|cambios?|desistimiento|canje(?:ar)?)[^.!;\n]{0,65}?\b((?:\d{1,3}|siete|diez|catorce|quince|veinte|veintiocho|treinta|sesenta|noventa|un|dos|tres)\s*(?:d[ií1l!|]a[s5]?|d\.|mes(?:es)?|semana[s]?))\b/i,
+    // "devoluciones o cambios en 15 días", "devolver el producto: 15 días", "cambios y devoluciones 15 días"
+    /(?:devolver|devoluci[oó]n(?:es)?|cambiar|cambios?\s*(?:y|o|\/)\s*devoluciones|desistimiento|canje(?:ar)?)[^.!;\n]{0,65}?\b((?:\d{1,3}|siete|diez|catorce|quince|veinte|veintiocho|treinta|sesenta|noventa|un|dos|tres)\s*(?:d[ií1l!|]a[s5]?|d\.|mes(?:es)?|semana[s]?))\b/i,
+    // "15 días para devolver", "15 días naturales para cambios o devoluciones", "15 días desde la fecha de compra"
+    /\b((?:\d{1,3}|siete|diez|catorce|quince|veinte|veintiocho|treinta|sesenta|noventa|un|dos|tres)\s*(?:d[ií1l!|]a[s5]?|d\.|mes(?:es)?|semana[s]?))\s*(?:naturales\s*|h[aá]biles\s*)?(?:desde\s+la\s+(?:fecha\s+de\s+)?compra\s*)?(?:para\s+|de\s+|en\s+)(?:poder\s+)?(?:cambios?\s*(?:o|y|\/)?\s*)?(?:devolver|devoluci[oó]n(?:es)?|cambiar|cambios?|desistimiento|canje)/i,
+    // "no se admiten devoluciones pasados 15 días", "pasados 15 días no se aceptan cambios"
+    /(?:pasados|transcurridos|despu[eé]s\s+de)\s*\b((?:\d{1,3}|siete|diez|catorce|quince|veinte|veintiocho|treinta|sesenta|noventa|un|dos|tres)\s*(?:d[ií1l!|]a[s5]?|d\.|mes(?:es)?|semana[s]?))\b[^.!;\n]{0,50}?(?:devolver|devoluci[oó]n|cambio|admit|acept)/i,
+    /(?:no\s+se\s+(?:admiten|aceptan|har[aá]n)\s+(?:cambios?\s*(?:ni|o)\s*)?(?:devoluciones|cambios))[^.!;\n]{0,45}?\b((?:\d{1,3}|siete|diez|catorce|quince|veinte|veintiocho|treinta|sesenta|noventa|un|dos|tres)\s*(?:d[ií1l!|]a[s5]?|d\.|mes(?:es)?|semana[s]?))\b/i,
+    // "plazo: 15 días" o "plazo es de 15 días"
+    /\bplazo\s*(?:m[aá]ximo)?\s*(?:para\s+\w+\s*)?(?:es\s*de|de|:)?\s*\b((?:\d{1,3}|siete|diez|catorce|quince|veinte|veintiocho|treinta|sesenta|noventa|un|dos|tres)\s*(?:d[ií1l!|]a[s5]?|d\.|mes(?:es)?|semana[s]?))\b/i
+  ];
+
+  for (const pat of retPatterns) {
+    const m = continuousText.match(pat);
+    if (m && m[1]) {
+      const parsedDays = parseSpanishDaysExpression(m[1]);
+      if (parsedDays && parsedDays >= 1 && parsedDays <= 365) {
+        detectedReturnDays = parsedDays;
+        break;
+      }
+    }
+  }
+
+  // Si el ticket indica una "fecha límite de devolución: DD/MM/YYYY" y tenemos fecha de compra, calcular los días exactos
+  if (detectedReturnDays === null && purchaseDate) {
+    const limitMatch = continuousText.match(/(?:fecha\s*l[ií]mite\s*(?:de\s*)?(?:devoluci[oó]n|cambio)|devoluci[oó]n\s*hasta(?:\s*el)?|cambiar\s*antes\s*del)\s*[:.-]?\s*([0-3]?\d)[/.-]([01]?\d)[/.-](20\d{2}|\d{2})/i);
+    if (limitMatch) {
+      let y = parseInt(limitMatch[3], 10);
+      if (y < 100) y += 2000;
+      const limitIso = `${y}-${ String(limitMatch[2]).padStart(2, '0') }-${ String(limitMatch[1]).padStart(2, '0') }`;
+      const diff = daysBetween(purchaseDate, limitIso);
+      if (diff !== null && diff >= 1 && diff <= 365) {
+        detectedReturnDays = diff;
+      }
+    }
+  }
+
+  // ── B. CONDICIONES DE DEVOLUCIÓN / ABONO / VALE / TIENDA (EXTRACCIÓN MULTILÍNEA COMPLETA) ──
+  // Detecta cualquier frase sobre cómo se devuelve, si no se abona efectivo, si se da vale o se gasta en tienda, ticket, embalaje, etc.
+  const policyLineTrigger = /(?:devolver|devoluci[oó]n|devoluciones|cambio|cambiar|plazo\s*(?:m[aá]ximo|de|para)|no\s+se\s+(?:abona|devuelve|reembolsa|admiten|aceptan)|abonar[aá]?|reembols|efectivo|met[aá]lico|dinero|gastar\s+en|en\s+la\s+tienda|vale\b|bono\b|canje|imprescindible|obligatorio\s+presentar|conserve\s+(?:este|el)\s+ticket|presentar\s+(?:este|el)?\s*ticket|sin\s+ticket|embalaje|envase\s+original|precinto|etiqueta|sin\s+usar|sin\s+abrir|perfecto\s+estado|art[ií]culos\s+de\s+(?:fiesta|higiene|ba[ñn]o)|ropa\s+interior|tara|defectuoso)/i;
+  const nonPolicyNoise = /^(?:total|subtotal|base\s*imponible|cuota|iva\b|i\.v\.a|tarjeta|visa|mastercard|maestro|bizum|cambio\s+\d|entrega\s*efectivo|efectivo\s+\d|factura\s*simplificada|n[º°o]?\s*(?:de\s*)?(?:factura|ticket)|fecha\s*:|hora\s*:|atendido\s*por|vendedor|cajero|caja\s*[:\d]|tpv|terminal|operaci[oó]n|autorizaci[oó]n|nif\b|cif\b|tel[eé]fono|tfno|www\.|http|gracias\s+por\s+su\s+visita|\*+|\-+|=+)$/i;
+
+  const matchedIndices = new Set();
+  lines.forEach((line, idx) => {
+    if (nonPolicyNoise.test(line)) return;
+    // Ignorar líneas que son claramente un artículo con precio en la sección superior si no tienen verbos de política
+    if (extractPricesFromLine(line).length > 0 && !/(?:abona|devuelv|dinero|efectivo|vale|tienda|plazo|d[ií]as|reembols)/i.test(line)) return;
+
+    if (policyLineTrigger.test(line)) {
+      matchedIndices.add(idx);
+      // Incluir la línea anterior o siguientes si forman parte de la misma frase cortada por el ancho del ticket
+      if (idx + 1 < lines.length && !nonPolicyNoise.test(lines[idx + 1]) && extractPricesFromLine(lines[idx + 1]).length === 0) {
+        const nextL = lines[idx + 1];
+        if (!/[.:!]$/.test(line) || /^(?:sino|si\s+no|que\s+|para\s+|en\s+|con\s+|sin\s+|el\s+|la\s+|los\s+|las\s+|un\s+|una\s+|de\s+|del\s+|por\s+|o\s+|y\s+|ni\s+|se\s+|deber[aá]|gastar|en\s+tienda|en\s+la\s+tienda|mediante|presentando)/i.test(nextL)) {
+          matchedIndices.add(idx + 1);
+          if (idx + 2 < lines.length && !nonPolicyNoise.test(lines[idx + 2]) && extractPricesFromLine(lines[idx + 2]).length === 0 && !/[.:!]$/.test(nextL)) {
+            matchedIndices.add(idx + 2);
+          }
+        }
+      }
+    }
+  });
+
+  if (matchedIndices.size > 0) {
+    const sortedIdxs = [...matchedIndices].sort((a, b) => a - b);
+    const paragraphs = [];
+    let currentPara = [];
+    for (let k = 0; k < sortedIdxs.length; k++) {
+      const idx = sortedIdxs[k];
+      if (k > 0 && idx === sortedIdxs[k - 1] + 1) {
+        currentPara.push(lines[idx]);
+      } else {
+        if (currentPara.length > 0) paragraphs.push(currentPara.join(' '));
+        currentPara = [lines[idx]];
+      }
+    }
+    if (currentPara.length > 0) paragraphs.push(currentPara.join(' '));
+
+    detectedReturnConditions = paragraphs
+      .join('. ')
+      .replace(/\s+/g, ' ')
+      .replace(/\.\s*\./g, '.')
+      .trim()
+      .slice(0, 390);
+  }
+
+  // ── C. AÑOS DE GARANTÍA Y COBERTURAS (SOLO SI APARECEN EN EL TICKET) ──
+  const warYearsMatch = continuousText.match(/\b(\d{1,2}|un|uno|dos|tres|cuatro|cinco)\s*a[ñn]os?\s*(?:de\s*)?garant[ií]a\b/i) ||
+                        continuousText.match(/\bgarant[ií]a\s*(?:legal\s*|comercial\s*|oficial\s*)?(?:de\s*|es\s*de\s*)?(\d{1,2}|un|uno|dos|tres|cuatro|cinco)\s*a[ñn]os?\b/i);
+  if (warYearsMatch && warYearsMatch[1]) {
+    const rawY = warYearsMatch[1].toLowerCase();
+    const wordMap = { un: 1, uno: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5 };
+    const y = wordMap[rawY] || parseInt(rawY, 10);
+    if (y >= 1 && y <= 30) detectedWarrantyYears = y;
+  } else {
+    const warMonthsMatch = continuousText.match(/\b(6|12|24|36)\s*meses\s*(?:de\s*)?garant[ií]a\b/i) ||
+                           continuousText.match(/\bgarant[ií]a\s*(?:de\s*)?(6|12|24|36)\s*meses\b/i);
+    if (warMonthsMatch && warMonthsMatch[1]) {
+      detectedWarrantyYears = Number((parseInt(warMonthsMatch[1], 10) / 12).toFixed(1));
+    }
+  }
+
+  // Coberturas o exclusiones de garantía explícitas en el ticket
+  const covLines = lines.filter(l => /(?:garant[ií]a\s+cubre|cubre\s+defectos|este\s+ticket\s+es\s+su\s+garant[ií]a|garant[ií]a\s+v[aá]lida)/i.test(l));
+  if (covLines.length > 0) detectedCoverage = covLines.join('. ').slice(0, 400);
+
+  const noCovLines = lines.filter(l => /(?:garant[ií]a\s+no\s+cubre|excluid[oa]s?\s+de\s+(?:la\s+)?garant[ií]a|no\s+cubre\s+(?:roturas|golpes|mal\s+uso|desgaste))/i.test(l));
+  if (noCovLines.length > 0) detectedNoCoverage = noCovLines.join('. ').slice(0, 400);
+
+  return {
+    returnDays: detectedReturnDays,
+    returnConditions: detectedReturnConditions,
+    warrantyYears: detectedWarrantyYears,
+    coverage: detectedCoverage,
+    noCoverage: detectedNoCoverage
+  };
+}
+
+/* Parser universal de tickets y facturas en España (CERO DATOS INVENTADOS, MÁXIMO DETALLE) */
 function parseReceiptOcrText(rawText) {
   if (!rawText || typeof rawText !== 'string') return null;
 
@@ -1631,12 +1814,10 @@ function parseReceiptOcrText(rawText) {
 
   // ── 1. TIENDA / VENDEDOR ───────────────────────────────────────
   let detectedStore = '';
-  // Priorizar coincidencia en la cabecera del ticket
   let matchedStore = KNOWN_STORES.find(s => s.key.test(headerSlice)) || KNOWN_STORES.find(s => s.key.test(rawText));
   if (matchedStore) {
     detectedStore = matchedStore.name;
   } else {
-    // Buscar razón social (S.L., S.A., S.L.U., C.B.) en las primeras 8 líneas
     const legalEntityRegex = /\b(?:S\.?\s*L\.?\s*U?\.?|S\.?\s*A\.?\s*U?\.?|S\.?\s*C\.?|C\.?\s*B\.?)\b/i;
     const nonStoreHeader = /^(?:factura|ticket|simplificada|simplificado|recibo|albaran|nota|copia|duplicado|original|caja|tpv|terminal|operacion|comercio|fecha|hora|cliente|atendido|vendedor|camarero|mesa|pedido|nif|cif|dni|iva|tel|tfno|telefono|movil|www\.|http|calle|c\/|avda|avenida|plaza|pza|pol\.|poligono|ctra|carretera|cp\b|\d{5}\b)/i;
 
@@ -1651,15 +1832,14 @@ function parseReceiptOcrText(rawText) {
       }
     }
 
-    // Si no tiene sufijo societario, evaluar las primeras 4 líneas buscando nombre comercial limpio
     if (!detectedStore) {
       for (let i = 0; i < Math.min(4, lines.length); i++) {
         const l = lines[i].replace(/^[*#\-=~_+|\s]+|[*#\-=~_+|\s]+$/g, '').trim();
         if (l.length < 3 || l.length > 48) continue;
         if (nonStoreHeader.test(l)) continue;
         if (/\d{2}[/.-]\d{2}[/.-]\d{2,4}/.test(l) || /\b\d+[,.]\d{2}\b/.test(l)) continue;
-        if (/\b[A-HJ-NP-SUVW]\d{7}[0-9A-J]\b/i.test(l)) continue; // CIF/NIF
-        if (/\b\d{3}[\s.-]?\d{2,3}[\s.-]?\d{2,3}\b/.test(l)) continue; // Teléfono
+        if (/\b[A-HJ-NP-SUVW]\d{7}[0-9A-J]\b/i.test(l)) continue;
+        if (/\b\d{3}[\s.-]?\d{2,3}[\s.-]?\d{2,3}\b/.test(l)) continue;
         const letters = (l.match(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g) || []).length;
         const vowels = (l.match(/[AEIOUÁÉÍÓÚÜaeiouáéíóúü]/g) || []).length;
         if (letters >= 3 && letters / l.length >= 0.72 && vowels >= 1 && vowels / letters >= 0.22) {
@@ -1700,27 +1880,23 @@ function parseReceiptOcrText(rawText) {
     const iso = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const parsedTime = new Date(iso + 'T00:00:00').getTime();
     if (isNaN(parsedTime)) return;
-    // Ignorar fechas futuras (> 2 días respecto a hoy) o fechas de caducidad/devolución máxima
     if (parsedTime > Date.now() + 2 * 86400000) return;
     if (/(?:caduc|valido\s*hasta|v[aá]lido\s*hasta|vencimiento|fecha\s*l[ií]mite|devoluci[oó]n\s*hasta|antes\s*del)/i.test(lineText)) return;
 
     let score = 10;
     if (/(?:fecha|date|compra|emisi[oó]n|expedici[oó]n|factura|ticket|venta)/i.test(lineText)) score += 45;
-    if (/\b(?:[01]?\d|2[0-3]):[0-5]\d\b/.test(lineText)) score += 35; // Acompañada de hora HH:MM
+    if (/\b(?:[01]?\d|2[0-3]):[0-5]\d\b/.test(lineText)) score += 35;
     if (lineIdx < 12) score += 15;
     dateCandidates.push({ iso, score, lineIdx });
   }
 
   lines.forEach((line, idx) => {
-    // 1. DD/MM/YYYY o DD-MM-YY
     const dmyMatches = [...line.matchAll(/\b([0-3]?\d)\s*[/.-]\s*([01]?\d)\s*[/.-]\s*(20\d{2}|\d{2})\b/g)];
     dmyMatches.forEach(m => addDateCandidate(m[3], m[2], m[1], idx, line));
 
-    // 2. YYYY-MM-DD o YYYY/MM/DD
     const ymdMatches = [...line.matchAll(/\b(20\d{2})\s*[/.-]\s*([01]?\d)\s*[/.-]\s*([0-3]?\d)\b/g)];
     ymdMatches.forEach(m => addDateCandidate(m[1], m[2], m[3], idx, line));
 
-    // 3. DD de <mes> de YYYY o DD-MMM-YYYY
     const txtMatches = [...line.matchAll(/\b([0-3]?\d)\s*(?:de\s+|[/.-]|\s+)([a-záéíóú]{3,10})\.?\s*(?:de\s+|,\s*|[/.-]|\s+)(20\d{2}|\d{2})\b/gi)];
     txtMatches.forEach(m => {
       const mKey = m[2].toLowerCase().slice(0, 4);
@@ -1755,12 +1931,10 @@ function parseReceiptOcrText(rawText) {
 
     if (isExplicitTotal) {
       if (linePrices.length > 0) {
-        // Tomar el último importe de la línea TOTAL (suele ser el total con IVA a la derecha)
         const p = linePrices[linePrices.length - 1];
         const priority = /total\s*(?:a\s*pagar|factura|compra|ticket|eur|€)/i.test(line) ? 100 : 90;
         totalCandidates.push({ val: p.val, priority, lineIdx: i });
       } else if (i + 1 < lines.length && !ignorePriceLine.test(lines[i + 1])) {
-        // Caso habitual en tickets térmicos: "TOTAL (€)" en una línea y el número justo en la siguiente
         const nextPrices = extractPricesFromLine(lines[i + 1]);
         if (nextPrices.length > 0) {
           totalCandidates.push({ val: nextPrices[nextPrices.length - 1].val, priority: 88, lineIdx: i + 1 });
@@ -1774,27 +1948,21 @@ function parseReceiptOcrText(rawText) {
   }
 
   if (totalCandidates.length > 0) {
-    // Ordenar por mayor prioridad; a igual prioridad, preferir la última aparición de TOTAL (final del ticket)
     totalCandidates.sort((a, b) => b.priority - a.priority || b.lineIdx - a.lineIdx);
     detectedPrice = totalCandidates[0].val;
   }
 
   // ── 4. EXTRACCIÓN DE ARTÍCULOS / PRODUCTOS ────────────────────
-  const nonItemLineRegex = /(?:\btotal\b|\bsubtotal\b|\ba\s*pagar\b|\bimporte\b|\bbase\s*imponible\b|\bcuota\b|\biva\b|\bi\.v\.a\b|\bigic\b|\bimpuesto|\befectivo\b|\btarjeta\b|\bvisa\b|\bmastercard\b|\bmaestro\b|\bbizum\b|\bcambio\b|\bentregado\b|\bentrega\b|\bahorro\b|\bdescuento\b|\bdto\b|\bpromoci[oó]n\b|\bcup[oó]n\b|\bpuntos\b|\bsaldo\b|\bfactura\b|\bticket\b|\bsimplificada\b|\brecibo\b|\balbar[aá]n\b|\bpedido\b|\boperaci[oó]n\b|\bautorizaci[oó]n\b|\bterminal\b|\btpv\b|\bcaja\b|\bcajero\b|\batendido\b|\bvendedor\b|\bcliente\b|\bsocio\b|\bfecha\b|\bhora\b|\bnif\b|\bcif\b|\bdni\b|\bgracias\b|\bvisita\b|\bdevoluci[oó]n\b|\bgarant[ií]a\b|\bconserve\b|\bcondiciones\b|\btel[eé]fono\b|\btfno\b|\btel\b|\bwww\.|http|@|\bcalle\b|\bc\/|\bavda\b|\bavenida\b|\bplaza\b|\bpol[ií]gono\b|\bc\.p\.|\bdescripci[oó]n\b|\bconcepto\b|\bcantidad\b|\bunidades\b|\bp\.v\.p\b|\bunitario\b)/i;
+  const nonItemLineRegex = /(?:\btotal\b|\bsubtotal\b|\ba\s*pagar\b|\bimporte\b|\bbase\s*imponible\b|\bcuota\b|\biva\b|\bi\.v\.a\b|\bigic\b|\bimpuesto|\befectivo\b|\btarjeta\b|\bvisa\b|\bmastercard\b|\bmaestro\b|\bbizum\b|\bcambio\b|\bentregado\b|\bentrega\b|\bahorro\b|\bdescuento\b|\bdto\b|\bpromoci[oó]n\b|\bcup[oó]n\b|\bpuntos\b|\bsaldo\b|\bfactura\b|\bticket\b|\bsimplificada\b|\brecibo\b|\balbar[aá]n\b|\bpedido\b|\boperaci[oó]n\b|\bautorizaci[oó]n\b|\bterminal\b|\btpv\b|\bcaja\b|\bcajero\b|\batendido\b|\bvendedor\b|\bcliente\b|\bsocio\b|\bfecha\b|\bhora\b|\bnif\b|\bcif\b|\bdni\b|\bgracias\b|\bvisita\b|\bdevoluci[oó]n\b|\bdevolver\b|\bgarant[ií]a\b|\bconserve\b|\bcondiciones\b|\btel[eé]fono\b|\btfno\b|\btel\b|\bwww\.|http|@|\bcalle\b|\bc\/|\bavda\b|\bavenida\b|\bplaza\b|\bpol[ií]gono\b|\bc\.p\.|\bdescripci[oó]n\b|\bconcepto\b|\bcantidad\b|\bunidades\b|\bp\.v\.p\b|\bunitario\b)/i;
   const qtyOnlyLineRegex = /^(?:\d+(?:[,.]\d+)?\s*(?:un|ud|uds|x|\*|kg|g|l)?\s*[x*]?\s*\d+[,.]\d{2}(?:\s*€|\s*eur)?(?:\s+\d+[,.]\d{2})?[\s€eurA-Z]*)$/i;
 
   function cleanItemDescription(rawDesc) {
     if (!rawDesc) return '';
     let s = rawDesc
-      // Quitar precios al final y letras de tipo de IVA (A, B, C, *)
       .replace(/\s+(?:\d{1,3}(?:\.\d{3})*|\d+)[,.]\d{2}\s*(?:€|eur)?\s*[ABC*]?$/i, '')
-      // Quitar multiplicadores de precio unitario al final (ej: "2 x 1,50")
       .replace(/\s+\d+\s*[xX*]\s*\d+[,.]\d{2}.*$/, '')
-      // Quitar códigos EAN / SKU largos al principio (5+ dígitos)
       .replace(/^(?:ref\.?\s*|cod\.?\s*|art\.?\s*)?\d{5,14}\s+/i, '')
-      // Quitar cantidad inicial (ej: "1 ", "2 x ", "1 UN ", "01 ")
       .replace(/^\d{1,3}\s*(?:un|ud|uds)?\s*[xX*]?\s+/i, '')
-      // Quitar símbolos sueltos en los extremos
       .replace(/^[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+|[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9)"']+$/g, '')
       .trim();
 
@@ -1806,10 +1974,9 @@ function parseReceiptOcrText(rawText) {
     return s.slice(0, 85);
   }
 
-  // Delimitar dónde termina la lista de artículos (en la primera línea de SUBTOTAL / TOTAL / BASE IMPONIBLE)
   let itemsEndIdx = lines.length;
   for (let i = 0; i < lines.length; i++) {
-    if (/(?:\bsubtotal\b|\btotal\s*(?:a\s*pagar|compra|ticket|factura|eur|€)\b|\bbase\s*imponible\b|\bdesglose\s*iva\b)/i.test(lines[i])) {
+    if (/(?:\bsubtotal\b|\btotal\s*(?:a\s*pagar|compra|ticket|factura|eur|€|\()?\b|\bbase\s*imponible\b|\bdesglose\s*iva\b)/i.test(lines[i])) {
       itemsEndIdx = i;
       break;
     }
@@ -1825,7 +1992,6 @@ function parseReceiptOcrText(rawText) {
       const itemPrice = linePrices[linePrices.length - 1].val;
       if (detectedPrice && itemPrice > detectedPrice * 1.05) continue;
 
-      // Extraer el texto previo al primer precio de la línea
       const firstPriceIdx = linePrices[0].index;
       const textBeforePrice = line.slice(0, firstPriceIdx).trim();
 
@@ -1834,7 +2000,6 @@ function parseReceiptOcrText(rawText) {
         desc = cleanItemDescription(textBeforePrice);
       }
 
-      // Si la línea actual era solo "1 UN x 49,99   49,99", el nombre del artículo está en la línea anterior
       if (!desc && i > 0) {
         const prevLine = lines[i - 1];
         if (!nonItemLineRegex.test(prevLine) && extractPricesFromLine(prevLine).length === 0) {
@@ -1848,7 +2013,6 @@ function parseReceiptOcrText(rawText) {
     }
   }
 
-  // Si no había línea TOTAL explícita pero sí 1 o varios artículos con precio claro, calcular el precio
   if (detectedPrice === null && extractedItems.length > 0) {
     if (extractedItems.length === 1) {
       detectedPrice = extractedItems[0].price;
@@ -1862,7 +2026,6 @@ function parseReceiptOcrText(rawText) {
   if (extractedItems.length === 1) {
     detectedProduct = extractedItems[0].name;
   } else if (extractedItems.length > 1) {
-    // Ordenar para destacar el artículo principal (mayor importe) o combinar los principales
     const sortedByPrice = [...extractedItems].sort((a, b) => (b.price || 0) - (a.price || 0));
     if (extractedItems.length === 2) {
       detectedProduct = `${extractedItems[0].name} + ${extractedItems[1].name}`.slice(0, 95);
@@ -1888,78 +2051,60 @@ function parseReceiptOcrText(rawText) {
     }
   }
 
-  // ── 6. PLAZO Y CONDICIONES DE DEVOLUCIÓN (SOLO SI APARECEN EN EL TICKET) ──
-  let detectedReturnDays = null;
-  let detectedReturnConditions = '';
+  // ── 6 & 7. POLÍTICA DE DEVOLUCIÓN, CONDICIONES Y GARANTÍA ──────
+  const policies = extractPoliciesFromText(lines, rawText, detectedDate);
+  const detectedReturnDays = policies.returnDays;
+  const detectedReturnConditions = policies.returnConditions;
+  const detectedWarrantyYears = policies.warrantyYears;
+  const detectedCoverage = policies.coverage;
+  const detectedNoCoverage = policies.noCoverage;
 
-  const retDaysPatterns = [
-    /(?:devoluci[oó]n(?:es)?|cambios?(?:\s*y\s*devoluciones)?|plazo\s*(?:m[aá]ximo\s*)?(?:de\s*)?(?:cambio|devoluci[oó]n)|desistimiento)[^\n\d]{0,40}\b(\d{1,3})\s*d[ií]as\b/i,
-    /\b(\d{1,3})\s*d[ií]as\s*(?:naturales\s*|h[aá]biles\s*)?(?:para\s*|de\s*)(?:cambios?\s*(?:o|y)\s*)?(?:devoluci[oó]n(?:es)?|devolver|cambios?|desistimiento)\b/i
-  ];
-  for (const pat of retDaysPatterns) {
-    const m = rawText.match(pat);
-    if (m && m[1]) {
-      const d = parseInt(m[1], 10);
-      if (d >= 1 && d <= 365) {
-        detectedReturnDays = d;
-        break;
-      }
-    }
-  }
-
-  // Extraer frases literales de condiciones de devolución si aparecen impresas en el ticket
-  const condLines = lines.filter(l =>
-    /(?:imprescindible\s+presentar|conserve\s+este\s+ticket|embalaje\s+original|sin\s+usar|precinto\s+original|para\s+cambios\s+y\s+devoluciones)/i.test(l)
-  );
-  if (condLines.length > 0) {
-    detectedReturnConditions = condLines.slice(0, 2).join('. ').slice(0, 350);
-  }
-
-  // ── 7. AÑOS DE GARANTÍA (SOLO SI APARECEN IMPRESOS EN EL TICKET) ──
-  let detectedWarrantyYears = null;
-  const warYearsMatch = rawText.match(/\b(\d{1,2})\s*a[ñn]os?\s*(?:de\s*)?garant[ií]a\b/i) ||
-                        rawText.match(/\bgarant[ií]a\s*(?:legal\s*|comercial\s*)?(?:de\s*)?(\d{1,2})\s*a[ñn]os?\b/i);
-  if (warYearsMatch && warYearsMatch[1]) {
-    const y = parseInt(warYearsMatch[1], 10);
-    if (y >= 1 && y <= 30) detectedWarrantyYears = y;
-  } else {
-    const warMonthsMatch = rawText.match(/\b(6|12|24|36)\s*meses\s*(?:de\s*)?garant[ií]a\b/i);
-    if (warMonthsMatch && warMonthsMatch[1]) {
-      detectedWarrantyYears = Number((parseInt(warMonthsMatch[1], 10) / 12).toFixed(1));
-    }
-  }
-
-  // ── 8. NOTAS ADICIONALES (Nº DE TICKET / SERIE / DESGLOSE DE ARTÍCULOS) ──
+  // ── 8. NOTAS ADICIONALES (MÁXIMO DETALLE DEL TICKET) ──────────
   const notesParts = [];
 
-  // Número de factura / ticket / pedido
+  // Número de factura / ticket / pedido / operación
   for (const line of lines) {
-    const docMatch = line.match(/(?:factura\s*simplificada|n[º°o]?\s*(?:de\s*)?(?:factura|ticket|recibo|pedido)|ticket\s*n[º°o]?|pedido\s*n[º°o]?)\s*[:.#-]?\s*([A-Z0-9][A-Z0-9\/-]{2,24})/i);
+    const docMatch = line.match(/(?:factura\s*simplificada|n[º°o]?\s*(?:de\s*)?(?:factura|ticket|recibo|pedido|operaci[oó]n)|ticket\s*n[º°o]?|pedido\s*n[º°o]?|op\b)\s*[:.#-]?\s*([A-Z0-9][A-Z0-9\/-]{2,24})/i);
     if (docMatch && docMatch[1] && /\d/.test(docMatch[1])) {
-      notesParts.push(`Nº documento: ${docMatch[1].trim()}`);
+      notesParts.push(`Nº ticket/factura: ${docMatch[1].trim()}`);
       break;
     }
   }
 
-  // Número de serie / IMEI / Modelo
+  // NIF / CIF del comercio si aparece en el ticket
+  const cifMatch = rawText.match(/\b(?:nif|cif)\s*[:.-]?\s*([A-HJ-NP-SUVW]\d{7}[0-9A-J]|\d{8}[A-Z])\b/i);
+  if (cifMatch && cifMatch[1]) {
+    notesParts.push(`NIF/CIF: ${cifMatch[1].toUpperCase()}`);
+  }
+
+  // Número de serie / IMEI / Referencia
   for (const line of lines) {
-    const snMatch = line.match(/\b(?:s\/n|imei|n[º°o]?\s*serie|serial)\s*[:.#-]?\s*([A-Z0-9-]{5,28})/i);
-    if (snMatch && snMatch[1]) {
-      notesParts.push(`Nº serie / IMEI: ${snMatch[1].trim()}`);
+    const snMatch = line.match(/\b(?:s\/n|imei|n[º°o]?\s*serie|serial|ref(?:erencia)?)\s*[:.#-]?\s*([A-Z0-9-]{5,28})/i);
+    if (snMatch && snMatch[1] && /\d/.test(snMatch[1])) {
+      notesParts.push(`Ref/Serie: ${snMatch[1].trim()}`);
       break;
     }
   }
 
-  // Si hay varios artículos, guardar el listado completo con sus precios en Notas adicionales
+  // Método de pago detectado en el ticket
+  if (/\b(?:visa|mastercard|maestro|pago\s*tarjeta|venta\s*tarjeta|tarjeta)\b/i.test(rawText)) {
+    notesParts.push('Pago: Tarjeta');
+  } else if (/\bbizum\b/i.test(rawText)) {
+    notesParts.push('Pago: Bizum');
+  } else if (/\b(?:entrega\s*efectivo|efectivo)\b/i.test(rawText)) {
+    notesParts.push('Pago: Efectivo');
+  }
+
+  // Desglose completo de artículos cuando hay varios productos
   if (extractedItems.length > 1) {
     const itemsSummary = extractedItems
-      .slice(0, 8)
+      .slice(0, 10)
       .map(it => `${it.name} (${it.price.toFixed(2)} €)`)
       .join(' · ');
-    notesParts.push(`Artículos en ticket: ${itemsSummary}`);
+    notesParts.push(`Artículos (${extractedItems.length}): ${itemsSummary}`);
   }
 
-  const detectedNotes = notesParts.join(' | ').slice(0, 480);
+  const detectedNotes = notesParts.join(' | ').slice(0, 490);
 
   const hasAnyData = Boolean(
     detectedProduct ||
@@ -1968,6 +2113,7 @@ function parseReceiptOcrText(rawText) {
     detectedPrice !== null ||
     detectedDate ||
     detectedReturnDays !== null ||
+    detectedReturnConditions ||
     detectedWarrantyYears !== null ||
     detectedNotes
   );
@@ -1984,9 +2130,9 @@ function parseReceiptOcrText(rawText) {
     returnConditions: detectedReturnConditions,
     warrantyYears: detectedWarrantyYears,
     notes: detectedNotes,
-    coverage: '',
-    noCoverage: '',
-    rawText: rawText.slice(0, 2500)
+    coverage: detectedCoverage,
+    noCoverage: detectedNoCoverage,
+    rawText: rawText.slice(0, 3000)
   };
 }
 
@@ -2006,7 +2152,6 @@ function sanitizeAiExtractedData(rawObj) {
   const store = cleanStr(rawObj.store, 80);
   const productName = cleanStr(rawObj.productName, 100);
   let brand = cleanStr(rawObj.brand, 60);
-  // Evitar que la IA ponga el nombre del comercio como marca si no es marca del producto
   if (brand && store && brand.toLowerCase() === store.toLowerCase() && !KNOWN_PRODUCT_BRANDS.some(b => b.key.test(brand))) {
     brand = '';
   }
@@ -2025,8 +2170,8 @@ function sanitizeAiExtractedData(rawObj) {
 
   let returnDays = null;
   if (rawObj.returnDays !== null && rawObj.returnDays !== undefined && rawObj.returnDays !== '') {
-    const rNum = parseInt(rawObj.returnDays, 10);
-    if (!isNaN(rNum) && rNum > 0 && rNum <= 3650) returnDays = rNum;
+    const rNum = typeof rawObj.returnDays === 'number' ? rawObj.returnDays : parseSpanishDaysExpression(String(rawObj.returnDays));
+    if (rNum && !isNaN(rNum) && rNum > 0 && rNum <= 3650) returnDays = rNum;
   }
 
   let warrantyYears = null;
@@ -2035,10 +2180,16 @@ function sanitizeAiExtractedData(rawObj) {
     if (!isNaN(wNum) && wNum > 0 && wNum <= 50) warrantyYears = wNum;
   }
 
-  const returnConditions = cleanStr(rawObj.returnConditions, 380);
-  const notes = cleanStr(rawObj.notes, 480);
+  const returnConditions = cleanStr(rawObj.returnConditions, 390);
+  const notes = cleanStr(rawObj.notes, 490);
   const coverage = cleanStr(rawObj.coverage, 550);
   const noCoverage = cleanStr(rawObj.noCoverage, 550);
+
+  // Si la IA dejó returnDays vacío pero puso los días dentro del texto de returnConditions, extraerlo de ahí también
+  if (returnDays === null && returnConditions) {
+    const pol = extractPoliciesFromText([returnConditions], returnConditions, purchaseDate);
+    if (pol.returnDays !== null) returnDays = pol.returnDays;
+  }
 
   return {
     store,
@@ -2055,7 +2206,7 @@ function sanitizeAiExtractedData(rawObj) {
   };
 }
 
-/* Función principal de escaneo con IA (Gemini Vision + Tesseract OCR real, CERO INVENCIONES) */
+/* Función principal de escaneo con IA (Gemini Vision + Tesseract OCR real con pasada en letra pequeña del pie) */
 async function scanTicketWithAI(file, dataUrl) {
   if (isScanningTicket || !file) return;
   isScanningTicket = true;
@@ -2073,7 +2224,7 @@ async function scanTicketWithAI(file, dataUrl) {
   if (rescanBtn) rescanBtn.hidden = true;
   if (rawToggleWrap) rawToggleWrap.hidden = true;
   if (rawTextBox) { rawTextBox.textContent = ''; rawTextBox.hidden = true; }
-  if (scanText) scanText.textContent = 'Analizando ticket (extrayendo únicamente los datos visibles)...';
+  if (scanText) scanText.textContent = 'Analizando todos los detalles del ticket (cabecera, productos y letra pequeña)...';
 
   let extracted = null;
   const geminiKey = (localStorage.getItem('gp_gemini_api_key') || '').trim();
@@ -2081,26 +2232,26 @@ async function scanTicketWithAI(file, dataUrl) {
   try {
     // ── ESTRATEGIA 1: GOOGLE GEMINI VISION (IMÁGENES Y PDF) ──
     if (geminiKey && dataUrl && (dataUrl.startsWith('data:image/') || dataUrl.startsWith('data:application/pdf'))) {
-      if (scanText) scanText.textContent = 'Extrayendo datos exactos del ticket con Gemini Vision...';
+      if (scanText) scanText.textContent = 'Extrayendo todos los detalles del ticket con Gemini Vision...';
       try {
         const mimeType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
         const base64Data = dataUrl.split(',')[1];
 
-        const prompt = `Analiza este ticket, factura o comprobante de compra de forma estrictamente literal.
-REGLA CRÍTICA: NO inventes, NO supongas y NO rellenes valores por defecto. Si un dato NO aparece impreso o NO se lee con claridad en la imagen/documento, devuelve cadena vacía "" o null en ese campo.
+        const prompt = `Analiza este ticket, factura o comprobante de compra de principio a fin, prestando especial atención tanto a los productos como a la LETRA PEQUEÑA de la parte inferior del ticket (plazos de devolución, si se devuelve el dinero o se entrega un vale para gastar en la tienda, condiciones y garantías).
+REGLA CRÍTICA: NO inventes ningún dato que no esté en el ticket. Si un campo no aparece en absoluto, devuelve "" o null.
 
 Devuelve ÚNICAMENTE un objeto JSON válido con estas claves exactas:
-- "productName": nombre exacto del producto o artículo principal impreso en el ticket (si hay varios artículos, pon el principal o résumelos; si no se lee ningún artículo, devuelve "")
-- "brand": marca del producto SOLO si aparece escrita en el ticket (NO pongas el nombre de la tienda como marca; si no aparece la marca del producto, devuelve "")
-- "price": importe total final pagado en euros como número decimal (ej: 49.99). Si no se ve el precio total, devuelve null
-- "store": nombre del comercio, tienda o empresa emisora del ticket tal como aparece impreso (si no se ve, devuelve "")
-- "purchaseDate": fecha de compra impresa en el ticket en formato YYYY-MM-DD (si no se ve la fecha en el ticket, devuelve "")
-- "notes": número de ticket/factura, número de serie/IMEI si aparece, y desglose de artículos si hay varios (si no hay datos adicionales, devuelve "")
-- "returnDays": número entero de días para devolución SOLO si el ticket lo menciona explícitamente en su texto (si no lo menciona, devuelve null)
-- "returnConditions": condiciones de devolución SOLO si están escritas en el ticket (si no, devuelve "")
-- "warrantyYears": años de garantía como número SOLO si el ticket menciona explícitamente los años/meses de garantía (si no lo menciona, devuelve null)
-- "coverage": qué cubre la garantía SOLO si está escrito explícitamente en el documento (si no, devuelve "")
-- "noCoverage": qué no cubre la garantía SOLO si está escrito explícitamente en el documento (si no, devuelve "")`;
+- "productName": nombre exacto del producto o productos comprados (si hay varios, pon los principales o resúmelos; si no se ve, "")
+- "brand": marca del producto SOLO si aparece escrita en el ticket (NO pongas el nombre de la tienda como marca; si no consta, "")
+- "price": importe total final pagado en euros como número decimal (ej: 49.99). Si no se ve, null
+- "store": nombre del comercio o tienda emisora del ticket tal como aparece impreso (si no se ve, "")
+- "purchaseDate": fecha de compra impresa en el ticket en formato YYYY-MM-DD (si no se ve, "")
+- "returnDays": número entero de días para devolver o cambiar según el pie o texto del ticket (ej: si pone "plazo para devolver 15 días", pon 15; si pone "1 mes", pon 30; si no menciona plazo, null)
+- "returnConditions": TODA la información de devolución escrita en el ticket, especialmente la letra pequeña inferior (ej: si dice que no se abonará dinero en efectivo sino que se deberá gastar el dinero en la tienda / vale de compra, requisito de presentar ticket, embalaje, etc.). Si no dice nada, ""
+- "warrantyYears": años de garantía como número SOLO si el ticket lo menciona explícitamente (si no, null)
+- "coverage": qué cubre la garantía si lo indica el ticket (si no, "")
+- "noCoverage": qué no cubre la garantía si lo indica el ticket (si no, "")
+- "notes": número de ticket/factura, NIF/CIF, método de pago y listado detallado de todos los artículos con su precio individual`;
 
         const models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-latest'];
         for (const model of models) {
@@ -2157,22 +2308,62 @@ Devuelve ÚNICAMENTE un objeto JSON válido con estas claves exactas:
       }
     }
 
-    // ── ESTRATEGIA 2B: MOTOR OCR LOCAL REAL EN NAVEGADOR (TESSERACT.JS) ──
+    // ── ESTRATEGIA 2B: MOTOR OCR LOCAL REAL EN NAVEGADOR + ZOOM EN PIE DE TICKET ──
     if (!extracted && dataUrl && dataUrl.startsWith('data:image/')) {
-      if (scanText) scanText.textContent = 'Optimizando nitidez de la imagen del ticket...';
-      const enhancedImage = await preprocessTicketImage(dataUrl);
+      if (scanText) scanText.textContent = 'Optimizando nitidez del ticket completo...';
+      const enhancedImage = await preprocessTicketImage(dataUrl, false);
 
-      if (scanText) scanText.textContent = 'Leyendo texto del ticket con OCR...';
+      if (scanText) scanText.textContent = 'Leyendo productos, importes y fechas del ticket...';
       try {
         let rawOcrText = await runOcrWithTesseract(enhancedImage, (msg) => {
           if (scanText) scanText.textContent = msg;
-        });
+        }, '6');
 
         let parsed = rawOcrText && rawOcrText.trim().length > 3 ? parseReceiptOcrText(rawOcrText) : null;
 
-        // Si en la imagen preprocesada faltan datos clave, hacer segunda pasada sobre la imagen original y combinar lo mejor
+        // Si en la primera pasada no se detectaron los días o condiciones de devolución del pie del ticket,
+        // hacer un zoom de alta resolución al 45% inferior del ticket para capturar toda la letra pequeña
+        if (!parsed || parsed.returnDays === null || !parsed.returnConditions) {
+          if (scanText) scanText.textContent = 'Analizando letra pequeña y condiciones en la parte inferior del ticket...';
+          const footerImage = await preprocessTicketImage(dataUrl, true);
+          const footerOcrText = await runOcrWithTesseract(footerImage, null, '6');
+
+          if (footerOcrText && footerOcrText.trim().length > 3) {
+            const combinedText = (rawOcrText || '') + '\n' + footerOcrText;
+            const footerLines = footerOcrText
+              .replace(/\r\n/g, '\n')
+              .split('\n')
+              .map(l => l.replace(/\s+/g, ' ').trim())
+              .filter(l => l.length > 1);
+
+            const footerPolicies = extractPoliciesFromText(footerLines, footerOcrText, parsed?.purchaseDate || '');
+
+            if (!parsed) {
+              parsed = parseReceiptOcrText(combinedText);
+            } else {
+              if (parsed.returnDays === null && footerPolicies.returnDays !== null) {
+                parsed.returnDays = footerPolicies.returnDays;
+              }
+              if (footerPolicies.returnConditions && footerPolicies.returnConditions.length > (parsed.returnConditions || '').length) {
+                parsed.returnConditions = footerPolicies.returnConditions;
+              }
+              if (parsed.warrantyYears === null && footerPolicies.warrantyYears !== null) {
+                parsed.warrantyYears = footerPolicies.warrantyYears;
+              }
+              if (!parsed.coverage && footerPolicies.coverage) {
+                parsed.coverage = footerPolicies.coverage;
+              }
+              if (!parsed.noCoverage && footerPolicies.noCoverage) {
+                parsed.noCoverage = footerPolicies.noCoverage;
+              }
+            }
+            rawOcrText = combinedText;
+          }
+        }
+
+        // Si aún faltan producto o precio, probar sobre la imagen original sin filtro
         if (!parsed || (!parsed.productName && parsed.price === null)) {
-          const rawOriginalText = await runOcrWithTesseract(dataUrl);
+          const rawOriginalText = await runOcrWithTesseract(dataUrl, null, '6');
           const parsedOrig = rawOriginalText && rawOriginalText.trim().length > 3 ? parseReceiptOcrText(rawOriginalText) : null;
           if (parsedOrig) {
             if (!parsed) {
@@ -2188,14 +2379,13 @@ Devuelve ÚNICAMENTE un objeto JSON válido con estas claves exactas:
               parsed.returnConditions = parsed.returnConditions || parsedOrig.returnConditions;
               parsed.warrantyYears = parsed.warrantyYears !== null ? parsed.warrantyYears : parsedOrig.warrantyYears;
               parsed.notes = parsed.notes || parsedOrig.notes;
-              rawOcrText = rawOcrText + '\n---\n' + rawOriginalText;
             }
           }
         }
 
         if (parsed) {
           extracted = parsed;
-          extracted._source = 'Motor OCR Físico (Lectura Literal)';
+          extracted._source = 'Motor OCR de Alta Precisión (Cabecera + Pie de Ticket)';
           extracted._rawText = rawOcrText;
         } else if (rawOcrText && rawOcrText.trim().length > 0 && rawToggleWrap && rawTextBox) {
           rawTextBox.textContent = rawOcrText.trim();
@@ -2218,7 +2408,8 @@ Devuelve ÚNICAMENTE un objeto JSON válido con estas claves exactas:
       if (extracted.store) foundFields.push(`Tienda: <strong>${escHtml(safeText(extracted.store, 45))}</strong>`);
       if (extracted.price !== null && extracted.price !== undefined) foundFields.push(`Importe: <strong>${Number(extracted.price).toFixed(2)} €</strong>`);
       if (extracted.purchaseDate) foundFields.push(`Fecha: <strong>${escHtml(fmtDate(extracted.purchaseDate))}</strong>`);
-      if (extracted.returnDays !== null && extracted.returnDays !== undefined) foundFields.push(`Devolución: <strong>${extracted.returnDays} días</strong>`);
+      if (extracted.returnDays !== null && extracted.returnDays !== undefined) foundFields.push(`Plazo devolución: <strong>${extracted.returnDays} días</strong>`);
+      if (extracted.returnConditions) foundFields.push(`Condiciones: <strong>${escHtml(safeText(extracted.returnConditions, 90))}</strong>`);
       if (extracted.warrantyYears !== null && extracted.warrantyYears !== undefined) foundFields.push(`Garantía: <strong>${extracted.warrantyYears} años</strong>`);
 
       if (alertBox && alertSummary) {
@@ -2226,7 +2417,7 @@ Devuelve ÚNICAMENTE un objeto JSON válido con estas claves exactas:
         if (alertTitleEl) alertTitleEl.textContent = 'Datos extraídos del ticket';
         alertSummary.innerHTML =
           foundFields.join(' · ') +
-          `<br /><span style="font-size:12px;color:var(--t-secondary);">Los campos que no aparecen o no se ven con claridad en el ticket se han dejado en blanco para que los completes si lo deseas.</span>`;
+          `<br /><span style="font-size:12px;color:var(--t-secondary);">Los campos que no aparecen en el ticket se han dejado en blanco para que los completes si lo deseas.</span>`;
 
         if (extracted._rawText && rawToggleWrap && rawTextBox) {
           rawTextBox.textContent = extracted._rawText;
@@ -2234,9 +2425,8 @@ Devuelve ÚNICAMENTE un objeto JSON válido con estas claves exactas:
         }
       }
       if (rescanBtn) rescanBtn.hidden = false;
-      showToast('Datos visibles del ticket extraídos correctamente', 'ok');
+      showToast('Datos y condiciones del ticket extraídos correctamente', 'ok');
     } else {
-      // No se pudo leer ningún dato fiable: dejar todo en blanco sin inventar nada
       if (alertBox && alertSummary) {
         alertBox.hidden = false;
         if (alertTitleEl) alertTitleEl.textContent = 'Ticket guardado en el Cofre Digital';
