@@ -1010,13 +1010,6 @@ function openAdd() {
 
   setTicketPreview(null);
 
-  const todayStr = today();
-  const purchEl = document.getElementById('prod-purchase');
-  if (purchEl && !purchEl.value) purchEl.value = todayStr;
-  const retStart = document.getElementById('ret-start');
-  if (retStart && !retStart.value) retStart.value = todayStr;
-  const warStart = document.getElementById('war-start');
-  if (warStart && !warStart.value) warStart.value = todayStr;
 
   const title = document.getElementById('modal-heading');
   if (title) title.textContent = t('modal.title.add');
@@ -1242,7 +1235,13 @@ function handleFileSelect(file) {
     const pdfPlaceholder = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='%23111827'/><text x='50%' y='45%' fill='%23e5484d' font-size='38' font-family='sans-serif' text-anchor='middle' font-weight='bold'>PDF</text><text x='50%' y='68%' fill='%2394a3b8' font-size='15' font-family='sans-serif' text-anchor='middle'>Factura / Ticket en PDF custodiado</text></svg>";
     pendingTicketDataUrl = pdfPlaceholder;
     setTicketPreview(pdfPlaceholder);
-    scanTicketWithAI(file, null);
+    const pdfReader = new FileReader();
+    pdfReader.onload = (ev) => {
+      const pdfDataUrl = typeof ev.target.result === 'string' ? ev.target.result : null;
+      scanTicketWithAI(file, pdfDataUrl);
+    };
+    pdfReader.onerror = () => scanTicketWithAI(file, null);
+    pdfReader.readAsDataURL(file);
     return;
   }
 
@@ -1257,10 +1256,10 @@ function handleFileSelect(file) {
   reader.readAsDataURL(file);
 }
 
-/* ── 12.1 PREPROCESAMIENTO Y MOTOR OCR REAL DE TICKETS (CUALQUIER COMERCIO) ── */
+/* ── 12.1 MOTOR DE EXTRACCIÓN EXACTA DE TICKETS Y FACTURAS (SIN INVENTAR DATOS) ── */
 let isScanningTicket = false;
 
-/* Mejora dinámica de contraste en Canvas para rescatar texto en papel térmico */
+/* Normalización adaptativa de niveles (histogram stretching) sin destruir bordes ni sombras */
 async function preprocessTicketImage(imageSource) {
   return new Promise((resolve) => {
     const img = new Image();
@@ -1269,29 +1268,62 @@ async function preprocessTicketImage(imageSource) {
       try {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        const maxW = 1200;
+        const maxDim = 2200;
+        const minDim = 1200;
         let w = img.naturalWidth || img.width;
         let h = img.naturalHeight || img.height;
-        if (w > maxW) {
-          h = Math.round((h * maxW) / w);
-          w = maxW;
+
+        if (w > maxDim || h > maxDim) {
+          const scale = maxDim / Math.max(w, h);
+          w = Math.round(w * scale);
+          h = Math.round(h * scale);
+        } else if (Math.max(w, h) < minDim && w > 0 && h > 0) {
+          const scale = Math.min(2.0, minDim / Math.max(w, h));
+          w = Math.round(w * scale);
+          h = Math.round(h * scale);
         }
+
         canvas.width = w;
         canvas.height = h;
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, w, h);
 
         const imgData = ctx.getImageData(0, 0, w, h);
         const d = imgData.data;
-        // Binarización y expansión de contraste para papel térmico desgastado
+        const totalPixels = w * h;
+        const hist = new Uint32Array(256);
+
         for (let i = 0; i < d.length; i += 4) {
-          const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-          const enhanced = gray < 138 ? Math.max(0, gray * 0.5) : Math.min(255, 120 + (gray - 120) * 1.6);
-          d[i] = enhanced;
-          d[i + 1] = enhanced;
-          d[i + 2] = enhanced;
+          const lum = Math.round(0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]);
+          d[i] = lum;
+          hist[lum]++;
         }
+
+        // Percentiles 3% (tinta) y 90% (papel de fondo) para estirar el contraste suavemente
+        let low = 0, high = 255, acc = 0;
+        const lowTarget = totalPixels * 0.03;
+        const highTarget = totalPixels * 0.90;
+        for (let v = 0; v < 256; v++) {
+          acc += hist[v];
+          if (acc < lowTarget) low = v;
+          if (acc < highTarget) high = v;
+        }
+        const range = Math.max(40, high - low);
+
+        for (let i = 0; i < d.length; i += 4) {
+          const lum = d[i];
+          let norm = (lum - low) / range;
+          norm = Math.max(0, Math.min(1, norm));
+          // Curva suave que limpia el fondo gris del papel térmico pero preserva los trazos finos
+          const val = norm > 0.78 ? Math.min(255, Math.round(200 + (norm - 0.78) * 250)) : Math.round(Math.pow(norm, 1.18) * 255);
+          d[i] = val;
+          d[i + 1] = val;
+          d[i + 2] = val;
+        }
+
         ctx.putImageData(imgData, 0, 0);
-        resolve(canvas.toDataURL('image/jpeg', 0.92));
+        resolve(canvas.toDataURL('image/jpeg', 0.95));
       } catch (err) {
         console.warn('Canvas preproc warning, using original:', err);
         resolve(imageSource);
@@ -1317,10 +1349,17 @@ async function runOcrWithTesseract(imageSource, onProgress) {
       logger: (m) => {
         if (m.status === 'recognizing text' && onProgress) {
           const pct = Math.round((m.progress || 0) * 100);
-          onProgress(`Leyendo texto físico del ticket... ${pct}%`, pct);
+          onProgress(`Leyendo texto del ticket... ${pct}%`, pct);
         }
       }
     });
+
+    if (worker.setParameters) {
+      await worker.setParameters({
+        tessedit_pageseg_mode: '6', // Bloque uniforme de texto alineado (óptimo para tickets y facturas)
+        preserve_interword_spaces: '1'
+      }).catch(() => {});
+    }
 
     const { data: { text } } = await worker.recognize(imageSource);
     await worker.terminate();
@@ -1333,144 +1372,690 @@ async function runOcrWithTesseract(imageSource, onProgress) {
   }
 }
 
-/* Parser universal de tickets de cualquier comercio en España */
-function parseReceiptOcrText(rawText, fallbackDate) {
+/* Extracción de texto digital de facturas en PDF en el navegador */
+async function extractTextFromPdfFile(file) {
+  try {
+    const buffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    const decoder = new TextDecoder('latin1');
+    const raw = decoder.decode(bytes);
+    const chunks = [];
+    // Extraer literales de texto entre paréntesis en streams PDF no comprimidos
+    const regex = /\(([^()\\]{2,120})\)\s*T[jJ]/g;
+    let m;
+    while ((m = regex.exec(raw)) !== null) {
+      const clean = m[1].replace(/\\[nrt]/g, ' ').replace(/[\x00-\x1F]/g, '').trim();
+      if (clean.length >= 2 && /[A-Za-z0-9]/.test(clean)) chunks.push(clean);
+    }
+    return chunks.join('\n');
+  } catch {
+    return '';
+  }
+}
+
+/* Catálogo de comercios y cadenas en España */
+const KNOWN_STORES = [
+  { key: /\bmercadona\b/i, name: 'Mercadona' },
+  { key: /\bcarrefour\b/i, name: 'Carrefour' },
+  { key: /media\s*markt/i, name: 'MediaMarkt' },
+  { key: /corte\s*ingl[eé]s/i, name: 'El Corte Inglés' },
+  { key: /\bhipercor\b/i, name: 'Hipercor' },
+  { key: /\bsupercor\b/i, name: 'Supercor' },
+  { key: /\bsfera\b/i, name: 'Sfera' },
+  { key: /\bzara\s*home\b/i, name: 'Zara Home' },
+  { key: /\bzara\b/i, name: 'Zara' },
+  { key: /stradivarius/i, name: 'Stradivarius' },
+  { key: /pull\s*(?:&|and)?\s*bear/i, name: 'Pull&Bear' },
+  { key: /\bbershka\b/i, name: 'Bershka' },
+  { key: /massimo\s*dutti/i, name: 'Massimo Dutti' },
+  { key: /\boysho\b/i, name: 'Oysho' },
+  { key: /\blefties\b/i, name: 'Lefties' },
+  { key: /\bdecathlon\b/i, name: 'Decathlon' },
+  { key: /leroy\s*merlin/i, name: 'Leroy Merlin' },
+  { key: /\bikea\b/i, name: 'IKEA' },
+  { key: /\blidl\b/i, name: 'Lidl' },
+  { key: /\baldi\b/i, name: 'Aldi' },
+  { key: /\balcampo\b/i, name: 'Alcampo' },
+  { key: /\bfnac\b/i, name: 'Fnac' },
+  { key: /apple\s*(?:store|retail|distribution)/i, name: 'Apple Store' },
+  { key: /\bamazon\b/i, name: 'Amazon' },
+  { key: /pc\s*componentes/i, name: 'PcComponentes' },
+  { key: /\b(?:bricomart|obramat)\b/i, name: 'Obramat' },
+  { key: /\bbauhaus\b/i, name: 'Bauhaus' },
+  { key: /brico\s*dep[oô]t/i, name: 'Brico Depôt' },
+  { key: /\bprimark\b/i, name: 'Primark' },
+  { key: /\bmango\b/i, name: 'Mango' },
+  { key: /\bsprinter\b/i, name: 'Sprinter' },
+  { key: /jd\s*sports/i, name: 'JD Sports' },
+  { key: /foot\s*locker/i, name: 'Foot Locker' },
+  { key: /\beroski\b/i, name: 'Eroski' },
+  { key: /\bconsum\b/i, name: 'Consum' },
+  { key: /supermercados\s*dia|\bdia\s*s\.?a\b/i, name: 'Supermercados Dia' },
+  { key: /\bahorramas\b/i, name: 'Ahorramas' },
+  { key: /\bbonpreu\b/i, name: 'Bonpreu' },
+  { key: /\bcaprabo\b/i, name: 'Caprabo' },
+  { key: /\bgadis\b/i, name: 'Gadis' },
+  { key: /\bfroiz\b/i, name: 'Froiz' },
+  { key: /\blupa\b/i, name: 'Lupa' },
+  { key: /\bworten\b/i, name: 'Worten' },
+  { key: /videojuegos\s*game|\bgame\s*stores\b/i, name: 'GAME' },
+  { key: /phone\s*house/i, name: 'Phone House' },
+  { key: /\bk-?tuin\b/i, name: 'K-tuin' },
+  { key: /mi\s*electro/i, name: 'Mi Electro' },
+  { key: /\btien\s*21\b/i, name: 'Tien21' },
+  { key: /\beuronics\b/i, name: 'Euronics' },
+  { key: /\bmilar\b/i, name: 'Milar' },
+  { key: /\bcoolmod\b/i, name: 'Coolmod' },
+  { key: /\bjysk\b/i, name: 'JYSK' },
+  { key: /\bconforama\b/i, name: 'Conforama' },
+  { key: /maisons\s*du\s*monde/i, name: 'Maisons du Monde' },
+  { key: /\bpepco\b/i, name: 'Pepco' },
+  { key: /\baction\b/i, name: 'Action' },
+  { key: /\btedi\b/i, name: 'TEDi' },
+  { key: /ale-?hop/i, name: 'Ale-Hop' },
+  { key: /flying\s*tiger/i, name: 'Flying Tiger' },
+  { key: /\bdruni\b/i, name: 'Druni' },
+  { key: /\bprimor\b/i, name: 'Primor' },
+  { key: /\bsephora\b/i, name: 'Sephora' },
+  { key: /\bdouglas\b/i, name: 'Douglas' },
+  { key: /\brituals\b/i, name: 'Rituals' },
+  { key: /\bcortefiel\b/i, name: 'Cortefiel' },
+  { key: /\bspringfield\b/i, name: 'Springfield' },
+  { key: /women'?secret/i, name: "Women'secret" },
+  { key: /pedro\s*del\s*hierro/i, name: 'Pedro del Hierro' },
+  { key: /\bkiabi\b/i, name: 'Kiabi' },
+  { key: /\bparfois\b/i, name: 'Parfois' },
+  { key: /\btous\b/i, name: 'Tous' },
+  { key: /\bdesigual\b/i, name: 'Desigual' },
+  { key: /\bscalpers\b/i, name: 'Scalpers' },
+  { key: /\buniqlo\b/i, name: 'Uniqlo' },
+  { key: /\bh\s*&\s*m\b/i, name: 'H&M' },
+  { key: /\bdeichmann\b/i, name: 'Deichmann' },
+  { key: /\bmerkal\b/i, name: 'Merkal' },
+  { key: /\bnorauto\b/i, name: 'Norauto' },
+  { key: /feu\s*vert/i, name: 'Feu Vert' },
+  { key: /\baurgi\b/i, name: 'Aurgi' },
+  { key: /casa\s*del\s*libro/i, name: 'Casa del Libro' },
+  { key: /\bjuguettos\b/i, name: 'Juguettos' },
+  { key: /toys\s*r\s*us/i, name: 'ToysRUs' },
+  { key: /\bcostco\b/i, name: 'Costco' },
+  { key: /\bmakro\b/i, name: 'Makro' }
+];
+
+/* Catálogo de marcas reales de productos (distintas del nombre de la tienda) */
+const KNOWN_PRODUCT_BRANDS = [
+  { key: /\b(?:apple|iphone|ipad|macbook|airpods|imac)\b/i, name: 'Apple' },
+  { key: /\b(?:samsung|galaxy)\b/i, name: 'Samsung' },
+  { key: /\b(?:xiaomi|redmi|poco|mi\s*band)\b/i, name: 'Xiaomi' },
+  { key: /\b(?:sony|playstation|ps5|ps4|bravia|wh-?1000|wf-?1000)\b/i, name: 'Sony' },
+  { key: /\blg\b/i, name: 'LG' },
+  { key: /\bphilips\b/i, name: 'Philips' },
+  { key: /\bbosch\b/i, name: 'Bosch' },
+  { key: /\bbalay\b/i, name: 'Balay' },
+  { key: /\bsiemens\b/i, name: 'Siemens' },
+  { key: /\bteka\b/i, name: 'Teka' },
+  { key: /\bbeko\b/i, name: 'Beko' },
+  { key: /\bwhirlpool\b/i, name: 'Whirlpool' },
+  { key: /\belectrolux\b/i, name: 'Electrolux' },
+  { key: /\baeg\b/i, name: 'AEG' },
+  { key: /\bzanussi\b/i, name: 'Zanussi' },
+  { key: /\bhisense\b/i, name: 'Hisense' },
+  { key: /\btcl\b/i, name: 'TCL' },
+  { key: /\bpanasonic\b/i, name: 'Panasonic' },
+  { key: /\bcanon\b/i, name: 'Canon' },
+  { key: /\bnikon\b/i, name: 'Nikon' },
+  { key: /\bgopro\b/i, name: 'GoPro' },
+  { key: /\bdji\b/i, name: 'DJI' },
+  { key: /\bgarmin\b/i, name: 'Garmin' },
+  { key: /\bhuawei\b/i, name: 'Huawei' },
+  { key: /\bhonor\b/i, name: 'Honor' },
+  { key: /\boppo\b/i, name: 'Oppo' },
+  { key: /\brealme\b/i, name: 'Realme' },
+  { key: /\bmotorola\b/i, name: 'Motorola' },
+  { key: /\boneplus\b/i, name: 'OnePlus' },
+  { key: /\b(?:hp|hewlett)\b/i, name: 'HP' },
+  { key: /\blenovo\b/i, name: 'Lenovo' },
+  { key: /\bdell\b/i, name: 'Dell' },
+  { key: /\basus\b/i, name: 'Asus' },
+  { key: /\bacer\b/i, name: 'Acer' },
+  { key: /\bmsi\b/i, name: 'MSI' },
+  { key: /\brazer\b/i, name: 'Razer' },
+  { key: /\bcorsair\b/i, name: 'Corsair' },
+  { key: /\blogitech\b/i, name: 'Logitech' },
+  { key: /\btrust\b/i, name: 'Trust' },
+  { key: /\bhyperx\b/i, name: 'HyperX' },
+  { key: /\bjbl\b/i, name: 'JBL' },
+  { key: /\bbose\b/i, name: 'Bose' },
+  { key: /\bsennheiser\b/i, name: 'Sennheiser' },
+  { key: /\bmarshall\b/i, name: 'Marshall' },
+  { key: /\bsonos\b/i, name: 'Sonos' },
+  { key: /\bdyson\b/i, name: 'Dyson' },
+  { key: /\b(?:cecotec|conga|mambo|bamba)\b/i, name: 'Cecotec' },
+  { key: /\browenta\b/i, name: 'Rowenta' },
+  { key: /\bmoulinex\b/i, name: 'Moulinex' },
+  { key: /\btefal\b/i, name: 'Tefal' },
+  { key: /\bkrups\b/i, name: 'Krups' },
+  { key: /\bdelonghi\b|de'longhi/i, name: "De'Longhi" },
+  { key: /\bnespresso\b/i, name: 'Nespresso' },
+  { key: /\bbraun\b/i, name: 'Braun' },
+  { key: /\boral-?b\b/i, name: 'Oral-B' },
+  { key: /\bremington\b/i, name: 'Remington' },
+  { key: /\bbabyliss\b/i, name: 'BaByliss' },
+  { key: /\bghd\b/i, name: 'ghd' },
+  { key: /\bufesa\b/i, name: 'Ufesa' },
+  { key: /\btaurus\b/i, name: 'Taurus' },
+  { key: /\borbegozo\b/i, name: 'Orbegozo' },
+  { key: /\bjata\b/i, name: 'Jata' },
+  { key: /\bk[aä]rcher\b/i, name: 'Kärcher' },
+  { key: /\b(?:irobot|roomba)\b/i, name: 'iRobot' },
+  { key: /\broborock\b/i, name: 'Roborock' },
+  { key: /\bdreame\b/i, name: 'Dreame' },
+  { key: /\b(?:nintendo|switch)\b/i, name: 'Nintendo' },
+  { key: /\bxbox\b/i, name: 'Xbox' },
+  { key: /\blego\b/i, name: 'LEGO' },
+  { key: /\bcasio\b/i, name: 'Casio' },
+  { key: /\bseiko\b/i, name: 'Seiko' },
+  { key: /\blotus\b/i, name: 'Lotus' },
+  { key: /\bfestina\b/i, name: 'Festina' },
+  { key: /\bpandora\b/i, name: 'Pandora' },
+  { key: /\bray-?ban\b/i, name: 'Ray-Ban' },
+  { key: /\bhawkers\b/i, name: 'Hawkers' },
+  { key: /\bnike\b/i, name: 'Nike' },
+  { key: /\badidas\b/i, name: 'Adidas' },
+  { key: /\bpuma\b/i, name: 'Puma' },
+  { key: /\basics\b/i, name: 'Asics' },
+  { key: /\bnew\s*balance\b/i, name: 'New Balance' },
+  { key: /\bsalomon\b/i, name: 'Salomon' },
+  { key: /\bvans\b/i, name: 'Vans' },
+  { key: /\bconverse\b/i, name: 'Converse' },
+  { key: /\breebok\b/i, name: 'Reebok' },
+  { key: /\bquechua\b/i, name: 'Quechua' },
+  { key: /\bdomyos\b/i, name: 'Domyos' },
+  { key: /\brockrider\b/i, name: 'Rockrider' },
+  { key: /\bkipsta\b/i, name: 'Kipsta' },
+  { key: /\bforclaz\b/i, name: 'Forclaz' },
+  { key: /\bparkside\b/i, name: 'Parkside' },
+  { key: /\bsilvercrest\b/i, name: 'Silvercrest' },
+  { key: /\bcrivit\b/i, name: 'Crivit' },
+  { key: /\bhacendado\b/i, name: 'Hacendado' },
+  { key: /\bdeliplus\b/i, name: 'Deliplus' },
+  { key: /\bbosque\s*verde\b/i, name: 'Bosque Verde' }
+];
+
+/* Extrae todos los importes monetarios válidos de una línea de texto */
+function extractPricesFromLine(line) {
+  if (!line) return [];
+  // Normalizar espacios accidentales del OCR junto a la coma/punto decimal (ej: "12 , 99" -> "12,99")
+  const norm = line.replace(/(\d)\s*([,.])\s*(\d{2})(?!\d)/g, '$1$2$3');
+  const results = [];
+  // Soporta "1.234,56", "1234,56", "123.45"
+  const regex = /(?:^|[^\d.,/\-])((?:\d{1,3}(?:\.\d{3})+|\d{1,5})[,.]\d{2})(?!\s*%)(?!\s*(?:kg|g|l|ml|m|cm|mm|un|ud|uds)\b)(?=$|[^\d.,/\-])/gi;
+  let m;
+  while ((m = regex.exec(norm)) !== null) {
+    const rawNum = m[1];
+    // Evitar confundir fechas DD.MM.YY (ej: 15.10.25)
+    const afterIdx = m.index + m[0].length;
+    if (norm.slice(afterIdx).match(/^[./-]\d{2,4}/)) continue;
+
+    let clean = rawNum;
+    if (clean.includes('.') && clean.includes(',')) {
+      clean = clean.replace(/\./g, '').replace(',', '.');
+    } else if (clean.includes(',')) {
+      clean = clean.replace(',', '.');
+    }
+    const val = parseFloat(clean);
+    if (!isNaN(val) && val > 0 && val < 100000) {
+      results.push({
+        val,
+        raw: rawNum,
+        index: m.index
+      });
+    }
+  }
+  return results;
+}
+
+/* Parser universal de tickets y facturas en España (CERO DATOS INVENTADOS) */
+function parseReceiptOcrText(rawText) {
   if (!rawText || typeof rawText !== 'string') return null;
 
   const lines = rawText
+    .replace(/\r\n/g, '\n')
     .split('\n')
-    .map(l => l.trim())
+    .map(l => l.replace(/\s+/g, ' ').trim())
     .filter(l => l.length > 1);
 
   if (!lines.length) return null;
 
-  const ignoreHeaders = /^(factura|ticket|simplificada|simplificado|caja|tpv|copia|cliente|bienvenido|gracias|fecha|hora|n\.?i\.?f|c\.?i\.?f|telefono|tel\b|iva|direccion|recibo|comprobante|nro|numero)/i;
+  const headerSlice = lines.slice(0, 10).join('\n');
 
-  const KNOWN_BRANDS = [
-    { key: /mercadona/i, name: 'Mercadona', retDays: 30 },
-    { key: /carrefour/i, name: 'Carrefour', retDays: 30 },
-    { key: /mediamarkt|media\s*markt/i, name: 'MediaMarkt', retDays: 30 },
-    { key: /corte\s*ingl[eé]s|el\s*corte\s*ingles/i, name: 'El Corte Inglés', retDays: 60 },
-    { key: /\bzara\b/i, name: 'Zara', retDays: 30 },
-    { key: /stradivarius/i, name: 'Stradivarius', retDays: 30 },
-    { key: /pull\s*(&|and)?\s*bear/i, name: 'Pull&Bear', retDays: 30 },
-    { key: /bershka/i, name: 'Bershka', retDays: 30 },
-    { key: /massimo\s*dutti/i, name: 'Massimo Dutti', retDays: 30 },
-    { key: /decathlon/i, name: 'Decathlon', retDays: 60 },
-    { key: /leroy\s*merlin/i, name: 'Leroy Merlin', retDays: 100 },
-    { key: /ikea/i, name: 'IKEA', retDays: 365 },
-    { key: /lidl/i, name: 'Lidl', retDays: 30 },
-    { key: /alcampo/i, name: 'Alcampo', retDays: 30 },
-    { key: /fnac/i, name: 'Fnac', retDays: 30 },
-    { key: /apple/i, name: 'Apple Store', retDays: 14 },
-    { key: /amazon/i, name: 'Amazon España', retDays: 30 },
-    { key: /pccomponentes|pc\s*componentes/i, name: 'PcComponentes', retDays: 30 },
-    { key: /bricomart|obramat/i, name: 'Obramat', retDays: 100 },
-    { key: /primark/i, name: 'Primark', retDays: 28 },
-    { key: /mango/i, name: 'Mango', retDays: 30 },
-    { key: /sprinter/i, name: 'Sprinter', retDays: 30 },
-    { key: /eroski/i, name: 'Eroski', retDays: 30 },
-    { key: /consum/i, name: 'Consum', retDays: 30 },
-    { key: /dia\b|supermercados\s*dia/i, name: 'Supermercados Dia', retDays: 30 },
-    { key: /worten/i, name: 'Worten', retDays: 30 },
-    { key: /game\b|videojuegos\s*game/i, name: 'GAME', retDays: 14 }
-  ];
-
-  let matchedBrand = KNOWN_BRANDS.find(b => b.key.test(rawText));
+  // ── 1. TIENDA / VENDEDOR ───────────────────────────────────────
   let detectedStore = '';
-  let returnDays = matchedBrand ? matchedBrand.retDays : 30;
-
-  if (matchedBrand) {
-    detectedStore = matchedBrand.name;
+  // Priorizar coincidencia en la cabecera del ticket
+  let matchedStore = KNOWN_STORES.find(s => s.key.test(headerSlice)) || KNOWN_STORES.find(s => s.key.test(rawText));
+  if (matchedStore) {
+    detectedStore = matchedStore.name;
   } else {
-    // Si es un comercio local, tienda de barrio o taller independiente:
-    for (let i = 0; i < Math.min(6, lines.length); i++) {
-      const line = lines[i];
-      if (!ignoreHeaders.test(line) && line.length >= 3 && !/^\d+$/.test(line) && !/^\d{1,2}[\/\-\.]/.test(line)) {
-        detectedStore = line
-          .replace(/^[^\wáéíóúñÁÉÍÓÚÑ]+/, '')
-          .replace(/[^\wáéíóúñÁÉÍÓÚÑ\s.,&-]+$/, '')
-          .slice(0, 50);
-        if (detectedStore.length >= 3) break;
+    // Buscar razón social (S.L., S.A., S.L.U., C.B.) en las primeras 8 líneas
+    const legalEntityRegex = /\b(?:S\.?\s*L\.?\s*U?\.?|S\.?\s*A\.?\s*U?\.?|S\.?\s*C\.?|C\.?\s*B\.?)\b/i;
+    const nonStoreHeader = /^(?:factura|ticket|simplificada|simplificado|recibo|albaran|nota|copia|duplicado|original|caja|tpv|terminal|operacion|comercio|fecha|hora|cliente|atendido|vendedor|camarero|mesa|pedido|nif|cif|dni|iva|tel|tfno|telefono|movil|www\.|http|calle|c\/|avda|avenida|plaza|pza|pol\.|poligono|ctra|carretera|cp\b|\d{5}\b)/i;
+
+    for (let i = 0; i < Math.min(8, lines.length); i++) {
+      const l = lines[i];
+      if (legalEntityRegex.test(l) && !/^(?:nif|cif|dir|calle|c\/|av)/i.test(l)) {
+        const cleanEntity = l.replace(/\b(?:nif|cif)\s*[:.-]?\s*[A-Z0-9-]+/ig, '').trim();
+        if (cleanEntity.length >= 3 && cleanEntity.length <= 65) {
+          detectedStore = cleanEntity;
+          break;
+        }
+      }
+    }
+
+    // Si no tiene sufijo societario, evaluar las primeras 4 líneas buscando nombre comercial limpio
+    if (!detectedStore) {
+      for (let i = 0; i < Math.min(4, lines.length); i++) {
+        const l = lines[i].replace(/^[*#\-=~_+|\s]+|[*#\-=~_+|\s]+$/g, '').trim();
+        if (l.length < 3 || l.length > 48) continue;
+        if (nonStoreHeader.test(l)) continue;
+        if (/\d{2}[/.-]\d{2}[/.-]\d{2,4}/.test(l) || /\b\d+[,.]\d{2}\b/.test(l)) continue;
+        if (/\b[A-HJ-NP-SUVW]\d{7}[0-9A-J]\b/i.test(l)) continue; // CIF/NIF
+        if (/\b\d{3}[\s.-]?\d{2,3}[\s.-]?\d{2,3}\b/.test(l)) continue; // Teléfono
+        const letters = (l.match(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g) || []).length;
+        const vowels = (l.match(/[AEIOUÁÉÍÓÚÜaeiouáéíóúü]/g) || []).length;
+        if (letters >= 3 && letters / l.length >= 0.72 && vowels >= 1 && vowels / letters >= 0.22) {
+          detectedStore = l;
+          break;
+        }
       }
     }
   }
 
-  // FECHA DE COMPRA
+  // ── 2. FECHA DE COMPRA (SOLO SI APARECE EN EL TICKET) ─────────
   let detectedDate = '';
-  const dateRegex = /\b([0-3]?[0-9])[\/\.\-]([0-1]?[0-9])[\/\.\-](20\d{2}|\d{2})\b/;
-  const dateMatch = rawText.match(dateRegex);
-  if (dateMatch) {
-    let day = dateMatch[1].padStart(2, '0');
-    let month = dateMatch[2].padStart(2, '0');
-    let year = dateMatch[3];
-    if (year.length === 2) year = '20' + year;
-    const mNum = parseInt(month, 10);
-    const dNum = parseInt(day, 10);
-    if (mNum >= 1 && mNum <= 12 && dNum >= 1 && dNum <= 31) {
-      detectedDate = `${year}-${month}-${day}`;
-    }
+  const MONTH_MAP = {
+    ene: '01', enero: '01', jan: '01',
+    feb: '02', febrero: '02',
+    mar: '03', marzo: '03',
+    abr: '04', abril: '04', apr: '04',
+    may: '05', mayo: '05',
+    jun: '06', junio: '06',
+    jul: '07', julio: '07',
+    ago: '08', agosto: '08', aug: '08',
+    sep: '09', sept: '09', set: '09', septiembre: '09',
+    oct: '10', octubre: '10',
+    nov: '11', noviembre: '11',
+    dic: '12', diciembre: '12', dec: '12'
+  };
+
+  const currentYear = new Date().getFullYear();
+  const dateCandidates = [];
+
+  function addDateCandidate(y, m, d, lineIdx, lineText) {
+    let year = parseInt(y, 10);
+    if (year < 100) year += 2000;
+    const month = parseInt(m, 10);
+    const day = parseInt(d, 10);
+    if (year < 2000 || year > currentYear + 1) return;
+    if (month < 1 || month > 12 || day < 1 || day > 31) return;
+    const iso = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const parsedTime = new Date(iso + 'T00:00:00').getTime();
+    if (isNaN(parsedTime)) return;
+    // Ignorar fechas futuras (> 2 días respecto a hoy) o fechas de caducidad/devolución máxima
+    if (parsedTime > Date.now() + 2 * 86400000) return;
+    if (/(?:caduc|valido\s*hasta|v[aá]lido\s*hasta|vencimiento|fecha\s*l[ií]mite|devoluci[oó]n\s*hasta|antes\s*del)/i.test(lineText)) return;
+
+    let score = 10;
+    if (/(?:fecha|date|compra|emisi[oó]n|expedici[oó]n|factura|ticket|venta)/i.test(lineText)) score += 45;
+    if (/\b(?:[01]?\d|2[0-3]):[0-5]\d\b/.test(lineText)) score += 35; // Acompañada de hora HH:MM
+    if (lineIdx < 12) score += 15;
+    dateCandidates.push({ iso, score, lineIdx });
   }
-  if (!detectedDate) detectedDate = fallbackDate || today();
 
-  // IMPORTE TOTAL
-  let detectedPrice = null;
-  const totalKeywords = /(total|a\s*pagar|importe|suma|subtotal|tarjeta|total\s*eur|eur\b|€)/i;
-  const candidatePrices = [];
+  lines.forEach((line, idx) => {
+    // 1. DD/MM/YYYY o DD-MM-YY
+    const dmyMatches = [...line.matchAll(/\b([0-3]?\d)\s*[/.-]\s*([01]?\d)\s*[/.-]\s*(20\d{2}|\d{2})\b/g)];
+    dmyMatches.forEach(m => addDateCandidate(m[3], m[2], m[1], idx, line));
 
-  lines.forEach(line => {
-    const priceMatches = [...line.matchAll(/\b(\d{1,4})[.,](\d{2})\b/g)];
-    priceMatches.forEach(m => {
-      const val = parseFloat(`${m[1]}.${m[2]}`);
-      if (val > 0 && val < 50000) {
-        candidatePrices.push({
-          val,
-          isTotalLine: totalKeywords.test(line),
-          line
-        });
-      }
+    // 2. YYYY-MM-DD o YYYY/MM/DD
+    const ymdMatches = [...line.matchAll(/\b(20\d{2})\s*[/.-]\s*([01]?\d)\s*[/.-]\s*([0-3]?\d)\b/g)];
+    ymdMatches.forEach(m => addDateCandidate(m[1], m[2], m[3], idx, line));
+
+    // 3. DD de <mes> de YYYY o DD-MMM-YYYY
+    const txtMatches = [...line.matchAll(/\b([0-3]?\d)\s*(?:de\s+|[/.-]|\s+)([a-záéíóú]{3,10})\.?\s*(?:de\s+|,\s*|[/.-]|\s+)(20\d{2}|\d{2})\b/gi)];
+    txtMatches.forEach(m => {
+      const mKey = m[2].toLowerCase().slice(0, 4);
+      const mKey3 = m[2].toLowerCase().slice(0, 3);
+      const monthNum = MONTH_MAP[m[2].toLowerCase()] || MONTH_MAP[mKey] || MONTH_MAP[mKey3];
+      if (monthNum) addDateCandidate(m[3], monthNum, m[1], idx, line);
     });
   });
 
-  const totalLines = candidatePrices.filter(c => c.isTotalLine);
-  if (totalLines.length) {
-    const sorted = [...totalLines].sort((a, b) => b.val - a.val);
-    detectedPrice = sorted[0].val;
-  } else if (candidatePrices.length) {
-    const sorted = [...candidatePrices].sort((a, b) => b.val - a.val);
-    detectedPrice = sorted[0].val;
+  if (dateCandidates.length > 0) {
+    dateCandidates.sort((a, b) => b.score - a.score || a.lineIdx - b.lineIdx);
+    detectedDate = dateCandidates[0].iso;
   }
 
-  // ARTÍCULO O PRODUCTO PRINCIPAL
+  // ── 3. IMPORTE TOTAL EXACTO ────────────────────────────────────
+  let detectedPrice = null;
+  const ignorePriceLine = /(?:cambio|devuelto|a\s*devolver|su\s*vuelta|entregado|entrega\s*efectivo|efectivo\s*entregado|base\s*imponible|cuota\s*iva|%\s*iva|iva\s*\d+\s*%|tipo\s*iva|ahorro|descuento|bonificaci|puntos|saldo\s*anterior|kg\s*x|eur\/kg|€\/kg)/i;
+  const explicitTotalRegex = /(?:\btotal\s*(?:a\s*pagar|compra|ticket|factura|venta|general|eur|€|importe)?\b|\bimporte\s*total\b|\ba\s*pagar\b)/i;
+  const excludeFakeTotalRegex = /(?:subtotal|sub-total|total\s*(?:base|iva|impuestos|dto|descuento|ahorro|art[ií]culos|unidades|uds|puntos|peso))/i;
+  const cardPaymentRegex = /(?:\btarjeta\b|\bpago\s*tarjeta\b|\bventa\s*tarjeta\b|\bvisa\b|\bmastercard\b|\bmaestro\b|\bbizum\b)/i;
+
+  const totalCandidates = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (ignorePriceLine.test(line)) continue;
+
+    const linePrices = extractPricesFromLine(line);
+    const isExplicitTotal = explicitTotalRegex.test(line) && !excludeFakeTotalRegex.test(line);
+    const isCardLine = cardPaymentRegex.test(line);
+    const isSubtotal = /\b(?:subtotal|suma)\b/i.test(line);
+
+    if (isExplicitTotal) {
+      if (linePrices.length > 0) {
+        // Tomar el último importe de la línea TOTAL (suele ser el total con IVA a la derecha)
+        const p = linePrices[linePrices.length - 1];
+        const priority = /total\s*(?:a\s*pagar|factura|compra|ticket|eur|€)/i.test(line) ? 100 : 90;
+        totalCandidates.push({ val: p.val, priority, lineIdx: i });
+      } else if (i + 1 < lines.length && !ignorePriceLine.test(lines[i + 1])) {
+        // Caso habitual en tickets térmicos: "TOTAL (€)" en una línea y el número justo en la siguiente
+        const nextPrices = extractPricesFromLine(lines[i + 1]);
+        if (nextPrices.length > 0) {
+          totalCandidates.push({ val: nextPrices[nextPrices.length - 1].val, priority: 88, lineIdx: i + 1 });
+        }
+      }
+    } else if (isCardLine && linePrices.length > 0) {
+      totalCandidates.push({ val: linePrices[linePrices.length - 1].val, priority: 75, lineIdx: i });
+    } else if (isSubtotal && linePrices.length > 0) {
+      totalCandidates.push({ val: linePrices[linePrices.length - 1].val, priority: 50, lineIdx: i });
+    }
+  }
+
+  if (totalCandidates.length > 0) {
+    // Ordenar por mayor prioridad; a igual prioridad, preferir la última aparición de TOTAL (final del ticket)
+    totalCandidates.sort((a, b) => b.priority - a.priority || b.lineIdx - a.lineIdx);
+    detectedPrice = totalCandidates[0].val;
+  }
+
+  // ── 4. EXTRACCIÓN DE ARTÍCULOS / PRODUCTOS ────────────────────
+  const nonItemLineRegex = /(?:\btotal\b|\bsubtotal\b|\ba\s*pagar\b|\bimporte\b|\bbase\s*imponible\b|\bcuota\b|\biva\b|\bi\.v\.a\b|\bigic\b|\bimpuesto|\befectivo\b|\btarjeta\b|\bvisa\b|\bmastercard\b|\bmaestro\b|\bbizum\b|\bcambio\b|\bentregado\b|\bentrega\b|\bahorro\b|\bdescuento\b|\bdto\b|\bpromoci[oó]n\b|\bcup[oó]n\b|\bpuntos\b|\bsaldo\b|\bfactura\b|\bticket\b|\bsimplificada\b|\brecibo\b|\balbar[aá]n\b|\bpedido\b|\boperaci[oó]n\b|\bautorizaci[oó]n\b|\bterminal\b|\btpv\b|\bcaja\b|\bcajero\b|\batendido\b|\bvendedor\b|\bcliente\b|\bsocio\b|\bfecha\b|\bhora\b|\bnif\b|\bcif\b|\bdni\b|\bgracias\b|\bvisita\b|\bdevoluci[oó]n\b|\bgarant[ií]a\b|\bconserve\b|\bcondiciones\b|\btel[eé]fono\b|\btfno\b|\btel\b|\bwww\.|http|@|\bcalle\b|\bc\/|\bavda\b|\bavenida\b|\bplaza\b|\bpol[ií]gono\b|\bc\.p\.|\bdescripci[oó]n\b|\bconcepto\b|\bcantidad\b|\bunidades\b|\bp\.v\.p\b|\bunitario\b)/i;
+  const qtyOnlyLineRegex = /^(?:\d+(?:[,.]\d+)?\s*(?:un|ud|uds|x|\*|kg|g|l)?\s*[x*]?\s*\d+[,.]\d{2}(?:\s*€|\s*eur)?(?:\s+\d+[,.]\d{2})?[\s€eurA-Z]*)$/i;
+
+  function cleanItemDescription(rawDesc) {
+    if (!rawDesc) return '';
+    let s = rawDesc
+      // Quitar precios al final y letras de tipo de IVA (A, B, C, *)
+      .replace(/\s+(?:\d{1,3}(?:\.\d{3})*|\d+)[,.]\d{2}\s*(?:€|eur)?\s*[ABC*]?$/i, '')
+      // Quitar multiplicadores de precio unitario al final (ej: "2 x 1,50")
+      .replace(/\s+\d+\s*[xX*]\s*\d+[,.]\d{2}.*$/, '')
+      // Quitar códigos EAN / SKU largos al principio (5+ dígitos)
+      .replace(/^(?:ref\.?\s*|cod\.?\s*|art\.?\s*)?\d{5,14}\s+/i, '')
+      // Quitar cantidad inicial (ej: "1 ", "2 x ", "1 UN ", "01 ")
+      .replace(/^\d{1,3}\s*(?:un|ud|uds)?\s*[xX*]?\s+/i, '')
+      // Quitar símbolos sueltos en los extremos
+      .replace(/^[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+|[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9)"']+$/g, '')
+      .trim();
+
+    const letters = (s.match(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g) || []).length;
+    const vowels = (s.match(/[AEIOUÁÉÍÓÚÜaeiouáéíóúü]/g) || []).length;
+    if (letters < 3 || vowels < 1 || s.length < 3) return '';
+    if (nonItemLineRegex.test(s)) return '';
+    if (detectedStore && s.toLowerCase() === detectedStore.toLowerCase()) return '';
+    return s.slice(0, 85);
+  }
+
+  // Delimitar dónde termina la lista de artículos (en la primera línea de SUBTOTAL / TOTAL / BASE IMPONIBLE)
+  let itemsEndIdx = lines.length;
+  for (let i = 0; i < lines.length; i++) {
+    if (/(?:\bsubtotal\b|\btotal\s*(?:a\s*pagar|compra|ticket|factura|eur|€)\b|\bbase\s*imponible\b|\bdesglose\s*iva\b)/i.test(lines[i])) {
+      itemsEndIdx = i;
+      break;
+    }
+  }
+
+  const extractedItems = [];
+  for (let i = 0; i < itemsEndIdx; i++) {
+    const line = lines[i];
+    if (nonItemLineRegex.test(line)) continue;
+
+    const linePrices = extractPricesFromLine(line);
+    if (linePrices.length > 0) {
+      const itemPrice = linePrices[linePrices.length - 1].val;
+      if (detectedPrice && itemPrice > detectedPrice * 1.05) continue;
+
+      // Extraer el texto previo al primer precio de la línea
+      const firstPriceIdx = linePrices[0].index;
+      const textBeforePrice = line.slice(0, firstPriceIdx).trim();
+
+      let desc = '';
+      if (!qtyOnlyLineRegex.test(line) && textBeforePrice.length >= 3) {
+        desc = cleanItemDescription(textBeforePrice);
+      }
+
+      // Si la línea actual era solo "1 UN x 49,99   49,99", el nombre del artículo está en la línea anterior
+      if (!desc && i > 0) {
+        const prevLine = lines[i - 1];
+        if (!nonItemLineRegex.test(prevLine) && extractPricesFromLine(prevLine).length === 0) {
+          desc = cleanItemDescription(prevLine);
+        }
+      }
+
+      if (desc) {
+        extractedItems.push({ name: desc, price: itemPrice });
+      }
+    }
+  }
+
+  // Si no había línea TOTAL explícita pero sí 1 o varios artículos con precio claro, calcular el precio
+  if (detectedPrice === null && extractedItems.length > 0) {
+    if (extractedItems.length === 1) {
+      detectedPrice = extractedItems[0].price;
+    } else {
+      const sum = extractedItems.reduce((acc, it) => acc + (it.price || 0), 0);
+      if (sum > 0) detectedPrice = Number(sum.toFixed(2));
+    }
+  }
+
   let detectedProduct = '';
-  for (let line of lines) {
-    if (/\b\d{1,4}[.,]\d{2}\b/.test(line) && !totalKeywords.test(line) && !ignoreHeaders.test(line)) {
-      const clean = line.replace(/\b\d{1,4}[.,]\d{2}\b.*$/, '').replace(/^[0-9\s*xX-]+/, '').trim();
-      if (clean.length > 3) {
-        detectedProduct = clean.slice(0, 50);
+  if (extractedItems.length === 1) {
+    detectedProduct = extractedItems[0].name;
+  } else if (extractedItems.length > 1) {
+    // Ordenar para destacar el artículo principal (mayor importe) o combinar los principales
+    const sortedByPrice = [...extractedItems].sort((a, b) => (b.price || 0) - (a.price || 0));
+    if (extractedItems.length === 2) {
+      detectedProduct = `${extractedItems[0].name} + ${extractedItems[1].name}`.slice(0, 95);
+    } else {
+      detectedProduct = `${sortedByPrice[0].name} (+${extractedItems.length - 1} art. más)`.slice(0, 95);
+    }
+  }
+
+  // ── 5. MARCA DEL PRODUCTO (SOLO SI CONSTA EN EL TICKET) ───────
+  let detectedBrand = '';
+  for (const line of lines) {
+    const explicitBrandMatch = line.match(/\b(?:marca|fabricante)\s*[:.-]\s*([A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9\s&-]{2,30})/i);
+    if (explicitBrandMatch) {
+      detectedBrand = explicitBrandMatch[1].trim();
+      break;
+    }
+  }
+  if (!detectedBrand) {
+    const productSearchSpace = extractedItems.map(it => it.name).join(' ') || rawText;
+    const foundBrand = KNOWN_PRODUCT_BRANDS.find(b => b.key.test(productSearchSpace));
+    if (foundBrand) {
+      detectedBrand = foundBrand.name;
+    }
+  }
+
+  // ── 6. PLAZO Y CONDICIONES DE DEVOLUCIÓN (SOLO SI APARECEN EN EL TICKET) ──
+  let detectedReturnDays = null;
+  let detectedReturnConditions = '';
+
+  const retDaysPatterns = [
+    /(?:devoluci[oó]n(?:es)?|cambios?(?:\s*y\s*devoluciones)?|plazo\s*(?:m[aá]ximo\s*)?(?:de\s*)?(?:cambio|devoluci[oó]n)|desistimiento)[^\n\d]{0,40}\b(\d{1,3})\s*d[ií]as\b/i,
+    /\b(\d{1,3})\s*d[ií]as\s*(?:naturales\s*|h[aá]biles\s*)?(?:para\s*|de\s*)(?:cambios?\s*(?:o|y)\s*)?(?:devoluci[oó]n(?:es)?|devolver|cambios?|desistimiento)\b/i
+  ];
+  for (const pat of retDaysPatterns) {
+    const m = rawText.match(pat);
+    if (m && m[1]) {
+      const d = parseInt(m[1], 10);
+      if (d >= 1 && d <= 365) {
+        detectedReturnDays = d;
         break;
       }
     }
   }
-  if (!detectedProduct) {
-    detectedProduct = detectedStore ? `Compra en ${detectedStore}` : 'Compra según ticket';
+
+  // Extraer frases literales de condiciones de devolución si aparecen impresas en el ticket
+  const condLines = lines.filter(l =>
+    /(?:imprescindible\s+presentar|conserve\s+este\s+ticket|embalaje\s+original|sin\s+usar|precinto\s+original|para\s+cambios\s+y\s+devoluciones)/i.test(l)
+  );
+  if (condLines.length > 0) {
+    detectedReturnConditions = condLines.slice(0, 2).join('. ').slice(0, 350);
   }
 
+  // ── 7. AÑOS DE GARANTÍA (SOLO SI APARECEN IMPRESOS EN EL TICKET) ──
+  let detectedWarrantyYears = null;
+  const warYearsMatch = rawText.match(/\b(\d{1,2})\s*a[ñn]os?\s*(?:de\s*)?garant[ií]a\b/i) ||
+                        rawText.match(/\bgarant[ií]a\s*(?:legal\s*|comercial\s*)?(?:de\s*)?(\d{1,2})\s*a[ñn]os?\b/i);
+  if (warYearsMatch && warYearsMatch[1]) {
+    const y = parseInt(warYearsMatch[1], 10);
+    if (y >= 1 && y <= 30) detectedWarrantyYears = y;
+  } else {
+    const warMonthsMatch = rawText.match(/\b(6|12|24|36)\s*meses\s*(?:de\s*)?garant[ií]a\b/i);
+    if (warMonthsMatch && warMonthsMatch[1]) {
+      detectedWarrantyYears = Number((parseInt(warMonthsMatch[1], 10) / 12).toFixed(1));
+    }
+  }
+
+  // ── 8. NOTAS ADICIONALES (Nº DE TICKET / SERIE / DESGLOSE DE ARTÍCULOS) ──
+  const notesParts = [];
+
+  // Número de factura / ticket / pedido
+  for (const line of lines) {
+    const docMatch = line.match(/(?:factura\s*simplificada|n[º°o]?\s*(?:de\s*)?(?:factura|ticket|recibo|pedido)|ticket\s*n[º°o]?|pedido\s*n[º°o]?)\s*[:.#-]?\s*([A-Z0-9][A-Z0-9\/-]{2,24})/i);
+    if (docMatch && docMatch[1] && /\d/.test(docMatch[1])) {
+      notesParts.push(`Nº documento: ${docMatch[1].trim()}`);
+      break;
+    }
+  }
+
+  // Número de serie / IMEI / Modelo
+  for (const line of lines) {
+    const snMatch = line.match(/\b(?:s\/n|imei|n[º°o]?\s*serie|serial)\s*[:.#-]?\s*([A-Z0-9-]{5,28})/i);
+    if (snMatch && snMatch[1]) {
+      notesParts.push(`Nº serie / IMEI: ${snMatch[1].trim()}`);
+      break;
+    }
+  }
+
+  // Si hay varios artículos, guardar el listado completo con sus precios en Notas adicionales
+  if (extractedItems.length > 1) {
+    const itemsSummary = extractedItems
+      .slice(0, 8)
+      .map(it => `${it.name} (${it.price.toFixed(2)} €)`)
+      .join(' · ');
+    notesParts.push(`Artículos en ticket: ${itemsSummary}`);
+  }
+
+  const detectedNotes = notesParts.join(' | ').slice(0, 480);
+
+  const hasAnyData = Boolean(
+    detectedProduct ||
+    detectedStore ||
+    detectedBrand ||
+    detectedPrice !== null ||
+    detectedDate ||
+    detectedReturnDays !== null ||
+    detectedWarrantyYears !== null ||
+    detectedNotes
+  );
+
+  if (!hasAnyData) return null;
+
   return {
-    store: detectedStore || 'Establecimiento detectado',
+    store: detectedStore,
     productName: detectedProduct,
-    brand: matchedBrand ? matchedBrand.name : '',
+    brand: detectedBrand,
     price: detectedPrice,
     purchaseDate: detectedDate,
-    returnDays: returnDays,
-    warrantyYears: 3,
-    rawText: rawText.slice(0, 2000),
-    coverage: 'Defectos de fabricación\nFallos de componentes de hardware o placas electrónicas\nFalta de conformidad con las especificaciones del fabricante (Art. 114 RDL 1/2007)',
-    noCoverage: 'Golpes o roturas accidentales provocadas por caída\nDaños derivados de contacto con líquidos o humedad no autorizada\nManipulación indebida o modificaciones de software no oficiales'
+    returnDays: detectedReturnDays,
+    returnConditions: detectedReturnConditions,
+    warrantyYears: detectedWarrantyYears,
+    notes: detectedNotes,
+    coverage: '',
+    noCoverage: '',
+    rawText: rawText.slice(0, 2500)
   };
 }
 
-/* Función principal de escaneo con IA (Gemini Vision + Tesseract OCR real) */
+/* Normaliza y sanea la respuesta JSON de Gemini Vision eliminando cualquier valor inventado o genérico */
+function sanitizeAiExtractedData(rawObj) {
+  if (!rawObj || typeof rawObj !== 'object') return null;
+
+  const genericPlaceholders = /^(?:n\/a|na|null|undefined|none|desconocido|no\s*visible|no\s*consta|no\s*especificado|no\s*indicado|establecimiento\s*detectado|comercio\s*f[ií]sico|compra\s*seg[uú]n\s*ticket|producto\s*seg[uú]n\s*ticket|sin\s*datos|-+)$/i;
+
+  function cleanStr(val, maxLen = 100) {
+    if (typeof val !== 'string') return '';
+    const t = val.trim();
+    if (!t || genericPlaceholders.test(t)) return '';
+    return t.slice(0, maxLen);
+  }
+
+  const store = cleanStr(rawObj.store, 80);
+  const productName = cleanStr(rawObj.productName, 100);
+  let brand = cleanStr(rawObj.brand, 60);
+  // Evitar que la IA ponga el nombre del comercio como marca si no es marca del producto
+  if (brand && store && brand.toLowerCase() === store.toLowerCase() && !KNOWN_PRODUCT_BRANDS.some(b => b.key.test(brand))) {
+    brand = '';
+  }
+
+  let price = null;
+  if (rawObj.price !== null && rawObj.price !== undefined && rawObj.price !== '') {
+    const pNum = typeof rawObj.price === 'string'
+      ? parseFloat(rawObj.price.replace(/[^\d.,]/g, '').replace(',', '.'))
+      : Number(rawObj.price);
+    if (!isNaN(pNum) && pNum > 0 && pNum < 100000) {
+      price = Number(pNum.toFixed(2));
+    }
+  }
+
+  const purchaseDate = safeDate(cleanStr(rawObj.purchaseDate, 10));
+
+  let returnDays = null;
+  if (rawObj.returnDays !== null && rawObj.returnDays !== undefined && rawObj.returnDays !== '') {
+    const rNum = parseInt(rawObj.returnDays, 10);
+    if (!isNaN(rNum) && rNum > 0 && rNum <= 3650) returnDays = rNum;
+  }
+
+  let warrantyYears = null;
+  if (rawObj.warrantyYears !== null && rawObj.warrantyYears !== undefined && rawObj.warrantyYears !== '') {
+    const wNum = parseFloat(rawObj.warrantyYears);
+    if (!isNaN(wNum) && wNum > 0 && wNum <= 50) warrantyYears = wNum;
+  }
+
+  const returnConditions = cleanStr(rawObj.returnConditions, 380);
+  const notes = cleanStr(rawObj.notes, 480);
+  const coverage = cleanStr(rawObj.coverage, 550);
+  const noCoverage = cleanStr(rawObj.noCoverage, 550);
+
+  return {
+    store,
+    productName,
+    brand,
+    price,
+    purchaseDate,
+    returnDays,
+    returnConditions,
+    warrantyYears,
+    notes,
+    coverage,
+    noCoverage
+  };
+}
+
+/* Función principal de escaneo con IA (Gemini Vision + Tesseract OCR real, CERO INVENCIONES) */
 async function scanTicketWithAI(file, dataUrl) {
   if (isScanningTicket || !file) return;
   isScanningTicket = true;
@@ -1488,31 +2073,36 @@ async function scanTicketWithAI(file, dataUrl) {
   if (rescanBtn) rescanBtn.hidden = true;
   if (rawToggleWrap) rawToggleWrap.hidden = true;
   if (rawTextBox) { rawTextBox.textContent = ''; rawTextBox.hidden = true; }
-  if (scanText) scanText.textContent = 'Analizando ticket con IA (extrayendo comercio, importe y fechas)...';
+  if (scanText) scanText.textContent = 'Analizando ticket (extrayendo únicamente los datos visibles)...';
 
   let extracted = null;
   const geminiKey = (localStorage.getItem('gp_gemini_api_key') || '').trim();
 
   try {
-    // ── ESTRATEGIA 1: GOOGLE GEMINI FLASH VISION (SI HAY CLAVE) ──
-    if (geminiKey && dataUrl && dataUrl.startsWith('data:image/')) {
-      if (scanText) scanText.textContent = 'Consultando Gemini Flash Vision (IA Multimodal)...';
+    // ── ESTRATEGIA 1: GOOGLE GEMINI VISION (IMÁGENES Y PDF) ──
+    if (geminiKey && dataUrl && (dataUrl.startsWith('data:image/') || dataUrl.startsWith('data:application/pdf'))) {
+      if (scanText) scanText.textContent = 'Extrayendo datos exactos del ticket con Gemini Vision...';
       try {
         const mimeType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
         const base64Data = dataUrl.split(',')[1];
 
-        const prompt = `Analiza este ticket, factura o comprobante de compra físico de cualquier establecimiento en España.
-Extrae estrictamente los datos en formato JSON con las siguientes claves:
-- "store": nombre del comercio, tienda o razón social (ej: "MediaMarkt", "Mercadona", "Bar Central", "Talleres Pérez", "Leroy Merlin")
-- "productName": nombre descriptivo del artículo o producto principal comprado
-- "brand": marca del producto si es visible o cadena vacía
-- "price": importe total numérico final a pagar en euros (ej: 49.99), número flotante sin símbolos
-- "purchaseDate": fecha de la compra en formato YYYY-MM-DD
-- "returnDays": días para devolución permitidos según el comercio (o 30 si no consta)
-- "warrantyYears": fijar en 3 (garantía legal obligatoria en España según RDL 1/2007)
-Responde ÚNICAMENTE con el objeto JSON sin formato markdown ni texto adicional.`;
+        const prompt = `Analiza este ticket, factura o comprobante de compra de forma estrictamente literal.
+REGLA CRÍTICA: NO inventes, NO supongas y NO rellenes valores por defecto. Si un dato NO aparece impreso o NO se lee con claridad en la imagen/documento, devuelve cadena vacía "" o null en ese campo.
 
-        const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-latest'];
+Devuelve ÚNICAMENTE un objeto JSON válido con estas claves exactas:
+- "productName": nombre exacto del producto o artículo principal impreso en el ticket (si hay varios artículos, pon el principal o résumelos; si no se lee ningún artículo, devuelve "")
+- "brand": marca del producto SOLO si aparece escrita en el ticket (NO pongas el nombre de la tienda como marca; si no aparece la marca del producto, devuelve "")
+- "price": importe total final pagado en euros como número decimal (ej: 49.99). Si no se ve el precio total, devuelve null
+- "store": nombre del comercio, tienda o empresa emisora del ticket tal como aparece impreso (si no se ve, devuelve "")
+- "purchaseDate": fecha de compra impresa en el ticket en formato YYYY-MM-DD (si no se ve la fecha en el ticket, devuelve "")
+- "notes": número de ticket/factura, número de serie/IMEI si aparece, y desglose de artículos si hay varios (si no hay datos adicionales, devuelve "")
+- "returnDays": número entero de días para devolución SOLO si el ticket lo menciona explícitamente en su texto (si no lo menciona, devuelve null)
+- "returnConditions": condiciones de devolución SOLO si están escritas en el ticket (si no, devuelve "")
+- "warrantyYears": años de garantía como número SOLO si el ticket menciona explícitamente los años/meses de garantía (si no lo menciona, devuelve null)
+- "coverage": qué cubre la garantía SOLO si está escrito explícitamente en el documento (si no, devuelve "")
+- "noCoverage": qué no cubre la garantía SOLO si está escrito explícitamente en el documento (si no, devuelve "")`;
+
+        const models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-latest'];
         for (const model of models) {
           try {
             const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(geminiKey)}`, {
@@ -1526,7 +2116,7 @@ Responde ÚNICAMENTE con el objeto JSON sin formato markdown ni texto adicional.
                   ]
                 }],
                 generationConfig: {
-                  temperature: 0.1,
+                  temperature: 0.0,
                   responseMimeType: 'application/json'
                 }
               })
@@ -1537,9 +2127,12 @@ Responde ÚNICAMENTE con el objeto JSON sin formato markdown ni texto adicional.
               const rawText = resultJson.candidates?.[0]?.content?.parts?.[0]?.text;
               if (rawText) {
                 const cleanJson = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
-                extracted = JSON.parse(cleanJson);
-                extracted._source = `Gemini Vision AI (${model})`;
-                break;
+                const parsedJson = JSON.parse(cleanJson);
+                extracted = sanitizeAiExtractedData(parsedJson);
+                if (extracted) {
+                  extracted._source = `Gemini Vision AI (${model})`;
+                  break;
+                }
               }
             }
           } catch (mErr) {
@@ -1547,72 +2140,116 @@ Responde ÚNICAMENTE con el objeto JSON sin formato markdown ni texto adicional.
           }
         }
       } catch (geminiErr) {
-        console.warn('Fallo en Gemini API, pasando a OCR local en navegador:', geminiErr);
+        console.warn('Fallo en Gemini API, pasando a motor OCR local:', geminiErr);
       }
     }
 
-    // ── ESTRATEGIA 2: MOTOR OCR LOCAL REAL EN NAVEGADOR (TESSERACT.JS) ──
+    // ── ESTRATEGIA 2A: LECTURA DE TEXTO DIGITAL EN PDF ──
+    if (!extracted && file.type === 'application/pdf') {
+      if (scanText) scanText.textContent = 'Extrayendo texto de la factura PDF...';
+      const pdfText = await extractTextFromPdfFile(file);
+      if (pdfText && pdfText.trim().length > 5) {
+        extracted = parseReceiptOcrText(pdfText);
+        if (extracted) {
+          extracted._source = 'Lector directo de factura PDF';
+          extracted._rawText = pdfText;
+        }
+      }
+    }
+
+    // ── ESTRATEGIA 2B: MOTOR OCR LOCAL REAL EN NAVEGADOR (TESSERACT.JS) ──
     if (!extracted && dataUrl && dataUrl.startsWith('data:image/')) {
-      if (scanText) scanText.textContent = 'Mejorando nitidez de la foto con Canvas...';
+      if (scanText) scanText.textContent = 'Optimizando nitidez de la imagen del ticket...';
       const enhancedImage = await preprocessTicketImage(dataUrl);
 
-      if (scanText) scanText.textContent = 'Leyendo texto físico del ticket con OCR...';
+      if (scanText) scanText.textContent = 'Leyendo texto del ticket con OCR...';
       try {
-        const rawOcrText = await runOcrWithTesseract(enhancedImage, (msg) => {
+        let rawOcrText = await runOcrWithTesseract(enhancedImage, (msg) => {
           if (scanText) scanText.textContent = msg;
         });
 
-        if (rawOcrText && rawOcrText.trim().length > 5) {
-          extracted = parseReceiptOcrText(rawOcrText, file.lastModified ? new Date(file.lastModified).toISOString().slice(0, 10) : today());
-          if (extracted) {
-            extracted._source = 'Motor OCR Físico GarantíasPro (Lectura Real)';
-            extracted._rawText = rawOcrText;
+        let parsed = rawOcrText && rawOcrText.trim().length > 3 ? parseReceiptOcrText(rawOcrText) : null;
+
+        // Si en la imagen preprocesada faltan datos clave, hacer segunda pasada sobre la imagen original y combinar lo mejor
+        if (!parsed || (!parsed.productName && parsed.price === null)) {
+          const rawOriginalText = await runOcrWithTesseract(dataUrl);
+          const parsedOrig = rawOriginalText && rawOriginalText.trim().length > 3 ? parseReceiptOcrText(rawOriginalText) : null;
+          if (parsedOrig) {
+            if (!parsed) {
+              parsed = parsedOrig;
+              rawOcrText = rawOriginalText;
+            } else {
+              parsed.productName = parsed.productName || parsedOrig.productName;
+              parsed.store = parsed.store || parsedOrig.store;
+              parsed.brand = parsed.brand || parsedOrig.brand;
+              parsed.price = parsed.price !== null ? parsed.price : parsedOrig.price;
+              parsed.purchaseDate = parsed.purchaseDate || parsedOrig.purchaseDate;
+              parsed.returnDays = parsed.returnDays !== null ? parsed.returnDays : parsedOrig.returnDays;
+              parsed.returnConditions = parsed.returnConditions || parsedOrig.returnConditions;
+              parsed.warrantyYears = parsed.warrantyYears !== null ? parsed.warrantyYears : parsedOrig.warrantyYears;
+              parsed.notes = parsed.notes || parsedOrig.notes;
+              rawOcrText = rawOcrText + '\n---\n' + rawOriginalText;
+            }
           }
+        }
+
+        if (parsed) {
+          extracted = parsed;
+          extracted._source = 'Motor OCR Físico (Lectura Literal)';
+          extracted._rawText = rawOcrText;
+        } else if (rawOcrText && rawOcrText.trim().length > 0 && rawToggleWrap && rawTextBox) {
+          rawTextBox.textContent = rawOcrText.trim();
+          rawToggleWrap.hidden = false;
         }
       } catch (ocrErr) {
         console.warn('Error en Tesseract OCR local:', ocrErr);
       }
     }
 
-    // ── ESTRATEGIA 3: ASIGNACIÓN SEGURA SI NO SE PUDO LEER NINGÚN CARÁCTER ──
-    if (!extracted) {
-      if (scanText) scanText.textContent = 'Calculando plazos de garantía legal...';
-      extracted = {
-        store: 'Comercio físico',
-        productName: 'Compra según ticket',
-        brand: '',
-        price: null,
-        purchaseDate: file.lastModified ? new Date(file.lastModified).toISOString().slice(0, 10) : today(),
-        returnDays: 30,
-        warrantyYears: 3,
-        _source: 'Identificador legal estándar (RDL 1/2007)'
-      };
-    }
-
-    // Aplicar los datos extraídos a los campos del formulario
+    // ── APLICAR ÚNICAMENTE LOS DATOS REALES EXTRAÍDOS (DEJANDO EN BLANCO EL RESTO) ──
     applyExtractedTicketData(extracted);
 
-    if (alertBox && alertSummary) {
-      alertBox.hidden = false;
-      const storeName = extracted.store || 'Comercio detectado';
-      const priceText = extracted.price ? `${Number(extracted.price).toFixed(2)} €` : 'A comprobar';
-      const retDays = extracted.returnDays || 30;
-      alertSummary.innerHTML = `<strong>${escHtml(safeText(storeName, 60))}</strong> · Importe: <strong>${escHtml(priceText)}</strong> · Compra: <strong>${escHtml(safeDate(extracted.purchaseDate) || 'Registrada')}</strong><br />` +
-        `<strong>Garantía legal España calculada:</strong> 3 años (RDL 1/2007) · <strong>Plazo de devolución:</strong> ${safeInt(retDays, 1, 3650, 30)} días.<br />` +
-        `<small style="color:var(--t-muted);display:inline-block;margin-top:2px;">Método: ${escHtml(extracted._source || 'Escáner')}</small>`;
+    const alertTitleEl = alertBox?.querySelector('.ai-alert-text > strong');
 
-      if (extracted._rawText && rawToggleWrap && rawTextBox) {
-        rawTextBox.textContent = extracted._rawText;
-        rawToggleWrap.hidden = false;
+    if (extracted) {
+      const foundFields = [];
+      if (extracted.productName) foundFields.push(`Producto: <strong>${escHtml(safeText(extracted.productName, 55))}</strong>`);
+      if (extracted.brand) foundFields.push(`Marca: <strong>${escHtml(safeText(extracted.brand, 35))}</strong>`);
+      if (extracted.store) foundFields.push(`Tienda: <strong>${escHtml(safeText(extracted.store, 45))}</strong>`);
+      if (extracted.price !== null && extracted.price !== undefined) foundFields.push(`Importe: <strong>${Number(extracted.price).toFixed(2)} €</strong>`);
+      if (extracted.purchaseDate) foundFields.push(`Fecha: <strong>${escHtml(fmtDate(extracted.purchaseDate))}</strong>`);
+      if (extracted.returnDays !== null && extracted.returnDays !== undefined) foundFields.push(`Devolución: <strong>${extracted.returnDays} días</strong>`);
+      if (extracted.warrantyYears !== null && extracted.warrantyYears !== undefined) foundFields.push(`Garantía: <strong>${extracted.warrantyYears} años</strong>`);
+
+      if (alertBox && alertSummary) {
+        alertBox.hidden = false;
+        if (alertTitleEl) alertTitleEl.textContent = 'Datos extraídos del ticket';
+        alertSummary.innerHTML =
+          foundFields.join(' · ') +
+          `<br /><span style="font-size:12px;color:var(--t-secondary);">Los campos que no aparecen o no se ven con claridad en el ticket se han dejado en blanco para que los completes si lo deseas.</span>`;
+
+        if (extracted._rawText && rawToggleWrap && rawTextBox) {
+          rawTextBox.textContent = extracted._rawText;
+          rawToggleWrap.hidden = false;
+        }
       }
+      if (rescanBtn) rescanBtn.hidden = false;
+      showToast('Datos visibles del ticket extraídos correctamente', 'ok');
+    } else {
+      // No se pudo leer ningún dato fiable: dejar todo en blanco sin inventar nada
+      if (alertBox && alertSummary) {
+        alertBox.hidden = false;
+        if (alertTitleEl) alertTitleEl.textContent = 'Ticket guardado en el Cofre Digital';
+        alertSummary.innerHTML =
+          'No se han podido distinguir los datos con suficiente nitidez en la imagen. <strong>No se ha inventado ningún dato:</strong> todos los campos se han dejado en blanco para que los rellenes manualmente o subas una foto más enfocada.';
+      }
+      if (rescanBtn) rescanBtn.hidden = false;
+      showToast('Foto guardada. Completa los campos que no se ven en el ticket.', 'info');
     }
-
-    if (rescanBtn) rescanBtn.hidden = false;
-    showToast('Ticket leído con éxito: datos extraídos y aplicados', 'ok');
 
   } catch (err) {
     console.error('Error durante el escaneo del ticket:', err);
-    showToast('No se pudo completar la lectura automática. Puedes rellenar los datos en el formulario.', 'warn');
+    showToast('No se pudo leer el ticket automáticamente. Rellena los campos manualmente.', 'warn');
   } finally {
     isScanningTicket = false;
     if (overlay) overlay.hidden = true;
@@ -1641,29 +2278,40 @@ async function testGeminiApiKey(key) {
 }
 
 function applyExtractedTicketData(data) {
-  if (!data) return;
+  const isNewProduct = !document.getElementById('edit-id')?.value;
 
   const nameEl = document.getElementById('prod-name');
   const brandEl = document.getElementById('prod-brand');
   const priceEl = document.getElementById('prod-price');
   const storeEl = document.getElementById('prod-store');
   const purchaseEl = document.getElementById('prod-purchase');
+  const notesEl = document.getElementById('prod-notes');
   const retDaysEl = document.getElementById('ret-days');
   const retStartEl = document.getElementById('ret-start');
+  const retCondEl = document.getElementById('ret-conditions');
   const warStartEl = document.getElementById('war-start');
   const warYearsEl = document.getElementById('war-years');
   const warCoversEl = document.getElementById('war-covers');
   const warNoCoversEl = document.getElementById('war-nocovers');
 
-  if (nameEl && (!nameEl.value.trim() || nameEl.value === 'Producto según ticket')) {
-    nameEl.value = data.productName || 'Producto según ticket';
+  // Si estamos creando un producto nuevo, limpiar primero cualquier valor previo para que lo no detectado quede en blanco
+  if (isNewProduct) {
+    [nameEl, brandEl, priceEl, storeEl, purchaseEl, notesEl, retDaysEl, retStartEl, retCondEl, warStartEl, warYearsEl, warCoversEl, warNoCoversEl].forEach(el => {
+      if (el) el.value = '';
+    });
+  }
+
+  if (!data) return;
+
+  if (nameEl && data.productName) {
+    nameEl.value = data.productName;
     highlightAiField(nameEl);
   }
-  if (brandEl && data.brand && !brandEl.value.trim()) {
+  if (brandEl && data.brand) {
     brandEl.value = data.brand;
     highlightAiField(brandEl);
   }
-  if (priceEl && data.price !== undefined && data.price !== null) {
+  if (priceEl && data.price !== undefined && data.price !== null && !isNaN(data.price) && Number(data.price) > 0) {
     priceEl.value = Number(data.price).toFixed(2);
     highlightAiField(priceEl);
   }
@@ -1675,25 +2323,35 @@ function applyExtractedTicketData(data) {
     purchaseEl.value = data.purchaseDate;
     highlightAiField(purchaseEl);
   }
-  if (retDaysEl) {
-    retDaysEl.value = data.returnDays || 30;
+  if (notesEl && data.notes) {
+    notesEl.value = data.notes;
+    highlightAiField(notesEl);
+  }
+  if (retDaysEl && data.returnDays !== undefined && data.returnDays !== null && !isNaN(data.returnDays) && Number(data.returnDays) > 0) {
+    retDaysEl.value = Number(data.returnDays);
     highlightAiField(retDaysEl);
+    if (retStartEl && data.purchaseDate) {
+      retStartEl.value = data.purchaseDate;
+    }
   }
-  if (retStartEl && data.purchaseDate) {
-    retStartEl.value = data.purchaseDate;
+  if (retCondEl && data.returnConditions) {
+    retCondEl.value = data.returnConditions;
+    highlightAiField(retCondEl);
   }
-  if (warYearsEl) {
-    warYearsEl.value = data.warrantyYears || 3;
+  if (warYearsEl && data.warrantyYears !== undefined && data.warrantyYears !== null && !isNaN(data.warrantyYears) && Number(data.warrantyYears) > 0) {
+    warYearsEl.value = Number(data.warrantyYears);
     highlightAiField(warYearsEl);
+    if (warStartEl && data.purchaseDate) {
+      warStartEl.value = data.purchaseDate;
+    }
   }
-  if (warStartEl && data.purchaseDate) {
-    warStartEl.value = data.purchaseDate;
-  }
-  if (warCoversEl && !warCoversEl.value.trim() && data.coverage) {
+  if (warCoversEl && data.coverage) {
     warCoversEl.value = data.coverage;
+    highlightAiField(warCoversEl);
   }
-  if (warNoCoversEl && !warNoCoversEl.value.trim() && data.noCoverage) {
+  if (warNoCoversEl && data.noCoverage) {
     warNoCoversEl.value = data.noCoverage;
+    highlightAiField(warNoCoversEl);
   }
 }
 
@@ -2428,12 +3086,28 @@ async function init() {
     else if (currentView === 'alerts') renderAlerts();
   });
 
-  // ── Auto-sync purchase date → return start if empty
+  // ── Auto-sync purchase date → return/warranty start when days/years are filled
   document.getElementById('prod-purchase')?.addEventListener('change', (e) => {
+    const retDays = document.getElementById('ret-days');
     const retStart = document.getElementById('ret-start');
-    if (retStart && !retStart.value) retStart.value = e.target.value;
+    if (retStart && !retStart.value && retDays && retDays.value) retStart.value = e.target.value;
+    const warYears = document.getElementById('war-years');
     const warStart = document.getElementById('war-start');
-    if (warStart && !warStart.value) warStart.value = e.target.value;
+    if (warStart && !warStart.value && warYears && warYears.value) warStart.value = e.target.value;
+  });
+  document.getElementById('ret-days')?.addEventListener('input', (e) => {
+    const purch = document.getElementById('prod-purchase');
+    const retStart = document.getElementById('ret-start');
+    if (e.target.value && retStart && !retStart.value && purch && purch.value) {
+      retStart.value = purch.value;
+    }
+  });
+  document.getElementById('war-years')?.addEventListener('input', (e) => {
+    const purch = document.getElementById('prod-purchase');
+    const warStart = document.getElementById('war-start');
+    if (e.target.value && warStart && !warStart.value && purch && purch.value) {
+      warStart.value = purch.value;
+    }
   });
 
   // ── Onboarding hero actions
