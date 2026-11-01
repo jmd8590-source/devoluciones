@@ -514,6 +514,7 @@ function isUrgent(p) {
 /* ══════════════════════════════════════════════════════════════
    6. TOAST NOTIFICATIONS
 ══════════════════════════════════════════════════════════════ */
+window.showToast = showToast;
 function showToast(msg, type = 'ok') {
   const container = document.getElementById('toast-container');
   if (!container) return;
@@ -559,7 +560,6 @@ function switchView(name) {
   if (name === 'products')  renderProducts();
   if (name === 'alerts') {
     renderAlerts();
-    updatePushStatusLabel();
   }
 }
 
@@ -879,7 +879,7 @@ function buildPill(status, kind, deadline) {
     textSpan.textContent = kind === 'return' ? t('label.expired.return') : t('label.expired.warranty');
   } else if (status.days !== null) {
     textSpan.textContent = status.days === 1
-      ? `1 ${t('label.day.left.singular') || t('label.days.left')}`
+      ? `1 ${t('label.days.left.singular') || t('label.days.left')}`
       : `${status.days} ${t('label.days.left')}`;
   }
   pill.appendChild(textSpan);
@@ -1598,7 +1598,7 @@ Responde ÚNICAMENTE con el objeto JSON sin formato markdown ni texto adicional.
       const priceText = extracted.price ? `${Number(extracted.price).toFixed(2)} €` : 'A comprobar';
       const retDays = extracted.returnDays || 30;
       alertSummary.innerHTML = `<strong>${escHtml(safeText(storeName, 60))}</strong> · Importe: <strong>${escHtml(priceText)}</strong> · Compra: <strong>${escHtml(safeDate(extracted.purchaseDate) || 'Registrada')}</strong><br />` +
-        `🛡️ <strong>Garantía legal España calculada:</strong> 3 años (RDL 1/2007) · ⏱️ <strong>Plazo de devolución:</strong> ${safeInt(retDays, 1, 3650, 30)} días.<br />` +
+        `<strong>Garantía legal España calculada:</strong> 3 años (RDL 1/2007) · <strong>Plazo de devolución:</strong> ${safeInt(retDays, 1, 3650, 30)} días.<br />` +
         `<small style="color:var(--t-muted);display:inline-block;margin-top:2px;">Método: ${escHtml(extracted._source || 'Escáner')}</small>`;
 
       if (extracted._rawText && rawToggleWrap && rawTextBox) {
@@ -1608,7 +1608,7 @@ Responde ÚNICAMENTE con el objeto JSON sin formato markdown ni texto adicional.
     }
 
     if (rescanBtn) rescanBtn.hidden = false;
-    showToast('✨ Ticket leído con éxito: datos extraídos y aplicados', 'ok');
+    showToast('Ticket leído con éxito: datos extraídos y aplicados', 'ok');
 
   } catch (err) {
     console.error('Error durante el escaneo del ticket:', err);
@@ -1716,7 +1716,7 @@ function openTicketViewer(imgUrl, productName) {
   if (img) img.src = imgUrl;
 
   const heading = document.getElementById('ticket-viewer-heading');
-  if (heading) heading.textContent = `🛡️ Custodia de Ticket: ${productName || 'Producto'}`;
+  if (heading) heading.textContent = `Custodia de Ticket: ${productName || 'Producto'}`;
 
   openModal('modal-ticket-viewer');
 }
@@ -1899,7 +1899,7 @@ function openDetail(id) {
     vaultCard.className = 'digital-vault-card';
     vaultCard.innerHTML = `
       <div class="vault-header">
-        <span class="vault-badge">🛡️ COFRE DIGITAL ACTIVO</span>
+        <span class="vault-badge">${iconSvg('shield', 14)} COFRE DIGITAL ACTIVO</span>
         <span class="vault-id">ID CUSTODIA: CUST-${p.id.slice(0, 8).toUpperCase()}</span>
       </div>
       <p class="vault-desc">
@@ -1907,10 +1907,10 @@ function openDetail(id) {
       </p>
       <div class="vault-actions">
         <button type="button" class="btn-vault-action" id="btn-view-ticket-zoom">
-          🔍 Ver ticket a tamaño completo
+          ${iconSvg('eye', 15)} Ver ticket a tamaño completo
         </button>
         <button type="button" class="btn-vault-action btn-vault-download" id="btn-download-vault-ticket">
-          📥 Descargar copia de custodia
+          ${iconSvg('download', 15)} Descargar copia de custodia
         </button>
       </div>
     `;
@@ -1937,7 +1937,7 @@ function openDetail(id) {
     noTicket.innerHTML = `
       <span style="display:inline-flex;align-items:center;gap:6px;">${iconSvg('receipt', 18)} ${t('no.ticket')}</span><br />
       <small style="color:var(--t-muted);margin-top:6px;display:inline-block;line-height:1.4;">
-        💡 <strong>El papel térmico de las tiendas se desgasta y se vuelve blanco a los meses.</strong> Edita el producto para custodiar la foto de tu ticket aquí para siempre.
+        <strong>El papel térmico de las tiendas se desgasta y se vuelve blanco a los meses.</strong> Edita el producto para custodiar la foto de tu ticket aquí para siempre.
       </small>
     `;
     body.appendChild(noTicket);
@@ -2077,7 +2077,7 @@ function openDetail(id) {
   const claimBtn = document.createElement('button');
   claimBtn.type = 'button';
   claimBtn.className = 'btn-detail-action btn-detail-claim';
-  claimBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> ⚖️ Reclamar garantía / Solicitar devolución (1 clic)`;
+  claimBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Reclamar garantía / Solicitar devolución (1 clic)`;
   claimBtn.addEventListener('click', () => {
     openClaimGenerator(p.id);
   });
@@ -2369,7 +2369,7 @@ async function init() {
     if (!rawBox) return;
     const isHidden = rawBox.hidden;
     rawBox.hidden = !isHidden;
-    toggleRawBtn.textContent = isHidden ? '🙈 Ocultar texto leído en el ticket' : '👁️ Ver texto leído en el ticket';
+    toggleRawBtn.innerHTML = iconSvg(isHidden ? 'eyeOff' : 'eye', 14) + (isHidden ? ' Ocultar texto leído en el ticket' : ' Ver texto leído en el ticket');
   });
 
   // Drag & drop
@@ -2552,23 +2552,23 @@ async function init() {
     if (!key) {
       if (testResultDiv) {
         testResultDiv.hidden = false;
-        testResultDiv.innerHTML = '<span style="color:#f87171;">⚠️ Por favor introduce una clave de Gemini antes de probar.</span>';
+        testResultDiv.innerHTML = '<span style="color:#f87171;">Por favor, introduce una clave de Gemini antes de probar.</span>';
       }
       return;
     }
     btnTestGemini.disabled = true;
-    btnTestGemini.textContent = '⏳ Probando...';
+    btnTestGemini.textContent = 'Probando...';
     if (testResultDiv) {
       testResultDiv.hidden = false;
       testResultDiv.innerHTML = '<span style="color:var(--t-muted);">Conectando con Google AI Studio...</span>';
     }
     const res = await testGeminiApiKey(key);
     btnTestGemini.disabled = false;
-    btnTestGemini.textContent = '🧪 Probar clave';
+    btnTestGemini.innerHTML = iconSvg('flask', 14) + ' Probar clave';
     if (res.ok) {
-      testResultDiv.innerHTML = '<span style="color:#34d399;font-weight:600;">✅ ¡Conexión con Gemini Vision correcta! Puedes guardar la clave.</span>';
+      testResultDiv.innerHTML = '<span style="color:#34d399;font-weight:600;">Conexión con Gemini Vision correcta. Puedes guardar la clave.</span>';
     } else {
-      testResultDiv.innerHTML = `<span style="color:#f87171;font-weight:600;">❌ Error al conectar:</span> <span style="color:var(--t-muted);">${escHtml(res.error || 'Clave no válida')}</span>`;
+      testResultDiv.innerHTML = `<span style="color:#f87171;font-weight:600;">Error al conectar:</span> <span style="color:var(--t-muted);">${escHtml(res.error || 'Clave no válida')}</span>`;
     }
   });
 
@@ -2624,7 +2624,7 @@ async function init() {
         area.select();
         document.execCommand('copy');
       }
-      showToast('✅ Escrito legal copiado al portapapeles', 'ok');
+      showToast('Escrito legal copiado al portapapeles', 'ok');
     } catch {
       showToast('Selecciona el texto y pulsa Ctrl+C para copiar', 'warn');
     }

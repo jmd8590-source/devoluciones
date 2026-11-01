@@ -1,4 +1,4 @@
-/* ═══════════════════════════════════════════════════════════════
+﻿/* ═══════════════════════════════════════════════════════════════
    GarantíasPro — Auth Logic (Supabase Auth)
    Seguridad: contraseñas gestionadas por Supabase (bcrypt en servidor),
               verificación de email obligatoria, límites de intentos
@@ -101,7 +101,7 @@ const AUTH_STRINGS = {
     'demo.or':          'or continue without an account',
     'demo.btn':         'Try demo',
     'verify.title':     'Check your email',
-    'verify.text':      'Te hemos enviado un enlace de confirmación. Ábrelo para activar tu cuenta y después inicia sesión.',
+    'verify.text':      'We sent you a confirmation link. Open it to activate your account and then sign in.',
     'verify.resend':    'Resend email',
     'verify.sent':      'Email sent again. It may take a few minutes.',
     'verify.back':      'Back to sign in',

@@ -199,6 +199,7 @@ ul, ol { list-style: none; }
   background: var(--c-primary-g);
   border-radius: var(--r-full);
 }
+.nav-btn-mobile-account,
 .nav-btn-mobile-logout { display: none; }
 
 /* Badge */
@@ -1247,7 +1248,8 @@ ul, ol { list-style: none; }
   }
   .nav-btn.active svg { color: var(--c-primary); }
 
-  /* Mobile logout in bottom nav */
+  /* Mobile account & logout in bottom nav */
+  .nav-btn-mobile-account,
   .nav-btn-mobile-logout {
     display: flex !important;
   }
@@ -1278,7 +1280,8 @@ ul, ol { list-style: none; }
   }
 
   /* User greeting: avatar only */
-  .user-name { display: none; }
+  .user-name,
+  .session-sync-pill { display: none !important; }
   .user-greeting {
     padding: 2px;
     background: transparent;
@@ -2819,9 +2822,28 @@ ul, ol { list-style: none; }
   .btn-account {
     display: inline-flex !important;
     align-items: center !important;
-    gap: 4px !important;
+    gap: 5px !important;
     padding: 6px 11px !important;
     font-size: 12px !important;
+    font-weight: 700 !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  .btn-account span {
+    display: inline-block !important;
+    visibility: visible !important;
+    line-height: 1;
+  }
+  .btn-account svg {
+    width: 14px !important;
+    height: 14px !important;
+    flex-shrink: 0 !important;
+  }
+  .modal-account-body {
+    padding: 16px 18px 24px;
+    max-height: calc(90vh - 68px);
   }
 }
 
@@ -2829,14 +2851,37 @@ ul, ol { list-style: none; }
   .btn-account {
     padding: 5px 9px !important;
     font-size: 11.5px !important;
+    gap: 4px !important;
+  }
+  .btn-account svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
+  .modal-account-body .field-wrap input {
+    font-size: 16px; /* evita auto-zoom en iOS */
+  }
+  .account-card-user {
+    padding: 13px 14px;
+    gap: 12px;
+  }
+  .account-user-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+  .account-section {
+    padding: 14px 15px;
   }
 }
 
-@media (max-width: 380px) {
-  .btn-account span {
-    display: none;
-  }
+@media (max-width: 360px) {
   .btn-account {
-    padding: 6px !important;
+    padding: 4px 8px !important;
+    font-size: 11px !important;
+    gap: 3px !important;
+  }
+  .btn-account svg {
+    width: 12px !important;
+    height: 12px !important;
   }
 }

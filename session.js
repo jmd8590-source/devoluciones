@@ -164,6 +164,7 @@
   function initAccountModal(info) {
     const modalEl = document.getElementById('modal-account');
     const btnOpen = document.getElementById('btn-account');
+    const btnNavAccount = document.getElementById('nav-account');
     const greetingEl = document.getElementById('user-greeting');
     const btnClose = document.getElementById('account-modal-close');
 
@@ -216,6 +217,14 @@
     function clearPasswordForm() {
       const form = document.getElementById('form-change-password');
       if (form) form.reset();
+      ['acc-current-pwd', 'acc-new-pwd', 'acc-confirm-pwd'].forEach(id => {
+        const inp = document.getElementById(id);
+        if (inp) inp.type = 'password';
+      });
+      ['acc-toggle-current-pwd', 'acc-toggle-new-pwd', 'acc-toggle-confirm-pwd'].forEach(id => {
+        const b = document.getElementById(id);
+        if (b && typeof iconSvg === 'function') { b.innerHTML = iconSvg('eye', 16); b.style.color = 'var(--t-muted)'; }
+      });
       const errEl = document.getElementById('acc-pwd-error');
       const succEl = document.getElementById('acc-pwd-success');
       if (errEl) { errEl.hidden = true; errEl.textContent = ''; }
@@ -225,6 +234,7 @@
     }
 
     btnOpen?.addEventListener('click', openModal);
+    btnNavAccount?.addEventListener('click', openModal);
     greetingEl?.addEventListener('click', openModal);
     btnClose?.addEventListener('click', closeModal);
 
@@ -359,6 +369,9 @@
       const isPwd = input.type === 'password';
       input.type = isPwd ? 'text' : 'password';
       btn.style.color = isPwd ? 'var(--c-primary)' : 'var(--t-muted)';
+      if (typeof iconSvg === 'function') {
+        btn.innerHTML = iconSvg(isPwd ? 'eyeOff' : 'eye', 16);
+      }
     });
   }
 
