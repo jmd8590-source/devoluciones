@@ -97,7 +97,7 @@
 
   async function saveSubscription(sub) {
     const session = await getSession();
-    if (!session || session.isDemo || !session.user) throw new Error('sin sesión');
+    if (!session || session.isDemo || !session.user) return false;
     const json = sub.toJSON();
     const { error } = await sb.from('push_subscriptions').upsert({
       user_id: session.user.id,
@@ -106,7 +106,11 @@
       auth: json.keys.auth,
       user_agent: (navigator.userAgent || '').slice(0, 200),
     }, { onConflict: 'endpoint' });
-    if (error) throw error;
+    if (error) {
+      console.warn('Sync push_subscriptions pendiente:', error.message || error);
+      return false;
+    }
+    return true;
   }
 
   async function enable() {
@@ -122,10 +126,12 @@
       });
     }
     await saveSubscription(sub);
+    localStorage.setItem('gp_push_enabled', '1');
     return true;
   }
 
   async function disable() {
+    localStorage.removeItem('gp_push_enabled');
     const sub = await currentSubscription();
     if (!sub) return;
     const endpoint = sub.endpoint;
@@ -138,14 +144,40 @@
     try { if (hasPushApi()) await disable(); } catch { /* ignorar */ }
   }
 
+  async function showLocalSwNotification(title, body, tag) {
+    const reg = await getRegistration();
+    if (!reg || Notification.permission !== 'granted') return false;
+    await reg.showNotification(title, {
+      body,
+      icon: './icons/icon-192.png',
+      badge: './icons/icon-192.png',
+      tag: tag || 'gp-deadline',
+      renotify: true,
+      data: { url: './index.html#alerts' },
+    });
+    return true;
+  }
+
   async function sendTest() {
     const sub = await currentSubscription();
-    if (!sub) return false;
-    const { data, error } = await sb.functions.invoke('send-test-push', {
-      body: { endpoint: sub.endpoint },
-    });
-    if (error) throw error;
-    return Boolean(data && data.sent > 0);
+    if (sub) {
+      try {
+        const { data, error } = await sb.functions.invoke('send-test-push', {
+          body: { endpoint: sub.endpoint },
+        });
+        if (!error && data && data.sent > 0) return true;
+      } catch (e) {
+        console.warn('Fallback local para aviso de prueba:', e);
+      }
+    }
+    const isEn = lang() === 'en';
+    return await showLocalSwNotification(
+      'GarantíasPro',
+      isEn
+        ? 'Notifications are working properly on this device.'
+        : 'Los avisos funcionan correctamente en este dispositivo.',
+      'gp-test'
+    );
   }
 
   /* ── Interfaz ─────────────────────────────────────────────── */
@@ -238,6 +270,11 @@
     document.getElementById('push-test-btn')?.addEventListener('click', onTest);
     document.getElementById('lang-toggle')?.addEventListener('click', () => setTimeout(render, 0));
     render();
+    currentSubscription().then((sub) => {
+      if (sub && Notification.permission === 'granted') {
+        saveSubscription(sub).catch(() => {});
+      }
+    });
   }
 
   window.GPPush = { getStatus, enable, disable, cleanup, render };

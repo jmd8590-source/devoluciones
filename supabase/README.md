@@ -4,7 +4,7 @@ Esta carpeta contiene las migraciones SQL y las Edge Functions necesarias para q
 
 ## 1. Crear tablas y políticas RLS
 
-Abre el **SQL Editor** de tu proyecto en Supabase (`https://supabase.com/dashboard/project/jfdzosiqgwjthdbtyvpg/sql`) y ejecuta el contenido completo de:
+Abre el **SQL Editor** de tu proyecto en Supabase (`https://supabase.com/dashboard/project/ynmqlzpqsyvhzlspzfkd/sql`) y ejecuta el contenido completo de:
 
 - [`migrations/001_push.sql`](./migrations/001_push.sql)
 
@@ -30,7 +30,7 @@ supabase secrets set \
 
 ## 3. Desplegar las Edge Functions
 
-Con la CLI de Supabase vinculada a tu proyecto (`supabase link --project-ref jfdzosiqgwjthdbtyvpg`), despliega ambas funciones:
+Con la CLI de Supabase vinculada a tu proyecto (`supabase link --project-ref ynmqlzpqsyvhzlspzfkd`), despliega ambas funciones:
 
 ```bash
 supabase functions deploy send-test-push --no-verify-jwt
@@ -44,6 +44,7 @@ supabase functions deploy send-deadline-pushes --no-verify-jwt
 
 ## 4. Programar el envío diario automático (08:00 UTC)
 
-En el **SQL Editor** de Supabase, abre [`migrations/002_schedule.sql`](./migrations/002_schedule.sql), sustituye `REEMPLAZAR_CON_TU_CRON_SECRET` por el mismo valor que hayas configurado en `CRON_SECRET` y ejecútalo.
+En el **SQL Editor** de Supabase, abre [`migrations/002_schedule.sql`](./migrations/002_schedule.sql), sustituye `TU_CRON_SECRET` por el mismo valor que hayas configurado en `CRON_SECRET` y ejecútalo.
 
 Esto programa `pg_cron` + `pg_net` para invocar `send-deadline-pushes` todos los días a las **08:00 UTC** (09:00 en invierno / 10:00 en verano en España peninsular).
+
