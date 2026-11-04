@@ -563,6 +563,9 @@ function switchView(name) {
   }
 }
 
+// Permite abrir una vista desde fuera (notificación push, acceso directo)
+window.gpOpenView = (name) => switchView(name);
+
 /* ══════════════════════════════════════════════════════════════
    8. DASHBOARD RENDER
 ══════════════════════════════════════════════════════════════ */
@@ -3120,6 +3123,9 @@ async function init() {
 
   // Disparar evento para comprobación de alertas urgentes
   window.dispatchEvent(new CustomEvent('productsReady', { detail: currentProducts }));
+
+  // Abrir directamente Alertas si se llega desde una notificación o acceso directo
+  if (window.location.hash === '#alerts') switchView('alerts');
 
   // ── Nav buttons
   document.querySelectorAll('.nav-btn').forEach(btn => {

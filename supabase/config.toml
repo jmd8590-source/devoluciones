@@ -1,0 +1,9 @@
+project_id = "ynmqlzpqsyvhzlspzfkd"
+
+# La seguridad se valida dentro de cada función (sesión del usuario o secreto del cron)
+[functions.send-test-push]
+verify_jwt = false
+
+[functions.send-deadline-pushes]
+verify_jwt = false
+

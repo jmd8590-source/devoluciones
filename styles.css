@@ -2885,3 +2885,89 @@ ul, ol { list-style: none; }
     height: 12px !important;
   }
 }
+
+/* ── Avisos push + instalar app ───────────────────────────── */
+.push-card {
+  background: linear-gradient(135deg, rgba(79, 140, 255, 0.10), rgba(162, 89, 255, 0.08));
+  border: 1px solid rgba(79, 140, 255, 0.28);
+  border-radius: 14px;
+  padding: 18px 22px;
+  margin-bottom: 16px;
+}
+.push-card-main { display: flex; align-items: center; gap: 14px; }
+.push-card-icon {
+  width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--c-primary-g); color: #fff;
+  box-shadow: 0 4px 14px rgba(79, 140, 255, 0.35);
+}
+.push-card-text { flex: 1; min-width: 0; }
+.push-card-title { font-size: 16px; font-weight: 600; color: var(--t-primary); margin: 0 0 3px; }
+.push-card-desc { font-size: 13px; color: var(--t-secondary); margin: 0; line-height: 1.5; }
+.push-status { font-size: 12px; margin: 6px 0 0; color: var(--t-muted); min-height: 1em; }
+.push-status.is-on { color: var(--c-green); }
+.push-status.is-warn { color: #f76808; }
+.push-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.push-actions:empty { display: none; }
+.push-actions .btn-channel-action { display: inline-flex; align-items: center; gap: 6px; }
+.push-actions .btn-channel-action[hidden],
+.push-installed[hidden], .push-ios-hint[hidden], .account-install-row[hidden] { display: none !important; }
+.push-installed {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; color: var(--c-green);
+}
+.push-ios-hint {
+  margin-top: 14px; padding: 12px 14px; border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 13px; color: var(--t-secondary);
+}
+.push-ios-hint strong { color: var(--t-primary); display: block; margin-bottom: 6px; }
+.push-ios-hint ol { margin: 0; padding-left: 18px; list-style: decimal; line-height: 1.7; }
+
+/* Interruptor */
+.switch { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
+.switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; z-index: 1; }
+.switch-track {
+  position: absolute; inset: 0; border-radius: 26px;
+  background: rgba(255, 255, 255, 0.14); transition: background 0.2s ease;
+}
+.switch-track::after {
+  content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
+  border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease;
+}
+.switch input:checked + .switch-track { background: var(--c-primary); }
+.switch input:checked + .switch-track::after { transform: translateX(20px); }
+.switch input:disabled { cursor: default; }
+.switch input:disabled + .switch-track { opacity: 0.5; }
+.switch input:focus-visible + .switch-track { outline: 2px solid var(--c-primary); outline-offset: 2px; }
+
+/* Instalar app en Mi cuenta */
+.account-install-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 14px 16px; border-radius: var(--r-md);
+  background: rgba(79, 140, 255, 0.08); border: 1px solid rgba(79, 140, 255, 0.25);
+}
+.account-install-text { display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; color: var(--t-secondary); }
+.account-install-text strong { color: var(--t-primary); font-size: 13.5px; }
+.account-install-row > .btn-primary { padding: 9px 16px; font-size: 13px; white-space: nowrap; }
+
+/* Aviso de nueva versión */
+.pwa-update-bar {
+  position: fixed; left: 50%; bottom: 80px; transform: translateX(-50%); z-index: 900;
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: 12px; font-size: 13px; color: var(--t-primary);
+  background: #0d1526; border: 1px solid rgba(79, 140, 255, 0.4);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.pwa-update-bar button {
+  background: var(--c-primary); color: #fff; font-weight: 600; font-size: 12px;
+  padding: 6px 12px; border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+  .push-card { padding: 16px; }
+  .push-card-main { align-items: flex-start; }
+  .account-install-row { flex-direction: column; align-items: stretch; }
+  .account-install-row > .btn-primary { width: 100%; }
+}

@@ -156,6 +156,10 @@
       goToAuth();
       return;
     }
+    // Este dispositivo deja de recibir avisos de la cuenta (sin bloquear la salida)
+    if (window.GPPush && typeof window.GPPush.cleanup === 'function') {
+      await Promise.race([window.GPPush.cleanup(), new Promise(r => setTimeout(r, 1500))]);
+    }
     try { await sb.auth.signOut(); } catch { /* ignorar */ }
     goToAuth();
   }

@@ -122,18 +122,10 @@
     } catch {}
   }
 
-  /* ── Browser Notification ───────────────────────────────────── */
-  function tryBrowserNotification(items) {
-    if (!('Notification' in window)) return;
-    if (Notification.permission === 'granted') {
-      try {
-        new Notification(t().notifTitle, {
-          body: t().notifBody(items.length),
-          tag: 'garantias-urgent',
-        });
-      } catch {}
-    }
-  }
+  /* ── Aviso fuera de la app ──────────────────────────────────────
+     Los avisos con la web cerrada los envía el servidor (push.js).
+     Con la app abierta basta con este panel, así no se duplican. */
+  function tryBrowserNotification() { /* sin acción a propósito */ }
 
   /* ── Build DOM ──────────────────────────────────────────────── */
   function buildOverlay(items, onGo, onDismiss) {
@@ -243,11 +235,6 @@
     btnGo.className = 'btn-urgent-primary';
     btnGo.textContent = tr.btnGo;
     btnGo.addEventListener('click', () => {
-      if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission().then(perm => {
-          if (perm === 'granted') tryBrowserNotification(items);
-        });
-      }
       onGo();
     });
 

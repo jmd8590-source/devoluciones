@@ -6,6 +6,13 @@
   <meta name="description" content="GarantíasPro — Controla tus plazos de devolución (14-30 días) y garantías legales (3 años). Guarda tus tickets en la nube con alertas automáticas." />
   <meta name="author" content="Jesús Mendoza Domínguez" />
   <meta name="theme-color" content="#0b1120" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GarantíasPro" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta property="og:title" content="GarantíasPro — Control de Devoluciones y Garantías en la Nube" />
   <meta property="og:description" content="Aplicación web gratuita para guardar compras y tickets. Avisos automáticos antes de que venzan tus devoluciones o garantías." />
@@ -292,6 +299,37 @@
       <div>
         <h2 class="view-title" data-i18n="alerts.title">Alertas</h2>
         <p class="view-subtitle" data-i18n="alerts.subtitle">Productos que requieren tu atención</p>
+      </div>
+    </div>
+
+    <!-- Avisos push + instalación de la app -->
+    <div class="push-card" id="push-card">
+      <div class="push-card-main">
+        <div class="push-card-icon" data-icon="bell" data-icon-size="22"></div>
+        <div class="push-card-text">
+          <h3 class="push-card-title" id="push-title">Avisos en tu móvil</h3>
+          <p class="push-card-desc" id="push-desc">Recibe una notificación antes de que venza cada devolución o garantía, aunque no tengas la web abierta.</p>
+          <p class="push-status" id="push-status" aria-live="polite"></p>
+        </div>
+        <label class="switch" aria-label="Activar avisos">
+          <input type="checkbox" id="push-toggle" />
+          <span class="switch-track"></span>
+        </label>
+      </div>
+      <div class="push-actions">
+        <button type="button" class="btn-channel-action" id="push-test-btn" hidden>
+          <span data-icon="bell" data-icon-size="14"></span><span id="push-test-text">Enviar aviso de prueba</span>
+        </button>
+        <button type="button" class="btn-channel-action" data-install-btn hidden>
+          <span data-icon="download" data-icon-size="14"></span><span data-install-label>Instalar app</span>
+        </button>
+        <span class="push-installed" data-install-done hidden>
+          <span data-icon="checkCircle" data-icon-size="14"></span><span data-install-done-label>App instalada</span>
+        </span>
+      </div>
+      <div class="push-ios-hint" data-install-ios hidden>
+        <strong id="push-ios-title">Instalar en iPhone</strong>
+        <ol id="push-ios-steps"></ol>
       </div>
     </div>
 
@@ -991,6 +1029,17 @@
         </form>
       </div>
 
+      <!-- Instalar app -->
+      <div class="account-install-row" id="account-install-row" data-install-btn hidden>
+        <div class="account-install-text">
+          <strong data-install-label>Instalar app</strong>
+          <span>Ábrela desde el icono de tu móvil u ordenador, como una app.</span>
+        </div>
+        <button type="button" class="btn-primary" data-install-btn>
+          <span data-install-label>Instalar app</span>
+        </button>
+      </div>
+
       <!-- Resumen de almacenamiento / datos -->
       <div class="account-storage-summary">
         <div class="storage-item">
@@ -1017,8 +1066,10 @@
 <script src="vendor/tesseract.min.js"></script>
 <script src="supabase-client.js"></script>
 <script src="icons.js"></script>
+<script src="pwa.js"></script>
 <script src="session.js"></script>
 <script src="app.js"></script>
+<script src="push.js"></script>
 <script src="urgent-alert.js"></script>
 <script src="cookies.js"></script>
 </body>
