@@ -2971,3 +2971,28 @@ ul, ol { list-style: none; }
   .account-install-row { flex-direction: column; align-items: stretch; }
   .account-install-row > .btn-primary { width: 100%; }
 }
+
+/* ── Insignia de cuota mensual de escaneos IA (Freemium / Pro) ── */
+.ai-quota-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #93c5fd;
+  background: rgba(74, 125, 255, 0.14);
+  border: 1px solid rgba(74, 125, 255, 0.32);
+  line-height: 1.2;
+}
+.ai-quota-badge.is-pro {
+  color: #6ee7b7;
+  background: rgba(16, 185, 129, 0.14);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+.ai-quota-badge.is-empty {
+  color: #fcd34d;
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.35);
+}

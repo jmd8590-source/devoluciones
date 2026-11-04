@@ -389,7 +389,13 @@
       <div class="form-section">
         <div class="form-section-header-flex">
           <h3 class="form-section-title" data-i18n="form.ticket.section">Ticket de compra · Cofre Digital</h3>
-          <span class="vault-mini-tag"><span data-icon="shield" data-icon-size="13"></span> Custodia permanente</span>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span class="ai-quota-badge" id="ai-quota-badge" title="Escaneos automáticos con IA Vision disponibles este mes">
+              <span data-icon="sparkles" data-icon-size="13"></span>
+              <span id="ai-quota-text">IA Vision · 5/5 gratis este mes</span>
+            </span>
+            <span class="vault-mini-tag"><span data-icon="shield" data-icon-size="13"></span> Custodia permanente</span>
+          </div>
         </div>
 
         <div class="thermal-warning-tip">
@@ -899,10 +905,11 @@
       </p>
 
       <div style="background:rgba(74,125,255,0.08);border:1px solid rgba(74,125,255,0.25);border-radius:10px;padding:12px;margin:12px 0;">
-        <strong style="color:var(--t-primary);display:block;margin-bottom:6px;"><span data-icon="sparkles" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span>Dos motores de escaneo 100% operativos:</strong>
-        <p style="margin:0;font-size:12px;color:var(--t-secondary);line-height:1.5;">
-          • <strong>Motor 1 · OCR Físico Local (Sin clave / Gratis):</strong> Utiliza el motor Tesseract OCR optimizado con contraste dinámico en tu navegador. Lee el texto impreso real de la fotografía de cualquier tienda física, bar o taller.<br />
-          • <strong>Motor 2 · IA Gemini Vision (Ultra Precisión):</strong> Si introduces tu clave gratuita de Google Gemini (Flash), la IA procesará la foto con visión por ordenador profunda para leer tickets arrugados o facturas complejas en PDF.
+        <strong style="color:var(--t-primary);display:block;margin-bottom:6px;"><span data-icon="sparkles" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span>Tres niveles de escaneo 100% operativos:</strong>
+        <p style="margin:0;font-size:12px;color:var(--t-secondary);line-height:1.55;">
+          • <strong>Nivel 1 · IA Gemini Vision en Servidor (5 escaneos/mes gratis incluidos):</strong> Al iniciar sesión con tu cuenta, tus tickets se analizan automáticamente en la nube con Gemini 2.5 Flash (incluyendo productos, fechas y la letra pequeña inferior de devoluciones y vales) sin configurar nada.<br />
+          • <strong>Nivel 2 · Clave Propia Gemini Flash (Opcional · Hasta 1.500 tickets/día gratis):</strong> Si necesitas escaneos IA ilimitados sin coste, puedes introducir abajo tu clave personal gratuita de Google AI Studio.<br />
+          • <strong>Nivel 3 · Motor OCR Físico Local (Ilimitado):</strong> Respaldo automático en tu navegador con doble pasada y zoom de alta resolución en el pie del ticket.
         </p>
       </div>
 

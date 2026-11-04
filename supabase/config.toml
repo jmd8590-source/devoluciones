@@ -7,3 +7,6 @@ verify_jwt = false
 [functions.send-deadline-pushes]
 verify_jwt = false
 
+[functions.scan-ticket]
+verify_jwt = false
+

@@ -1019,6 +1019,7 @@ function openAdd() {
   const saveBtn = document.getElementById('btn-save');
   if (saveBtn) saveBtn.textContent = t('btn.save');
 
+  refreshAiQuotaBadge();
   openModal('modal-overlay');
 }
 
@@ -1053,6 +1054,7 @@ function openEdit(id) {
   const saveBtn = document.getElementById('btn-save');
   if (saveBtn) saveBtn.textContent = t('btn.save.edit');
 
+  refreshAiQuotaBadge();
   openModal('modal-overlay');
 }
 
@@ -2209,7 +2211,129 @@ function sanitizeAiExtractedData(rawObj) {
   };
 }
 
-/* Función principal de escaneo con IA (Gemini Vision + Tesseract OCR real con pasada en letra pequeña del pie) */
+/* Optimiza imágenes grandes antes de enviarlas a Gemini Vision para respuesta en <1s manteniendo nitidez en letra pequeña */
+async function prepareTicketPayloadForAi(dataUrl) {
+  if (!dataUrl || typeof dataUrl !== 'string') return null;
+  const header = dataUrl.split(';')[0] || '';
+  const mimeType = header.split(':')[1] || 'image/jpeg';
+  const base64Data = dataUrl.split(',')[1] || '';
+
+  if (!dataUrl.startsWith('data:image/') || base64Data.length < 900_000) {
+    return { mimeType, base64Data };
+  }
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const maxSide = 2000;
+        let w = img.naturalWidth || img.width;
+        let h = img.naturalHeight || img.height;
+        if (w > maxSide || h > maxSide) {
+          const ratio = Math.min(maxSide / w, maxSide / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        const compressedUrl = canvas.toDataURL('image/jpeg', 0.88);
+        resolve({
+          mimeType: 'image/jpeg',
+          base64Data: compressedUrl.split(',')[1] || base64Data
+        });
+      } catch {
+        resolve({ mimeType, base64Data });
+      }
+    };
+    img.onerror = () => resolve({ mimeType, base64Data });
+    img.src = dataUrl;
+  });
+}
+
+/* Estado de cuota mensual de escaneos IA (Freemium: 5/mes gratis · Pro/Clave propia: ilimitados) */
+let aiQuotaCache = null;
+
+function getLocalMonthKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function updateAiQuotaBadgeDOM(usage) {
+  const badge = document.getElementById('ai-quota-badge');
+  const textEl = document.getElementById('ai-quota-text');
+  if (!badge || !textEl) return;
+
+  const personalKey = (localStorage.getItem('gp_gemini_api_key') || '').trim();
+  if (personalKey) {
+    badge.className = 'ai-quota-badge is-pro';
+    textEl.textContent = 'IA Gemini Flash · Clave propia ilimitada';
+    return;
+  }
+
+  if (currentSession && currentSession.isDemo) {
+    badge.className = 'ai-quota-badge';
+    textEl.textContent = 'Modo Demo · OCR de alta precisión';
+    return;
+  }
+
+  if (usage && usage.isPro) {
+    badge.className = 'ai-quota-badge is-pro';
+    textEl.textContent = 'Plan Pro · Escaneos IA ilimitados';
+    return;
+  }
+
+  const limit = (usage && typeof usage.limit === 'number') ? usage.limit : 5;
+  const remaining = (usage && typeof usage.remaining === 'number') ? usage.remaining : limit;
+
+  if (remaining <= 0) {
+    badge.className = 'ai-quota-badge is-empty';
+    textEl.textContent = `0/${limit} escaneos IA este mes · OCR activo`;
+  } else {
+    badge.className = 'ai-quota-badge';
+    textEl.textContent = `IA Vision · ${remaining}/${limit} gratis este mes`;
+  }
+}
+
+async function refreshAiQuotaBadge() {
+  updateAiQuotaBadgeDOM(aiQuotaCache);
+  if (!currentSession || currentSession.isDemo || typeof sb === 'undefined') return;
+  try {
+    const { data, error } = await sb.functions.invoke('scan-ticket', {
+      body: { action: 'status' }
+    });
+    if (!error && data && data.usage) {
+      aiQuotaCache = data.usage;
+      updateAiQuotaBadgeDOM(aiQuotaCache);
+    }
+  } catch {
+    // Si la función aún no está desplegada en el servidor, se mantiene el indicador por defecto
+  }
+}
+
+const GEMINI_TICKET_PROMPT = `Analiza este ticket, factura o comprobante de compra de principio a fin, prestando especial atención tanto a los productos como a la LETRA PEQUEÑA de la parte inferior del ticket (plazos de devolución, si se devuelve el dinero o se entrega un vale para gastar en la tienda, condiciones y garantías).
+REGLA CRÍTICA: NO inventes ningún dato que no esté en el ticket. Si un campo no aparece en absoluto, devuelve "" o null.
+
+Devuelve ÚNICAMENTE un objeto JSON válido con estas claves exactas:
+- "productName": nombre exacto del producto o productos comprados (si hay varios, pon los principales o resúmelos; si no se ve, "")
+- "brand": marca del producto SOLO si aparece escrita en el ticket (NO pongas el nombre de la tienda como marca; si no consta, "")
+- "price": importe total final pagado en euros como número decimal (ej: 49.99). Si no se ve, null
+- "store": nombre del comercio o tienda emisora del ticket tal como aparece impreso (si no se ve, "")
+- "purchaseDate": fecha de compra impresa en el ticket en formato YYYY-MM-DD (si no se ve, "")
+- "returnDays": número entero de días para devolver o cambiar según el pie o texto del ticket (ej: si pone "plazo para devolver 15 días", pon 15; si pone "1 mes", pon 30; si no menciona plazo, null)
+- "returnConditions": TODA la información de devolución escrita en el ticket, especialmente la letra pequeña inferior (ej: si dice que no se abonará dinero en efectivo sino que se deberá gastar el dinero en la tienda / vale de compra, requisito de presentar ticket, embalaje, etc.). Si no dice nada, ""
+- "warrantyYears": años de garantía como número SOLO si el ticket lo menciona explícitamente (si no, null)
+- "coverage": qué cubre la garantía si lo indica el ticket (si no, "")
+- "noCoverage": qué no cubre la garantía si lo indica el ticket (si no, "")
+- "notes": número de ticket/factura, NIF/CIF, método de pago y listado detallado de todos los artículos con su precio individual`;
+
+const GEMINI_VISION_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+
+/* Función principal de escaneo con IA (1º Servidor Gemini Flash -> 2º Clave propia -> 3º PDF/Tesseract OCR con zoom en pie de ticket) */
 async function scanTicketWithAI(file, dataUrl) {
   if (isScanningTicket || !file) return;
   isScanningTicket = true;
@@ -2231,33 +2355,51 @@ async function scanTicketWithAI(file, dataUrl) {
 
   let extracted = null;
   const geminiKey = (localStorage.getItem('gp_gemini_api_key') || '').trim();
+  const isSupportedAiMedia = Boolean(dataUrl && (dataUrl.startsWith('data:image/') || dataUrl.startsWith('data:application/pdf')));
 
   try {
-    // ── ESTRATEGIA 1: GOOGLE GEMINI VISION (IMÁGENES Y PDF) ──
-    if (geminiKey && dataUrl && (dataUrl.startsWith('data:image/') || dataUrl.startsWith('data:application/pdf'))) {
+    let aiPayload = null;
+    if (isSupportedAiMedia) {
+      aiPayload = await prepareTicketPayloadForAi(dataUrl);
+    }
+
+    // ── ESTRATEGIA 1A: ESCANEO CON IA EN SERVIDOR (SIN CLAVE DEL USUARIO, FREEMIUM 5/MES) ──
+    if (!extracted && aiPayload && currentSession && !currentSession.isDemo && typeof sb !== 'undefined') {
+      if (scanText) scanText.textContent = 'Analizando ticket con IA Gemini Vision en la nube...';
+      try {
+        const { data: srvRes, error: srvErr } = await sb.functions.invoke('scan-ticket', {
+          body: {
+            action: 'scan',
+            mimeType: aiPayload.mimeType,
+            base64Data: aiPayload.base64Data
+          }
+        });
+
+        if (!srvErr && srvRes) {
+          if (srvRes.usage) {
+            aiQuotaCache = srvRes.usage;
+            updateAiQuotaBadgeDOM(aiQuotaCache);
+          }
+          if (srvRes.ok && srvRes.data) {
+            extracted = sanitizeAiExtractedData(srvRes.data);
+            if (extracted) {
+              extracted._source = `IA Vision en Servidor (${srvRes.model || 'gemini-2.5-flash'})`;
+              extracted._usage = srvRes.usage || null;
+            }
+          } else if (srvRes.error === 'quota_exceeded' && !geminiKey) {
+            showToast('Has utilizado tus 5 escaneos IA gratis de este mes. Usando lector OCR...', 'info');
+          }
+        }
+      } catch (srvInvokeErr) {
+        console.warn('Escaneo IA en servidor no disponible, pasando a siguiente motor:', srvInvokeErr);
+      }
+    }
+
+    // ── ESTRATEGIA 1B: GOOGLE GEMINI VISION CON CLAVE PROPIA DEL USUARIO (HASTA 1.500/DÍA GRATIS) ──
+    if (!extracted && geminiKey && aiPayload) {
       if (scanText) scanText.textContent = 'Extrayendo todos los detalles del ticket con Gemini Vision...';
       try {
-        const mimeType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
-        const base64Data = dataUrl.split(',')[1];
-
-        const prompt = `Analiza este ticket, factura o comprobante de compra de principio a fin, prestando especial atención tanto a los productos como a la LETRA PEQUEÑA de la parte inferior del ticket (plazos de devolución, si se devuelve el dinero o se entrega un vale para gastar en la tienda, condiciones y garantías).
-REGLA CRÍTICA: NO inventes ningún dato que no esté en el ticket. Si un campo no aparece en absoluto, devuelve "" o null.
-
-Devuelve ÚNICAMENTE un objeto JSON válido con estas claves exactas:
-- "productName": nombre exacto del producto o productos comprados (si hay varios, pon los principales o resúmelos; si no se ve, "")
-- "brand": marca del producto SOLO si aparece escrita en el ticket (NO pongas el nombre de la tienda como marca; si no consta, "")
-- "price": importe total final pagado en euros como número decimal (ej: 49.99). Si no se ve, null
-- "store": nombre del comercio o tienda emisora del ticket tal como aparece impreso (si no se ve, "")
-- "purchaseDate": fecha de compra impresa en el ticket en formato YYYY-MM-DD (si no se ve, "")
-- "returnDays": número entero de días para devolver o cambiar según el pie o texto del ticket (ej: si pone "plazo para devolver 15 días", pon 15; si pone "1 mes", pon 30; si no menciona plazo, null)
-- "returnConditions": TODA la información de devolución escrita en el ticket, especialmente la letra pequeña inferior (ej: si dice que no se abonará dinero en efectivo sino que se deberá gastar el dinero en la tienda / vale de compra, requisito de presentar ticket, embalaje, etc.). Si no dice nada, ""
-- "warrantyYears": años de garantía como número SOLO si el ticket lo menciona explícitamente (si no, null)
-- "coverage": qué cubre la garantía si lo indica el ticket (si no, "")
-- "noCoverage": qué no cubre la garantía si lo indica el ticket (si no, "")
-- "notes": número de ticket/factura, NIF/CIF, método de pago y listado detallado de todos los artículos con su precio individual`;
-
-        const models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-latest'];
-        for (const model of models) {
+        for (const model of GEMINI_VISION_MODELS) {
           try {
             const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(geminiKey)}`, {
               method: 'POST',
@@ -2265,8 +2407,8 @@ Devuelve ÚNICAMENTE un objeto JSON válido con estas claves exactas:
               body: JSON.stringify({
                 contents: [{
                   parts: [
-                    { inline_data: { mime_type: mimeType, data: base64Data } },
-                    { text: prompt }
+                    { inline_data: { mime_type: aiPayload.mimeType, data: aiPayload.base64Data } },
+                    { text: GEMINI_TICKET_PROMPT }
                   ]
                 }],
                 generationConfig: {
@@ -2415,12 +2557,16 @@ Devuelve ÚNICAMENTE un objeto JSON válido con estas claves exactas:
       if (extracted.returnConditions) foundFields.push(`Condiciones: <strong>${escHtml(safeText(extracted.returnConditions, 90))}</strong>`);
       if (extracted.warrantyYears !== null && extracted.warrantyYears !== undefined) foundFields.push(`Garantía: <strong>${extracted.warrantyYears} años</strong>`);
 
+      const usageNote = extracted._usage && !extracted._usage.isPro
+        ? ` · <strong>Te quedan ${extracted._usage.remaining} de ${extracted._usage.limit} escaneos IA gratis este mes</strong>.`
+        : '';
+
       if (alertBox && alertSummary) {
         alertBox.hidden = false;
         if (alertTitleEl) alertTitleEl.textContent = 'Datos extraídos del ticket';
         alertSummary.innerHTML =
           foundFields.join(' · ') +
-          `<br /><span style="font-size:12px;color:var(--t-secondary);">Los campos que no aparecen en el ticket se han dejado en blanco para que los completes si lo deseas.</span>`;
+          `<br /><span style="font-size:12px;color:var(--t-secondary);">Los campos que no aparecen en el ticket se han dejado en blanco para que los completes si lo deseas${usageNote}</span>`;
 
         if (extracted._rawText && rawToggleWrap && rawTextBox) {
           rawTextBox.textContent = extracted._rawText;
@@ -2449,25 +2595,29 @@ Devuelve ÚNICAMENTE un objeto JSON válido con estas claves exactas:
   }
 }
 
-/* Comprobador de conectividad con Gemini API */
+/* Comprobador de conectividad con Gemini API (prueba los modelos actuales de la familia Flash) */
 async function testGeminiApiKey(key) {
   if (!key) return { ok: false, error: 'Introduce una clave antes de probar.' };
-  try {
-    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(key)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: 'Responde solo la palabra OK' }] }]
-      })
-    });
-    if (resp.ok) {
-      return { ok: true };
+  let lastError = 'Error de conexión';
+  for (const model of GEMINI_VISION_MODELS) {
+    try {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: 'Responde solo la palabra OK' }] }]
+        })
+      });
+      if (resp.ok) {
+        return { ok: true, model };
+      }
+      const errData = await resp.json().catch(() => ({}));
+      lastError = errData.error?.message || `Error HTTP ${resp.status}`;
+    } catch (e) {
+      lastError = e.message || 'Error de conexión';
     }
-    const errData = await resp.json().catch(() => ({}));
-    return { ok: false, error: errData.error?.message || `Error HTTP ${resp.status}` };
-  } catch (e) {
-    return { ok: false, error: e.message || 'Error de conexión' };
   }
+  return { ok: false, error: lastError };
 }
 
 function applyExtractedTicketData(data) {
@@ -3412,6 +3562,7 @@ async function init() {
     openModal('modal-ai-settings');
   });
   document.getElementById('ai-settings-close')?.addEventListener('click', () => {
+    updateAiQuotaBadgeDOM(aiQuotaCache);
     closeModal('modal-ai-settings');
   });
 
@@ -3451,6 +3602,7 @@ async function init() {
       localStorage.removeItem('gp_gemini_api_key');
       showToast('Clave eliminada. Modo OCR físico local activo', 'ok');
     }
+    updateAiQuotaBadgeDOM(aiQuotaCache);
     closeModal('modal-ai-settings');
   });
   document.getElementById('btn-clear-gemini-key')?.addEventListener('click', () => {
@@ -3460,6 +3612,7 @@ async function init() {
     const resDiv = document.getElementById('gemini-test-result');
     if (resDiv) { resDiv.hidden = true; resDiv.innerHTML = ''; }
     showToast('Clave restablecida. Motor OCR local activo', 'ok');
+    updateAiQuotaBadgeDOM(aiQuotaCache);
     closeModal('modal-ai-settings');
   });
   document.getElementById('btn-ai-re-scan')?.addEventListener('click', () => {

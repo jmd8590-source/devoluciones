@@ -8,7 +8,7 @@
    ═══════════════════════════════════════════════════════════════ */
 'use strict';
 
-const VERSION = 'gp-v2';
+const VERSION = 'gp-v3';
 const STATIC_CACHE = `${VERSION}-static`;
 
 const PRECACHE = [
