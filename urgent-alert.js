@@ -321,11 +321,28 @@
 
   window.checkUrgentAlerts = checkAndShowUrgentAlert;
 
+  function refreshUrgentOverlayLang() {
+    const ov = document.getElementById('urgent-overlay');
+    if (!ov) return;
+    const tr = t();
+    const titleEl = ov.querySelector('.urgent-title');
+    if (titleEl) titleEl.textContent = tr.title;
+    const subEl = ov.querySelector('.urgent-subtitle');
+    if (subEl) subEl.textContent = tr.subtitle;
+    const btnGo = ov.querySelector('.btn-urgent-primary');
+    if (btnGo) btnGo.textContent = tr.btnGo;
+    const btnDismiss = ov.querySelector('.btn-urgent-secondary');
+    if (btnDismiss) btnDismiss.textContent = tr.btnDismiss;
+  }
+
   function boot() {
     // Escucha el evento 'productsReady' emitido por app.js cuando los productos han cargado
     window.addEventListener('productsReady', () => {
       setTimeout(checkAndShowUrgentAlert, 400);
     }, { once: true });
+    document.getElementById('lang-toggle')?.addEventListener('click', () => {
+      setTimeout(refreshUrgentOverlayLang, 0);
+    });
   }
 
   if (document.readyState === 'loading') {

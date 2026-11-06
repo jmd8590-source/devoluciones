@@ -120,6 +120,56 @@ const TRANSLATIONS = {
     'demo.banner':         'Modo demo — los datos se borran al cerrar la pestaña.',
     'demo.register':       'Crear cuenta gratis →',
     'session.greeting':    'Hola,',
+    'hero.eyebrow':        'GarantíasPro · Tu gestor de compras, devoluciones y garantías',
+    'hero.title':          'No vuelvas a perder el dinero de una devolución ni una garantía',
+    'hero.desc':           'Guarda tus compras y tickets con total seguridad en la nube. Te avisamos con tiempo antes de que caduquen tus <strong>14 o 30 días de devolución</strong> y los <strong>3 años de garantía legal</strong> en España.',
+    'hero.feat1.title':    'Avisos a 3 días y Calendario',
+    'hero.feat1.desc':     'Notificaciones push en navegador o móvil y alarmas automáticas directas a tu Google Calendar, Apple Calendar o WhatsApp.',
+    'hero.feat2.title':    'Sincronización en la Nube (UE)',
+    'hero.feat2.desc':     'Tus facturas y tickets se guardan en servidores seguros en la Unión Europea con cifrado avanzado. No se pierden si cambias de móvil o limpias caché.',
+    'hero.feat3.title':    'Adaptado a la Ley Española',
+    'hero.feat3.desc':     'Cálculo automático de plazos de desistimiento de comercios y los 3 años de garantía obligatorios en España.',
+    'hero.btn.add':        'Añadir mi primer producto',
+    'hero.btn.sample':     'Probar con datos de muestra',
+    'hero.btn.cloud':      'Crear cuenta en la nube',
+    'tools.export':        'Exportar copia de seguridad (JSON)',
+    'tools.import':        'Importar',
+    'alerts.cal.title':         'Alarmas en tu Calendario Móvil',
+    'alerts.cal.desc':          'No necesitas entrar a la web todos los días. Guarda alarmas automáticas en Google Calendar, Apple Calendar o WhatsApp 3 días antes de que venza cualquier plazo de devolución o garantía.',
+    'alerts.cal.channel.title': 'Alarmas Automáticas (.ics / Google / Apple)',
+    'alerts.cal.channel.sub':   'Genera avisos con alarma a 3 días en cada producto con 1 solo clic',
+    'alerts.cal.btn':           'Ver cómo funciona',
+    'footer.owner':             'GarantíasPro · Responsable: Jesús Mendoza Domínguez',
+    'ticket.vault.tag':         'Custodia permanente',
+    'ticket.thermal.tip':       '<strong>El papel térmico se borra a los 6 meses:</strong> Sube una foto o factura en PDF. El lector extraerá todos los datos del ticket automáticamente y tu copia quedará custodiada para siempre.',
+    'ticket.scanning':          'Analizando todos los detalles del ticket (cabecera, productos y letra pequeña)...',
+    'ticket.analyzed.title':    '¡Ticket analizado con éxito!',
+    'ticket.raw.show':          'Ver texto leído en el ticket',
+    'ticket.raw.hide':          'Ocultar texto leído en el ticket',
+    'ticket.btn.camera':        'Foto con cámara',
+    'ticket.btn.file':          'Subir archivo / PDF',
+    'ticket.btn.rescan':        'Re-escanear ticket',
+    'ticket.btn.settings':      'Ajustes IA / OCR',
+    'claim.modal.title':        'Reclamación Formal con 1 Clic',
+    'claim.modal.sub':          'Redacción legal conforme al RDL 1/2007 (Ley de Consumidores y Usuarios y 3 años de garantía en España).',
+    'viewer.title':             'Ticket Custodiado en el Cofre Digital',
+    'viewer.subtitle':          'Copia Digital Permanente · Válida para Reclamaciones Legales en España',
+    'acc.modal.title':          'Mi Cuenta y Ajustes',
+    'acc.modal.sub':            'Gestiona tu perfil, seguridad y preferencias',
+    'acc.pwd.title':            'Cambiar contraseña',
+    'acc.pwd.desc':             'Actualiza tu contraseña para mantener tu cuenta protegida en la nube.',
+    'acc.pwd.current.label':    'Contraseña actual (para verificar tu identidad)',
+    'acc.pwd.current.ph':       'Introduce tu contraseña actual',
+    'acc.pwd.new.label':        'Nueva contraseña',
+    'acc.pwd.new.ph':           'Mínimo 8 caracteres',
+    'acc.pwd.confirm.label':    'Confirmar nueva contraseña',
+    'acc.pwd.confirm.ph':       'Repite la nueva contraseña',
+    'acc.pwd.btn':              'Actualizar contraseña',
+    'acc.install.desc':         'Ábrela desde el icono de tu móvil u ordenador, como una app.',
+    'acc.sec.label1':           'Seguridad de cuenta',
+    'acc.sec.val1':             'Cifrado de extremo a extremo (TLS / AES-256)',
+    'acc.sec.label2':           'Protección de tickets',
+    'acc.sec.val2':             'Aislamiento por usuario y custodia antiborrado',
   },
   en: {
     'nav.dashboard':  'Home',
@@ -230,6 +280,56 @@ const TRANSLATIONS = {
     'demo.banner':         'Demo mode — data is deleted when you close the tab.',
     'demo.register':       'Create free account →',
     'session.greeting':    'Hello,',
+    'hero.eyebrow':        'GarantíasPro · Your purchase, return & warranty manager',
+    'hero.title':          'Never lose money on an expired return or warranty again',
+    'hero.desc':           'Store your purchases and receipts safely in the cloud. We alert you ahead of time before your <strong>14 or 30-day return period</strong> and <strong>3-year legal warranty</strong> expire.',
+    'hero.feat1.title':    '3-Day Alerts & Calendar',
+    'hero.feat1.desc':     'Browser or phone push notifications and direct alarms for Google Calendar, Apple Calendar, or WhatsApp.',
+    'hero.feat2.title':    'EU Cloud Sync',
+    'hero.feat2.desc':     'Your invoices and receipts are stored on encrypted European Union servers. Never lose them if you switch phones or clear cache.',
+    'hero.feat3.title':    'Adapted to Consumer Law',
+    'hero.feat3.desc':     'Automatic calculation of store return deadlines and mandatory 3-year legal warranties.',
+    'hero.btn.add':        'Add my first product',
+    'hero.btn.sample':     'Try with sample data',
+    'hero.btn.cloud':      'Create cloud account',
+    'tools.export':        'Export backup copy (JSON)',
+    'tools.import':        'Import',
+    'alerts.cal.title':         'Alarms on your Mobile Calendar',
+    'alerts.cal.desc':          'No need to check the app every day. Save automatic alarms in Google Calendar, Apple Calendar, or WhatsApp 3 days before any return or warranty deadline expires.',
+    'alerts.cal.channel.title': 'Automatic Alarms (.ics / Google / Apple)',
+    'alerts.cal.channel.sub':   'Generate 3-day advance alerts for each product with 1 click',
+    'alerts.cal.btn':           'See how it works',
+    'footer.owner':             'GarantíasPro · Owner: Jesús Mendoza Domínguez',
+    'ticket.vault.tag':         'Permanent vault',
+    'ticket.thermal.tip':       '<strong>Thermal paper fades in 6 months:</strong> Upload a receipt photo or PDF invoice. The scanner extracts all details automatically and keeps your receipt safe forever.',
+    'ticket.scanning':          'Analyzing all receipt details (header, items, and fine print)...',
+    'ticket.analyzed.title':    'Receipt analyzed successfully!',
+    'ticket.raw.show':          'View text read from receipt',
+    'ticket.raw.hide':          'Hide text read from receipt',
+    'ticket.btn.camera':        'Take photo',
+    'ticket.btn.file':          'Upload file / PDF',
+    'ticket.btn.rescan':        'Re-scan receipt',
+    'ticket.btn.settings':      'AI / OCR Settings',
+    'claim.modal.title':        '1-Click Formal Legal Claim',
+    'claim.modal.sub':          'Formal legal notice drafted under Consumer Law (RDL 1/2007 and 3-year legal warranty).',
+    'viewer.title':             'Receipt Stored in Digital Vault',
+    'viewer.subtitle':          'Permanent Digital Copy · Valid for Legal Warranty Claims',
+    'acc.modal.title':          'My Account & Settings',
+    'acc.modal.sub':            'Manage your profile, security, and preferences',
+    'acc.pwd.title':            'Change password',
+    'acc.pwd.desc':             'Update your password to keep your cloud account protected.',
+    'acc.pwd.current.label':    'Current password (to verify your identity)',
+    'acc.pwd.current.ph':       'Enter your current password',
+    'acc.pwd.new.label':        'New password',
+    'acc.pwd.new.ph':           'Minimum 8 characters',
+    'acc.pwd.confirm.label':    'Confirm new password',
+    'acc.pwd.confirm.ph':       'Repeat your new password',
+    'acc.pwd.btn':              'Update password',
+    'acc.install.desc':         'Open it from your phone or computer home screen like a native app.',
+    'acc.sec.label1':           'Account security',
+    'acc.sec.val1':             'End-to-end encryption (TLS / AES-256)',
+    'acc.sec.label2':           'Receipt protection',
+    'acc.sec.val2':             'Per-user isolation and anti-fade digital vault',
   }
 };
 
@@ -249,8 +349,14 @@ function applyTranslations() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = t(el.dataset.i18n);
   });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    el.innerHTML = t(el.dataset.i18nHtml);
+  });
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = t(el.dataset.i18nTitle);
   });
   const codeEl = document.getElementById('lang-code');
   if (codeEl) codeEl.textContent = currentLang === 'es' ? 'ES' : 'EN';
@@ -1264,7 +1370,7 @@ function handleFileSelect(file) {
 /* ── 12.1 MOTOR DE EXTRACCIÓN EXACTA DE TICKETS Y FACTURAS (SIN INVENTAR DATOS) ── */
 let isScanningTicket = false;
 
-/* Normalización de contraste preservando e intensificando la letra pequeña del pie de ticket */
+/* Normalización suave de contraste (estiramiento de histograma en escala de grises sin romper trazos finos) */
 async function preprocessTicketImage(imageSource, cropFooterOnly = false) {
   return new Promise((resolve) => {
     const img = new Image();
@@ -1276,13 +1382,12 @@ async function preprocessTicketImage(imageSource, cropFooterOnly = false) {
         const origW = img.naturalWidth || img.width;
         const origH = img.naturalHeight || img.height;
 
-        // Si cropFooterOnly = true, recortar el 45% inferior del ticket y ampliarlo x2 para leer la letra pequeña
-        const srcY = cropFooterOnly ? Math.floor(origH * 0.55) : 0;
+        const srcY = cropFooterOnly ? Math.floor(origH * 0.60) : 0;
         const srcH = cropFooterOnly ? Math.max(1, origH - srcY) : origH;
         const srcW = origW;
 
-        const maxDim = 2400;
-        const minDim = cropFooterOnly ? 1600 : 1400;
+        const maxDim = 2200;
+        const minDim = 1200;
         let w = srcW;
         let h = srcH;
 
@@ -1291,7 +1396,7 @@ async function preprocessTicketImage(imageSource, cropFooterOnly = false) {
           w = Math.round(w * scale);
           h = Math.round(h * scale);
         } else if (Math.max(w, h) < minDim && w > 0 && h > 0) {
-          const scale = Math.min(2.4, minDim / Math.max(w, h));
+          const scale = Math.min(2.2, minDim / Math.max(w, h));
           w = Math.round(w * scale);
           h = Math.round(h * scale);
         }
@@ -1313,38 +1418,32 @@ async function preprocessTicketImage(imageSource, cropFooterOnly = false) {
           hist[lum]++;
         }
 
-        // Percentiles 2% (tinta más oscura) y 92% (blanco del papel)
+        // Percentiles 3% (tinta) y 90% (papel de fondo)
         let low = 0, high = 255, acc = 0;
-        const lowTarget = totalPixels * 0.02;
-        const highTarget = totalPixels * 0.92;
+        const lowTarget = totalPixels * 0.03;
+        const highTarget = totalPixels * 0.90;
         for (let v = 0; v < 256; v++) {
           acc += hist[v];
           if (acc < lowTarget) low = v;
           if (acc < highTarget) high = v;
         }
-        const range = Math.max(35, high - low);
+        const range = Math.max(40, high - low);
 
         for (let i = 0; i < d.length; i += 4) {
           const lum = d[i];
           let norm = (lum - low) / range;
           norm = Math.max(0, Math.min(1, norm));
-          // Oscurecer la tinta grisácea de la letra pequeña térmica (gamma 1.45 en tonos medios-oscuros)
-          // y limpiar únicamente el fondo claro del papel (> 0.88) para no borrar trazos finos
-          let val;
-          if (norm > 0.88) {
-            val = 255;
-          } else if (norm < 0.25) {
-            val = Math.round(norm * 120);
-          } else {
-            val = Math.round(Math.pow(norm, 1.35) * 245);
-          }
+          // Empujar el fondo claro a blanco limpio y oscurecer los caracteres del ticket
+          const val = norm > 0.78
+            ? Math.min(255, Math.round(200 + (norm - 0.78) * 250))
+            : Math.round(Math.pow(norm, 1.18) * 255);
           d[i] = val;
           d[i + 1] = val;
           d[i + 2] = val;
         }
 
         ctx.putImageData(imgData, 0, 0);
-        resolve(canvas.toDataURL('image/jpeg', 0.95));
+        resolve(canvas.toDataURL('image/jpeg', 0.94));
       } catch (err) {
         console.warn('Canvas preproc warning, using original:', err);
         resolve(imageSource);
@@ -1723,8 +1822,8 @@ function extractPoliciesFromText(lines, fullText, purchaseDate) {
   }
 
   // ── B. CONDICIONES DE DEVOLUCIÓN / ABONO / VALE / TIENDA (EXTRACCIÓN MULTILÍNEA COMPLETA) ──
-  // Detecta cualquier frase sobre cómo se devuelve, si no se abona efectivo, si se da vale o se gasta en tienda, ticket, embalaje, etc.
-  const policyLineTrigger = /(?:devolver|devoluci[oó]n|devoluciones|cambio|cambiar|plazo\s*(?:m[aá]ximo|de|para)|no\s+se\s+(?:abona|devuelve|reembolsa|admiten|aceptan)|abonar[aá]?|reembols|efectivo|met[aá]lico|dinero|gastar\s+en|en\s+la\s+tienda|vale\b|bono\b|canje|imprescindible|obligatorio\s+presentar|conserve\s+(?:este|el)\s+ticket|presentar\s+(?:este|el)?\s*ticket|sin\s+ticket|embalaje|envase\s+original|precinto|etiqueta|sin\s+usar|sin\s+abrir|perfecto\s+estado|art[ií]culos\s+de\s+(?:fiesta|higiene|ba[ñn]o)|ropa\s+interior|tara|defectuoso)/i;
+  // Detecta frases reales de política de devolución, reembolso, vales de tienda o requisitos de ticket/embalaje
+  const policyLineTrigger = /(?:devolver|devoluci[oó]n|devoluciones|cambios?\s*(?:y|o|ni|\/)\s*devoluciones|plazo\s*(?:m[aá]ximo\s*)?(?:de|para)|no\s+se\s+(?:abona(?:r[aá])?|devuelve|devolver[aá]|reembolsa(?:r[aá])?|admiten|aceptan|cambian)|abonar[aá]?\s+(?:el\s+)?(?:dinero|efectivo|importe)|gastar\s+(?:el\s+dinero\s+)?en\s+(?:la\s+)?tienda|vale\s+(?:de\s+compra|canjeable|por\s+el\s+importe|sin\s+caducidad)|bono\s+de\s+compra|conserve\s+(?:este|el)\s+ticket|imprescindible\s+(?:presentar\s+)?(?:este\s+|el\s+)?ticket|presentar\s+(?:este|el)\s+ticket|embalaje\s+original|envase\s+original|precinto\s+original|sin\s+usar|sin\s+abrir|perfecto\s+estado|art[ií]culos\s+de\s+(?:fiesta|higiene|ba[ñn]o)|ropa\s+interior)/i;
   const nonPolicyNoise = /^(?:total|subtotal|base\s*imponible|cuota|iva\b|i\.v\.a|tarjeta|visa|mastercard|maestro|bizum|cambio\s+\d|entrega\s*efectivo|efectivo\s+\d|factura\s*simplificada|n[º°o]?\s*(?:de\s*)?(?:factura|ticket)|fecha\s*:|hora\s*:|atendido\s*por|vendedor|cajero|caja\s*[:\d]|tpv|terminal|operaci[oó]n|autorizaci[oó]n|nif\b|cif\b|tel[eé]fono|tfno|www\.|http|gracias\s+por\s+su\s+visita|\*+|\-+|=+)$/i;
 
   const matchedIndices = new Set();
@@ -2268,22 +2367,23 @@ function updateAiQuotaBadgeDOM(usage) {
   const textEl = document.getElementById('ai-quota-text');
   if (!badge || !textEl) return;
 
+  const isEn = currentLang === 'en';
   const personalKey = (localStorage.getItem('gp_gemini_api_key') || '').trim();
   if (personalKey) {
     badge.className = 'ai-quota-badge is-pro';
-    textEl.textContent = 'IA Gemini Flash · Clave propia ilimitada';
+    textEl.textContent = isEn ? 'Gemini Flash AI · Unlimited key' : 'IA Gemini Flash · Clave propia ilimitada';
     return;
   }
 
-  if (currentSession && currentSession.isDemo) {
+  if (activeSession && activeSession.isDemo) {
     badge.className = 'ai-quota-badge';
-    textEl.textContent = 'Modo Demo · OCR de alta precisión';
+    textEl.textContent = isEn ? 'Demo Mode · High-precision OCR' : 'Modo Demo · OCR de alta precisión';
     return;
   }
 
   if (usage && usage.isPro) {
     badge.className = 'ai-quota-badge is-pro';
-    textEl.textContent = 'Plan Pro · Escaneos IA ilimitados';
+    textEl.textContent = isEn ? 'Pro Plan · Unlimited AI scans' : 'Plan Pro · Escaneos IA ilimitados';
     return;
   }
 
@@ -2292,16 +2392,17 @@ function updateAiQuotaBadgeDOM(usage) {
 
   if (remaining <= 0) {
     badge.className = 'ai-quota-badge is-empty';
-    textEl.textContent = `0/${limit} escaneos IA este mes · OCR activo`;
+    textEl.textContent = isEn ? `0/${limit} AI scans this month · OCR active` : `0/${limit} escaneos IA este mes · OCR activo`;
   } else {
     badge.className = 'ai-quota-badge';
-    textEl.textContent = `IA Vision · ${remaining}/${limit} gratis este mes`;
+    textEl.textContent = isEn ? `AI Vision · ${remaining}/${limit} free this month` : `IA Vision · ${remaining}/${limit} gratis este mes`;
   }
 }
 
 async function refreshAiQuotaBadge() {
   updateAiQuotaBadgeDOM(aiQuotaCache);
-  if (!currentSession || currentSession.isDemo || typeof sb === 'undefined') return;
+  if (!activeSession || activeSession.isDemo || typeof sb === 'undefined') return;
+  if (localStorage.getItem('gp_server_ai_enabled') !== '1') return;
   try {
     const { data, error } = await sb.functions.invoke('scan-ticket', {
       body: { action: 'status' }
@@ -2363,8 +2464,8 @@ async function scanTicketWithAI(file, dataUrl) {
       aiPayload = await prepareTicketPayloadForAi(dataUrl);
     }
 
-    // ── ESTRATEGIA 1A: ESCANEO CON IA EN SERVIDOR (SIN CLAVE DEL USUARIO, FREEMIUM 5/MES) ──
-    if (!extracted && aiPayload && currentSession && !currentSession.isDemo && typeof sb !== 'undefined') {
+    // ── ESTRATEGIA 1A: ESCANEO CON IA EN SERVIDOR (OPCIONAL SI ESTÁ HABILITADO EN CLOUD) ──
+    if (!extracted && aiPayload && activeSession && !activeSession.isDemo && typeof sb !== 'undefined' && localStorage.getItem('gp_server_ai_enabled') === '1') {
       if (scanText) scanText.textContent = 'Analizando ticket con IA Gemini Vision en la nube...';
       try {
         const { data: srvRes, error: srvErr } = await sb.functions.invoke('scan-ticket', {
@@ -3060,7 +3161,7 @@ function openDetail(id) {
     btnTg.className = 'btn-detail-action btn-detail-tg';
     btnTg.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Recordar por Telegram`;
     btnTg.addEventListener('click', () => {
-      const tgText = `🔔 *Recordatorio GarantíasPro*\n\n📦 *Producto:* ${p.name}\n🏪 *Tienda:* ${p.store || 'Comercio'}\n📅 *Fecha límite:* ${alarmDl}\n⚠️ Revisa tu ticket antes de que expire el plazo.`;
+      const tgText = `*Recordatorio GarantíasPro*\n\n*Producto:* ${p.name}\n*Tienda:* ${p.store || 'Comercio'}\n*Fecha límite:* ${alarmDl}\nRevisa tu ticket antes de que expire el plazo.`;
       const tgUrl = `https://t.me/share/url?url=${encodeURIComponent('https://devoluciones.jmd8590.workers.dev')}&text=${encodeURIComponent(tgText)}`;
       window.open(tgUrl, '_blank', 'noopener,noreferrer');
     });
@@ -3373,7 +3474,7 @@ async function init() {
     if (!rawBox) return;
     const isHidden = rawBox.hidden;
     rawBox.hidden = !isHidden;
-    toggleRawBtn.innerHTML = iconSvg(isHidden ? 'eyeOff' : 'eye', 14) + (isHidden ? ' Ocultar texto leído en el ticket' : ' Ver texto leído en el ticket');
+    toggleRawBtn.innerHTML = iconSvg(isHidden ? 'eyeOff' : 'eye', 14) + ' <span data-i18n="' + (isHidden ? 'ticket.raw.hide' : 'ticket.raw.show') + '">' + t(isHidden ? 'ticket.raw.hide' : 'ticket.raw.show') + '</span>';
   });
 
   // Drag & drop
@@ -3422,14 +3523,21 @@ async function init() {
     });
   });
 
-  // ── Language toggle
+  // ── Language toggle (traducción simultánea de toda la interfaz)
   document.getElementById('lang-toggle')?.addEventListener('click', () => {
     currentLang = currentLang === 'es' ? 'en' : 'es';
     localStorage.setItem('gp_lang', currentLang);
     applyTranslations();
-    if (currentView === 'dashboard') renderDashboard();
-    else if (currentView === 'products') renderProducts();
-    else if (currentView === 'alerts') renderAlerts();
+    updateAiQuotaBadgeDOM(aiQuotaCache);
+    renderDashboard();
+    renderProducts();
+    renderAlerts();
+    if (openModals.has('detail-overlay') && detailProductId) {
+      openDetail(detailProductId);
+    }
+    if (openModals.has('modal-claim-generator')) {
+      updateClaimTextPreview();
+    }
   });
 
   // ── Auto-sync purchase date → return/warranty start when days/years are filled

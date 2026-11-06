@@ -148,10 +148,10 @@
       <div class="onboarding-hero-content">
         <span class="onboarding-eyebrow">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          GarantíasPro · Tu gestor de compras, devoluciones y garantías
+          <span data-i18n="hero.eyebrow">GarantíasPro · Tu gestor de compras, devoluciones y garantías</span>
         </span>
-        <h2 class="onboarding-title">No vuelvas a perder el dinero de una devolución ni una garantía</h2>
-        <p class="onboarding-desc">
+        <h2 class="onboarding-title" data-i18n="hero.title">No vuelvas a perder el dinero de una devolución ni una garantía</h2>
+        <p class="onboarding-desc" data-i18n-html="hero.desc">
           Guarda tus compras y tickets con total seguridad en la nube. Te avisamos con tiempo antes de que caduquen tus <strong>14 o 30 días de devolución</strong> y los <strong>3 años de garantía legal</strong> en España.
         </p>
 
@@ -159,24 +159,24 @@
           <div class="onboarding-feature-card">
             <div class="feat-icon" data-icon="clock" data-icon-size="22"></div>
             <div class="feat-content">
-              <h3>Avisos a 3 días y Calendario</h3>
-              <p>Notificaciones push en navegador o móvil y alarmas automáticas directas a tu Google Calendar, Apple Calendar o WhatsApp.</p>
+              <h3 data-i18n="hero.feat1.title">Avisos a 3 días y Calendario</h3>
+              <p data-i18n="hero.feat1.desc">Notificaciones push en navegador o móvil y alarmas automáticas directas a tu Google Calendar, Apple Calendar o WhatsApp.</p>
             </div>
           </div>
 
           <div class="onboarding-feature-card">
             <div class="feat-icon" data-icon="cloud" data-icon-size="22"></div>
             <div class="feat-content">
-              <h3>Sincronización en la Nube (UE)</h3>
-              <p>Tus facturas y tickets se guardan en servidores seguros en la Unión Europea con cifrado avanzado. No se pierden si cambias de móvil o limpias caché.</p>
+              <h3 data-i18n="hero.feat2.title">Sincronización en la Nube (UE)</h3>
+              <p data-i18n="hero.feat2.desc">Tus facturas y tickets se guardan en servidores seguros en la Unión Europea con cifrado avanzado. No se pierden si cambias de móvil o limpias caché.</p>
             </div>
           </div>
 
           <div class="onboarding-feature-card">
             <div class="feat-icon" data-icon="scale" data-icon-size="22"></div>
             <div class="feat-content">
-              <h3>Adaptado a la Ley Española</h3>
-              <p>Cálculo automático de plazos de desistimiento de comercios y los 3 años de garantía obligatorios en España.</p>
+              <h3 data-i18n="hero.feat3.title">Adaptado a la Ley Española</h3>
+              <p data-i18n="hero.feat3.desc">Cálculo automático de plazos de desistimiento de comercios y los 3 años de garantía obligatorios en España.</p>
             </div>
           </div>
         </div>
@@ -184,13 +184,13 @@
         <div class="onboarding-cta-row">
           <button type="button" class="btn-hero-primary" id="btn-hero-add">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Añadir mi primer producto
+            <span data-i18n="hero.btn.add">Añadir mi primer producto</span>
           </button>
           <button type="button" class="btn-hero-secondary" id="btn-hero-sample">
-            <span data-icon="flask" data-icon-size="15"></span> Probar con datos de muestra
+            <span data-icon="flask" data-icon-size="15"></span> <span data-i18n="hero.btn.sample">Probar con datos de muestra</span>
           </button>
           <a href="auth.html" class="btn-hero-outline" id="btn-hero-cloud">
-            <span data-icon="cloud" data-icon-size="15"></span> Crear cuenta en la nube
+            <span data-icon="cloud" data-icon-size="15"></span> <span data-i18n="hero.btn.cloud">Crear cuenta en la nube</span>
           </a>
         </div>
       </div>
@@ -283,11 +283,11 @@
     <div class="products-tools-bar">
       <button type="button" class="btn-tool" id="btn-export-json" title="Descargar copia de seguridad en JSON">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        <span>Exportar copia de seguridad (JSON)</span>
+        <span data-i18n="tools.export">Exportar copia de seguridad (JSON)</span>
       </button>
       <button type="button" class="btn-tool" id="btn-import-trigger" title="Restaurar productos desde copia JSON">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <span>Importar</span>
+        <span data-i18n="tools.import">Importar</span>
       </button>
       <input type="file" id="import-json-input" accept=".json" style="display:none" />
     </div>
@@ -338,17 +338,17 @@
       <div class="notif-card-header">
         <div class="notif-card-icon" data-icon="calendar" data-icon-size="24"></div>
         <div>
-          <h3 class="notif-card-title">Alarmas en tu Calendario Móvil</h3>
-          <p class="notif-card-desc">No necesitas entrar a la web todos los días. Guarda alarmas automáticas en Google Calendar, Apple Calendar o WhatsApp 3 días antes de que venza cualquier plazo de devolución o garantía.</p>
+          <h3 class="notif-card-title" data-i18n="alerts.cal.title">Alarmas en tu Calendario Móvil</h3>
+          <p class="notif-card-desc" data-i18n="alerts.cal.desc">No necesitas entrar a la web todos los días. Guarda alarmas automáticas en Google Calendar, Apple Calendar o WhatsApp 3 días antes de que venza cualquier plazo de devolución o garantía.</p>
         </div>
       </div>
       <div class="notif-channels-grid">
         <div class="notif-channel-item">
           <div class="channel-text">
-            <strong>Alarmas Automáticas (.ics / Google / Apple)</strong>
-            <span>Genera avisos con alarma a 3 días en cada producto con 1 solo clic</span>
+            <strong data-i18n="alerts.cal.channel.title">Alarmas Automáticas (.ics / Google / Apple)</strong>
+            <span data-i18n="alerts.cal.channel.sub">Genera avisos con alarma a 3 días en cada producto con 1 solo clic</span>
           </div>
-          <button type="button" class="btn-channel-action" id="btn-demo-calendar">Ver cómo funciona</button>
+          <button type="button" class="btn-channel-action" id="btn-demo-calendar" data-i18n="alerts.cal.btn">Ver cómo funciona</button>
         </div>
       </div>
     </div>
@@ -362,7 +362,7 @@
   </section>
 
   <footer class="app-legal-footer" role="contentinfo">
-    <span>GarantíasPro · Responsable: Jesús Mendoza Domínguez</span>
+    <span data-i18n="footer.owner">GarantíasPro · Responsable: Jesús Mendoza Domínguez</span>
   </footer>
 
 </main>
@@ -394,12 +394,12 @@
               <span data-icon="sparkles" data-icon-size="13"></span>
               <span id="ai-quota-text">IA Vision · 5/5 gratis este mes</span>
             </span>
-            <span class="vault-mini-tag"><span data-icon="shield" data-icon-size="13"></span> Custodia permanente</span>
+            <span class="vault-mini-tag"><span data-icon="shield" data-icon-size="13"></span> <span data-i18n="ticket.vault.tag">Custodia permanente</span></span>
           </div>
         </div>
 
         <div class="thermal-warning-tip">
-          <span><span data-icon="lightbulb" data-icon-size="15" style="vertical-align:middle;margin-right:4px;"></span> <strong>El papel térmico se borra a los 6 meses:</strong> Sube una foto o factura en PDF. La IA extraerá los datos automáticamente en 2 segundos y tu ticket quedará custodiado de forma permanente.</span>
+          <span><span data-icon="lightbulb" data-icon-size="15" style="vertical-align:middle;margin-right:4px;"></span> <span data-i18n-html="ticket.thermal.tip"><strong>El papel térmico se borra a los 6 meses:</strong> Sube una foto o factura en PDF. El lector extraerá todos los datos del ticket automáticamente y tu copia quedará custodiada para siempre.</span></span>
         </div>
 
         <div class="ticket-upload-area" id="ticket-upload-area" tabindex="0"
@@ -409,13 +409,13 @@
             <div class="ai-scan-laser"></div>
             <div class="ai-scan-status">
               <span class="ai-sparkle" data-icon="sparkles" data-icon-size="16"></span>
-              <span id="ai-scan-text">Analizando ticket con IA (extrayendo comercio, importe y fechas)...</span>
+              <span id="ai-scan-text" data-i18n="ticket.scanning">Analizando todos los detalles del ticket (cabecera, productos y letra pequeña)...</span>
             </div>
           </div>
           <div class="ticket-placeholder" id="ticket-placeholder">
             <div class="upload-icon" data-icon="camera" data-icon-size="28"></div>
-            <p class="upload-title">Arrastra la foto del ticket / factura o pulsa aquí</p>
-            <p class="upload-sub"><span data-icon="sparkles" data-icon-size="14" style="vertical-align:middle;margin-right:3px;"></span><strong>Escaneo automático con IA</strong> · JPG, PNG, WEBP o PDF — máx. 10 MB</p>
+            <p class="upload-title" data-i18n="form.ticket.drag">Arrastra la foto del ticket / factura o pulsa aquí</p>
+            <p class="upload-sub"><span data-icon="sparkles" data-icon-size="14" style="vertical-align:middle;margin-right:3px;"></span><span data-i18n-html="form.ticket.formats"><strong>Escaneo automático inteligente</strong> · JPG, PNG, WEBP o PDF — máx. 10 MB</span></p>
           </div>
           <input type="file" id="ticket-file" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
                  style="display:none" aria-label="Seleccionar foto de ticket" />
@@ -426,11 +426,11 @@
         <div class="ai-extraction-alert" id="ai-extraction-alert" hidden>
           <div class="ai-alert-icon" data-icon="sparkles" data-icon-size="20"></div>
           <div class="ai-alert-text">
-            <strong>¡Ticket analizado con éxito!</strong>
-            <p id="ai-extraction-summary">Comercio, importe, fecha de compra extraídos y 3 años de garantía legal en España calculados automáticamente.</p>
+            <strong data-i18n="ticket.analyzed.title">¡Ticket analizado con éxito!</strong>
+            <p id="ai-extraction-summary"></p>
             <div class="ai-raw-toggle" id="ai-raw-toggle-wrap" hidden>
               <button type="button" class="btn-raw-toggle" id="btn-toggle-raw-text">
-                <span data-icon="eye" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span>Ver texto leído en el ticket
+                <span data-icon="eye" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span><span data-i18n="ticket.raw.show">Ver texto leído en el ticket</span>
               </button>
               <pre class="ai-raw-text-box" id="ai-raw-text" hidden></pre>
             </div>
@@ -439,18 +439,18 @@
 
         <div class="ticket-actions-row">
           <button type="button" class="btn-ai-action btn-camera-trigger" id="btn-camera-trigger" title="Hacer foto con la cámara del móvil">
-            <span data-icon="camera" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span>Foto con cámara
+            <span data-icon="camera" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span><span data-i18n="ticket.btn.camera">Foto con cámara</span>
           </button>
           <button type="button" class="btn-ai-action" id="btn-upload-file-trigger" title="Elegir foto o PDF desde tus archivos">
-            <span data-icon="folder" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span>Subir archivo / PDF
+            <span data-icon="folder" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span><span data-i18n="ticket.btn.file">Subir archivo / PDF</span>
           </button>
           <button type="button" class="btn-remove-ticket" id="btn-remove-ticket"
                   data-i18n="form.ticket.remove" hidden>Eliminar foto</button>
           <button type="button" class="btn-ai-action" id="btn-ai-re-scan" hidden>
-            <span data-icon="sparkles" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span>Re-escanear ticket
+            <span data-icon="sparkles" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span><span data-i18n="ticket.btn.rescan">Re-escanear ticket</span>
           </button>
           <button type="button" class="btn-ai-action btn-ai-config" id="btn-ai-settings-toggle" title="Configuración de la IA de escaneo">
-            <span data-icon="settings" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span>Ajustes IA / OCR
+            <span data-icon="settings" data-icon-size="14" style="vertical-align:middle;margin-right:4px;"></span><span data-i18n="ticket.btn.settings">Ajustes IA / OCR</span>
           </button>
         </div>
       </div>
@@ -710,7 +710,7 @@
      aria-labelledby="cal-demo-heading" hidden>
   <div class="modal-panel modal-panel-legal">
     <div class="modal-header">
-      <h2 class="modal-title" id="cal-demo-heading">Alarmas en tu Calendario Móvil</h2>
+      <h2 class="modal-title" id="cal-demo-heading" data-i18n="alerts.cal.title">Alarmas en tu Calendario Móvil</h2>
       <button class="modal-close" id="cal-demo-close" aria-label="Cerrar">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -743,7 +743,7 @@
           <div class="feat-icon" data-icon="checkCircle" data-icon-size="24"></div>
           <div>
             <strong style="color:var(--t-primary);display:block;margin-bottom:3px;font-size:13px;">Disponible en cada producto registrado</strong>
-            <p style="margin:0;font-size:12px;color:var(--t-muted);line-height:1.4;">Al hacer clic sobre cualquier producto de tu lista, verás el botón <strong>«📅 Alarma calendario (.ics)»</strong> y <strong>«💬 WhatsApp»</strong> para guardar el aviso en 1 segundo.</p>
+            <p style="margin:0;font-size:12px;color:var(--t-muted);line-height:1.4;">Al hacer clic sobre cualquier producto de tu lista, verás el botón <strong>«Alarma calendario (.ics)»</strong> y <strong>«WhatsApp»</strong> para guardar el aviso en 1 segundo.</p>
           </div>
         </div>
       </div>
@@ -770,8 +770,8 @@
   <div class="modal-panel modal-panel-claim">
     <div class="modal-header">
       <div>
-        <h2 class="modal-title" id="claim-gen-heading">Reclamación Formal con 1 Clic</h2>
-        <p class="modal-claim-sub">Redacción legal conforme al RDL 1/2007 (Ley de Consumidores y Usuarios y 3 años de garantía en España).</p>
+        <h2 class="modal-title" id="claim-gen-heading" data-i18n="claim.modal.title">Reclamación Formal con 1 Clic</h2>
+        <p class="modal-claim-sub" data-i18n="claim.modal.sub">Redacción legal conforme al RDL 1/2007 (Ley de Consumidores y Usuarios y 3 años de garantía en España).</p>
       </div>
       <button class="modal-close" id="claim-gen-close" aria-label="Cerrar">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -857,8 +857,8 @@
   <div class="modal-panel modal-panel-viewer">
     <div class="modal-header">
       <div>
-        <h2 class="modal-title" id="ticket-viewer-heading">Ticket Custodiado en el Cofre Digital</h2>
-        <span class="vault-cert-tag">Copia Digital Permanente · Válida para Reclamaciones Legales en España</span>
+        <h2 class="modal-title" id="ticket-viewer-heading" data-i18n="viewer.title">Ticket Custodiado en el Cofre Digital</h2>
+        <span class="vault-cert-tag" data-i18n="viewer.subtitle">Copia Digital Permanente · Válida para Reclamaciones Legales en España</span>
       </div>
       <button class="modal-close" id="ticket-viewer-close" aria-label="Cerrar">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -941,8 +941,8 @@
   <div class="modal-panel modal-panel-account">
     <div class="modal-header">
       <div class="modal-header-info">
-        <h2 class="modal-title" id="account-modal-title">Mi Cuenta y Ajustes</h2>
-        <p class="modal-subtitle">Gestiona tu perfil, seguridad y preferencias</p>
+        <h2 class="modal-title" id="account-modal-title" data-i18n="acc.modal.title">Mi Cuenta y Ajustes</h2>
+        <p class="modal-subtitle" data-i18n="acc.modal.sub">Gestiona tu perfil, seguridad y preferencias</p>
       </div>
       <button class="modal-close" id="account-modal-close" aria-label="Cerrar ventana">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -975,27 +975,27 @@
         <div class="account-section-header">
           <div class="section-icon" data-icon="lock" data-icon-size="20"></div>
           <div>
-            <h4 class="account-section-title">Cambiar contraseña</h4>
-            <p class="account-section-desc">Actualiza tu contraseña para mantener tu cuenta protegida en la nube.</p>
+            <h4 class="account-section-title" data-i18n="acc.pwd.title">Cambiar contraseña</h4>
+            <p class="account-section-desc" data-i18n="acc.pwd.desc">Actualiza tu contraseña para mantener tu cuenta protegida en la nube.</p>
           </div>
         </div>
 
         <form id="form-change-password" novalidate autocomplete="off">
           <div class="field-group">
-            <label for="acc-current-pwd">Contraseña actual (para verificar tu identidad)</label>
+            <label for="acc-current-pwd" data-i18n="acc.pwd.current.label">Contraseña actual (para verificar tu identidad)</label>
             <div class="field-wrap">
               <span class="field-icon" data-icon="key" data-icon-size="16"></span>
-              <input type="password" id="acc-current-pwd" placeholder="Introduce tu contraseña actual" autocomplete="current-password" required minlength="6" maxlength="128" />
+              <input type="password" id="acc-current-pwd" data-i18n-placeholder="acc.pwd.current.ph" placeholder="Introduce tu contraseña actual" autocomplete="current-password" required minlength="6" maxlength="128" />
               <button type="button" class="toggle-pwd-btn" id="acc-toggle-current-pwd" aria-label="Mostrar contraseña actual" title="Mostrar/ocultar contraseña">
                 <span data-icon="eye" data-icon-size="16"></span>
               </button>
             </div>
           </div>
           <div class="field-group">
-            <label for="acc-new-pwd">Nueva contraseña</label>
+            <label for="acc-new-pwd" data-i18n="acc.pwd.new.label">Nueva contraseña</label>
             <div class="field-wrap">
               <span class="field-icon" data-icon="lock" data-icon-size="16"></span>
-              <input type="password" id="acc-new-pwd" placeholder="Mínimo 8 caracteres" autocomplete="new-password" required minlength="8" maxlength="128" />
+              <input type="password" id="acc-new-pwd" data-i18n-placeholder="acc.pwd.new.ph" placeholder="Mínimo 8 caracteres" autocomplete="new-password" required minlength="8" maxlength="128" />
               <button type="button" class="toggle-pwd-btn" id="acc-toggle-new-pwd" aria-label="Mostrar contraseña" title="Mostrar/ocultar contraseña">
                 <span data-icon="eye" data-icon-size="16"></span>
               </button>
@@ -1013,10 +1013,10 @@
           </div>
 
           <div class="field-group">
-            <label for="acc-confirm-pwd">Confirmar nueva contraseña</label>
+            <label for="acc-confirm-pwd" data-i18n="acc.pwd.confirm.label">Confirmar nueva contraseña</label>
             <div class="field-wrap">
               <span class="field-icon" data-icon="lock" data-icon-size="16"></span>
-              <input type="password" id="acc-confirm-pwd" placeholder="Repite la nueva contraseña" autocomplete="new-password" required minlength="8" maxlength="128" />
+              <input type="password" id="acc-confirm-pwd" data-i18n-placeholder="acc.pwd.confirm.ph" placeholder="Repite la nueva contraseña" autocomplete="new-password" required minlength="8" maxlength="128" />
               <button type="button" class="toggle-pwd-btn" id="acc-toggle-confirm-pwd" aria-label="Mostrar contraseña" title="Mostrar/ocultar contraseña">
                 <span data-icon="eye" data-icon-size="16"></span>
               </button>
@@ -1029,7 +1029,7 @@
 
           <div class="account-form-actions">
             <button type="submit" class="btn-primary" id="btn-submit-change-pwd">
-              <span id="btn-change-pwd-text">Actualizar contraseña</span>
+              <span id="btn-change-pwd-text" data-i18n="acc.pwd.btn">Actualizar contraseña</span>
               <span class="btn-spinner" id="btn-change-pwd-spinner" hidden aria-hidden="true"></span>
             </button>
           </div>
@@ -1040,7 +1040,7 @@
       <div class="account-install-row" id="account-install-row" data-install-btn hidden>
         <div class="account-install-text">
           <strong data-install-label>Instalar app</strong>
-          <span>Ábrela desde el icono de tu móvil u ordenador, como una app.</span>
+          <span data-i18n="acc.install.desc">Ábrela desde el icono de tu móvil u ordenador, como una app.</span>
         </div>
         <button type="button" class="btn-primary" data-install-btn>
           <span data-install-label>Instalar app</span>
@@ -1050,12 +1050,12 @@
       <!-- Resumen de almacenamiento / datos -->
       <div class="account-storage-summary">
         <div class="storage-item">
-          <span class="storage-label">Seguridad de cuenta</span>
-          <span class="storage-value">Cifrado de extremo a extremo (TLS / AES-256)</span>
+          <span class="storage-label" data-i18n="acc.sec.label1">Seguridad de cuenta</span>
+          <span class="storage-value" data-i18n="acc.sec.val1">Cifrado de extremo a extremo (TLS / AES-256)</span>
         </div>
         <div class="storage-item">
-          <span class="storage-label">Protección de tickets</span>
-          <span class="storage-value">Aislamiento por usuario y custodia antiborrado</span>
+          <span class="storage-label" data-i18n="acc.sec.label2">Protección de tickets</span>
+          <span class="storage-value" data-i18n="acc.sec.val2">Aislamiento por usuario y custodia antiborrado</span>
         </div>
       </div>
     </div>

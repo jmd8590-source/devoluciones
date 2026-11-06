@@ -77,7 +77,7 @@
     const display  = info.name || info.email || '';
 
     if (info.isDemo) {
-      if (nameEl) nameEl.textContent = lang() === 'en' ? 'Modo Demo' : 'Modo Demo';
+      if (nameEl) nameEl.textContent = lang() === 'en' ? 'Demo Mode' : 'Modo Demo';
       if (avatarEl) avatarEl.textContent = 'D';
       if (syncPill) {
         syncPill.className = 'session-sync-pill sync-pill-demo';
@@ -138,15 +138,31 @@
   }
 
   function refreshTexts() {
-    const text = lang() === 'en' ? 'Sign out' : 'Salir';
+    const isEnglish = lang() === 'en';
+    const text = isEnglish ? 'Sign out' : 'Salir';
     document.querySelectorAll('[data-i18n="btn.logout"]').forEach(el => { el.textContent = text; });
-    const accText = lang() === 'en' ? 'My account' : 'Mi cuenta';
+    const accText = isEnglish ? 'My account' : 'Mi cuenta';
     document.querySelectorAll('[data-i18n="btn.account"]').forEach(el => { el.textContent = accText; });
     const tx = demoTexts();
     const bt = document.querySelector('#demo-banner .demo-banner-text');
     if (bt) bt.textContent = tx.text;
     const bl = document.querySelector('#demo-banner .demo-banner-link');
     if (bl) bl.textContent = tx.link;
+
+    if (resolved) {
+      renderUser(resolved);
+      const statusBadge = document.getElementById('account-status-badge');
+      const syncText = document.getElementById('account-sync-text');
+      const emailEl = document.getElementById('account-user-email');
+      if (resolved.isDemo) {
+        if (emailEl) emailEl.textContent = isEnglish ? 'Demo session (local)' : 'Modo Demo local';
+        if (statusBadge) statusBadge.textContent = 'Demo';
+        if (syncText) syncText.textContent = isEnglish ? 'Session active on this browser' : 'Sesión local en este navegador';
+      } else {
+        if (statusBadge) statusBadge.textContent = isEnglish ? 'Active Account' : 'Cuenta Activa';
+        if (syncText) syncText.textContent = isEnglish ? 'Secure cloud synchronization active' : 'Sincronización segura activa en la nube';
+      }
+    }
   }
 
   // ── Logout ──────────────────────────────────────────────────
