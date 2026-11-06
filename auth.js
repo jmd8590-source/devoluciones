@@ -1,8 +1,8 @@
 ﻿/* ═══════════════════════════════════════════════════════════════
-   GarantíasPro — Auth Logic (Supabase Auth)
-   Seguridad: contraseñas gestionadas por Supabase (bcrypt en servidor),
-              verificación de email obligatoria, límites de intentos
-              en servidor + bloqueo local, operaciones DOM sin innerHTML.
+   GarantíasPro — Auth Logic
+   Seguridad: contraseñas cifradas con bcrypt en servidor, alta inmediata
+              sin verificación por email, límites de intentos en servidor
+              + bloqueo local, operaciones DOM sin innerHTML.
    ═══════════════════════════════════════════════════════════════ */
 
 'use strict';
@@ -25,12 +25,12 @@ const AUTH_STRINGS = {
     'register.title':   'Crear cuenta',
     'register.sub':     'Empieza a controlar tus garantías',
     'label.name':       'Nombre',
+    'label.lastname':   'Apellidos',
+    'ph.lastname':      'Tus apellidos',
     'label.email':      'Correo electrónico',
     'label.pwd':        'Contraseña',
-    'label.pwd2':       'Confirmar contraseña',
     'ph.name':          'Tu nombre',
     'ph.pwd.new':       'Mínimo 8 caracteres',
-    'ph.pwd.repeat':    'Repite la contraseña',
     'pwd.hint':         'Usa letras y números. Mínimo 8 caracteres.',
     'btn.login':        'Iniciar sesión',
     'btn.register':     'Crear cuenta',
@@ -42,9 +42,10 @@ const AUTH_STRINGS = {
     'err.email':        'Introduce un correo electrónico válido.',
     'err.pwd.short':    `La contraseña debe tener al menos ${MIN_PWD_LEN} caracteres.`,
     'err.pwd.weak':     'La contraseña debe incluir letras y números.',
-    'err.pwd.match':    'Las contraseñas no coinciden.',
     'err.credentials':  'Correo o contraseña incorrectos.',
-    'err.unconfirmed':  'Todavía no has confirmado tu correo. Revisa tu bandeja de entrada (y la carpeta de spam).',
+    'err.unconfirmed':  'No se ha podido iniciar sesión con esta cuenta. Inténtalo de nuevo en unos minutos.',
+    'err.exists':       'Ya existe una cuenta con este correo. Inicia sesión con tu contraseña.',
+    'err.activation':   'No se ha podido completar el alta en este momento. Inténtalo de nuevo en unos minutos.',
     'err.locked':       'Demasiados intentos. Espera 5 minutos.',
     'err.ratelimit':    'Demasiadas solicitudes. Espera unos minutos e inténtalo de nuevo.',
     'err.network':      'No se pudo conectar con el servidor. Comprueba tu conexión.',
@@ -55,12 +56,6 @@ const AUTH_STRINGS = {
     'pwd.strong':       'Muy segura',
     'demo.or':          'o continúa sin cuenta',
     'demo.btn':         'Ver demo',
-    'verify.title':     'Revisa tu correo',
-    'verify.text':      'Te hemos enviado un enlace de confirmación. Ábrelo para activar tu cuenta y después inicia sesión.',
-    'verify.resend':    'Reenviar email',
-    'verify.sent':      'Email reenviado. Puede tardar unos minutos.',
-    'verify.back':      'Volver a iniciar sesión',
-    'resend.login':     'Reenviar email de confirmación',
     'pwd.show':         'Mostrar contraseña',
     'pwd.hide':         'Ocultar contraseña',
   },
@@ -69,13 +64,13 @@ const AUTH_STRINGS = {
     'login.sub':        'Sign in to your account',
     'register.title':   'Create account',
     'register.sub':     'Start tracking your warranties',
-    'label.name':       'Name',
+    'label.name':       'First name',
+    'label.lastname':   'Last name',
+    'ph.lastname':      'Your last name',
     'label.email':      'Email address',
     'label.pwd':        'Password',
-    'label.pwd2':       'Confirm password',
     'ph.name':          'Your name',
     'ph.pwd.new':       'At least 8 characters',
-    'ph.pwd.repeat':    'Repeat password',
     'pwd.hint':         'Use letters and numbers. At least 8 characters.',
     'btn.login':        'Sign in',
     'btn.register':     'Create account',
@@ -87,9 +82,10 @@ const AUTH_STRINGS = {
     'err.email':        'Please enter a valid email address.',
     'err.pwd.short':    `Password must be at least ${MIN_PWD_LEN} characters.`,
     'err.pwd.weak':     'Password must include letters and numbers.',
-    'err.pwd.match':    'Passwords do not match.',
     'err.credentials':  'Incorrect email or password.',
-    'err.unconfirmed':  "You haven't confirmed your email yet. Check your inbox (and spam folder).",
+    'err.unconfirmed':  'Could not sign in with this account. Please try again in a few minutes.',
+    'err.exists':       'An account with this email already exists. Sign in with your password.',
+    'err.activation':   'Sign-up could not be completed right now. Please try again in a few minutes.',
     'err.locked':       'Too many attempts. Please wait 5 minutes.',
     'err.ratelimit':    'Too many requests. Please wait a few minutes and try again.',
     'err.network':      'Could not reach the server. Check your connection.',
@@ -100,12 +96,6 @@ const AUTH_STRINGS = {
     'pwd.strong':       'Strong',
     'demo.or':          'or continue without an account',
     'demo.btn':         'Try demo',
-    'verify.title':     'Check your email',
-    'verify.text':      'We sent you a confirmation link. Open it to activate your account and then sign in.',
-    'verify.resend':    'Resend email',
-    'verify.sent':      'Email sent again. It may take a few minutes.',
-    'verify.back':      'Back to sign in',
-    'resend.login':     'Resend confirmation email',
     'pwd.show':         'Show password',
     'pwd.hide':         'Hide password',
   }
@@ -132,11 +122,11 @@ function applyAuthLang() {
   setText('register-title',    at('register.title'));
   setText('register-sub',      at('register.sub'));
   setText('label-name',        at('label.name'));
+  setText('label-lastname',    at('label.lastname'));
   setText('label-email-login', at('label.email'));
   setText('label-email-reg',   at('label.email'));
   setText('label-pwd-login',   at('label.pwd'));
   setText('label-pwd-reg',     at('label.pwd'));
-  setText('label-pwd2',        at('label.pwd2'));
   setText('btn-login-text',    at('btn.login'));
   setText('btn-register-text', at('btn.register'));
   setText('no-account-text',   at('no.account'));
@@ -146,14 +136,9 @@ function applyAuthLang() {
   setText('demo-or-text',      at('demo.or'));
   setText('btn-demo-text',     at('demo.btn'));
   setText('pwd-hint',          at('pwd.hint'));
-  setText('verify-title',      at('verify.title'));
-  setText('verify-text',       at('verify.text'));
-  setText('btn-resend-text',   at('verify.resend'));
-  setText('verify-go-login',   at('verify.back'));
-  setText('btn-resend-login',  at('resend.login'));
   setPlaceholder('reg-name',      at('ph.name'));
+  setPlaceholder('reg-lastname',  at('ph.lastname'));
   setPlaceholder('reg-password',  at('ph.pwd.new'));
-  setPlaceholder('reg-password2', at('ph.pwd.repeat'));
 
   document.querySelectorAll('.js-lang-code').forEach(el => {
     el.textContent = currentLang === 'es' ? 'ES' : 'EN';
@@ -284,7 +269,7 @@ function updateStrengthMeter(pwd) {
    7. PANEL SWITCHING
 ══════════════════════════════════════════════════════════════ */
 function showCard(which) {
-  ['login', 'register', 'verify'].forEach(name => {
+  ['login', 'register'].forEach(name => {
     const card = document.getElementById('card-' + name);
     if (!card) return;
     const active = name === which;
@@ -293,21 +278,8 @@ function showCard(which) {
   });
   hideError('login-error');
   hideError('register-error');
-  hideError('verify-msg');
-  const resendLogin = document.getElementById('btn-resend-login');
-  if (resendLogin) resendLogin.hidden = true;
   if (which === 'login')    document.getElementById('login-email')?.focus();
   if (which === 'register') document.getElementById('reg-name')?.focus();
-}
-
-let pendingVerifyEmail = '';
-
-function showVerify(email) {
-  pendingVerifyEmail = email;
-  setText('verify-email', email);
-  const loginInput = document.getElementById('login-email');
-  if (loginInput) loginInput.value = email;
-  showCard('verify');
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -316,8 +288,6 @@ function showVerify(email) {
 async function handleLogin(e) {
   e.preventDefault();
   hideError('login-error');
-  const resendLogin = document.getElementById('btn-resend-login');
-  if (resendLogin) resendLogin.hidden = true;
 
   const email = (document.getElementById('login-email')?.value || '').trim().toLowerCase();
   const pwd   = document.getElementById('login-password')?.value || '';
@@ -330,14 +300,8 @@ async function handleLogin(e) {
   try {
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pwd });
     if (error) {
-      const unconfirmed = error.code === 'email_not_confirmed' ||
-                          (error.message || '').toLowerCase().includes('email not confirmed');
-      if (!unconfirmed) recordFailedAttempt(email);
+      recordFailedAttempt(email);
       showError('login-error', mapAuthError(error));
-      if (unconfirmed && resendLogin) {
-        pendingVerifyEmail = email;
-        resendLogin.hidden = false;
-      }
       return;
     }
     if (data && data.session) {
@@ -352,77 +316,60 @@ async function handleLogin(e) {
   }
 }
 
-/* ══════════════════════════════════════════════════════════════
-   9. REGISTER HANDLER
-══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   9. REGISTER HANDLER (sin verificación por email: alta y acceso inmediatos)
+══════════════════════════════════════════════════════════════ */
 async function handleRegister(e) {
   e.preventDefault();
   hideError('register-error');
 
-  const name  = sanitizeName(document.getElementById('reg-name')?.value || '');
-  const email = (document.getElementById('reg-email')?.value || '').trim().toLowerCase();
-  const pwd   = document.getElementById('reg-password')?.value || '';
-  const pwd2  = document.getElementById('reg-password2')?.value || '';
+  const firstName = sanitizeName(document.getElementById('reg-name')?.value || '');
+  const lastName  = sanitizeName(document.getElementById('reg-lastname')?.value || '');
+  const email     = (document.getElementById('reg-email')?.value || '').trim().toLowerCase();
+  const pwd       = document.getElementById('reg-password')?.value || '';
 
-  if (!name || !email || !pwd || !pwd2)           return showError('register-error', at('err.required'));
-  if (!isValidEmail(email))                       return showError('register-error', at('err.email'));
-  if (pwd.length < MIN_PWD_LEN)                   return showError('register-error', at('err.pwd.short'));
+  if (!firstName || !lastName || !email || !pwd)   return showError('register-error', at('err.required'));
+  if (!isValidEmail(email))                        return showError('register-error', at('err.email'));
+  if (pwd.length < MIN_PWD_LEN)                    return showError('register-error', at('err.pwd.short'));
   if (!/[A-Za-z]/.test(pwd) || !/[0-9]/.test(pwd)) return showError('register-error', at('err.pwd.weak'));
-  if (pwd !== pwd2)                               return showError('register-error', at('err.pwd.match'));
+
+  const fullName = (firstName + ' ' + lastName).trim().slice(0, 120);
 
   setLoading('btn-register', true);
   try {
     const { data, error } = await sb.auth.signUp({
       email,
       password: pwd,
-      options: {
-        data: { name },
-        emailRedirectTo: AUTH_REDIRECT_URL,
-      },
+      options: { data: { name: fullName, first_name: firstName, last_name: lastName } },
     });
     if (error) {
-      showError('register-error', mapAuthError(error));
-      return;
+      const msg = (error.message || '').toLowerCase();
+      if (error.code === 'user_already_exists' || msg.includes('already registered')) {
+        return showError('register-error', at('err.exists'));
+      }
+      return showError('register-error', mapAuthError(error));
     }
-    // Si la verificación de email está desactivada en Supabase, ya hay sesión
-    if (data && data.session) {
-      clearDemoSession();
-      window.location.replace('index.html');
-      return;
+
+    let session = data && data.session;
+
+    // Respaldo: si el alta no devolvió sesión, se intenta el acceso directo
+    if (!session) {
+      const { data: loginData, error: loginErr } = await sb.auth.signInWithPassword({ email, password: pwd });
+      if (!loginErr && loginData && loginData.session) {
+        session = loginData.session;
+      } else {
+        const unconfirmed = loginErr && (loginErr.code === 'email_not_confirmed' ||
+          (loginErr.message || '').toLowerCase().includes('email not confirmed'));
+        return showError('register-error', unconfirmed ? at('err.activation') : at('err.exists'));
+      }
     }
-    // Por privacidad, Supabase no revela si el correo ya existía:
-    // mostramos siempre el mismo mensaje.
-    document.getElementById('register-form')?.reset();
-    updateStrengthMeter('');
-    showVerify(email);
+
+    clearDemoSession();
+    window.location.replace('index.html');
   } catch (err) {
     showError('register-error', mapAuthError(err));
   } finally {
     setLoading('btn-register', false);
-  }
-}
-
-/* ══════════════════════════════════════════════════════════════
-   10. RESEND CONFIRMATION
-══════════════════════════════════════════════════════════════ */
-async function resendConfirmation(targetMsgId) {
-  if (!pendingVerifyEmail) return;
-  try {
-    const { error } = await sb.auth.resend({
-      type: 'signup',
-      email: pendingVerifyEmail,
-      options: { emailRedirectTo: AUTH_REDIRECT_URL },
-    });
-    const el = document.getElementById(targetMsgId);
-    if (error) {
-      if (el) el.classList.remove('info-msg');
-      showError(targetMsgId, mapAuthError(error));
-    } else {
-      if (el) el.classList.add('info-msg');
-      showError(targetMsgId, at('verify.sent'));
-    }
-  } catch (err) {
-    showError(targetMsgId, mapAuthError(err));
   }
 }
 
@@ -531,7 +478,7 @@ function initAuth() {
     }
   }
 
-  // Cuando el usuario vuelve desde el enlace del email, Supabase crea la sesión
+  // Si ya existe una sesión activa, entrar directamente en la app
   sb.auth.onAuthStateChange((event, session) => {
     if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
       clearDemoSession();
@@ -542,10 +489,7 @@ function initAuth() {
 
   document.getElementById('go-register')?.addEventListener('click', () => showCard('register'));
   document.getElementById('go-login')?.addEventListener('click', () => showCard('login'));
-  document.getElementById('verify-go-login')?.addEventListener('click', () => showCard('login'));
   document.getElementById('btn-demo')?.addEventListener('click', handleDemo);
-  document.getElementById('btn-resend')?.addEventListener('click', () => resendConfirmation('verify-msg'));
-  document.getElementById('btn-resend-login')?.addEventListener('click', () => resendConfirmation('login-error'));
 
   document.getElementById('login-form')?.addEventListener('submit', handleLogin);
   document.getElementById('register-form')?.addEventListener('submit', handleRegister);

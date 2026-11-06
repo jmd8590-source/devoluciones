@@ -86,7 +86,6 @@
         </div>
 
         <div class="error-msg" id="login-error" role="alert" aria-live="polite" hidden></div>
-        <button type="button" class="link-btn link-btn-sm" id="btn-resend-login" hidden>Reenviar email de confirmación</button>
 
         <button type="submit" class="btn-auth" id="btn-login">
           <span class="btn-text" id="btn-login-text">Iniciar sesión</span>
@@ -142,8 +141,23 @@
             </span>
             <input type="text" id="reg-name" name="name"
                    placeholder="Tu nombre"
-                   autocomplete="name" required
+                   autocomplete="given-name" required
                    maxlength="60" spellcheck="false" />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="reg-lastname" id="label-lastname">Apellidos</label>
+          <div class="field-wrap">
+            <span class="field-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>
+              </svg>
+            </span>
+            <input type="text" id="reg-lastname" name="lastname"
+                   placeholder="Tus apellidos"
+                   autocomplete="family-name" required
+                   maxlength="80" spellcheck="false" />
           </div>
         </div>
 
@@ -187,25 +201,6 @@
           <p class="field-hint" id="pwd-hint">Usa letras y números. Mínimo 8 caracteres.</p>
         </div>
 
-        <div class="field-group">
-          <label for="reg-password2" id="label-pwd2">Confirmar contraseña</label>
-          <div class="field-wrap">
-            <span class="field-icon" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-            </span>
-            <input type="password" id="reg-password2" name="password2"
-                   placeholder="Repite la contraseña"
-                   autocomplete="new-password" required
-                   maxlength="128" />
-            <button type="button" class="toggle-pwd" aria-label="Mostrar contraseña"
-                    data-target="reg-password2">
-              <span data-icon="eye" data-icon-size="16"></span>
-            </button>
-          </div>
-        </div>
-
         <div class="error-msg" id="register-error" role="alert" aria-live="polite" hidden></div>
 
         <p class="auth-legal-note" id="register-legal">
@@ -230,25 +225,6 @@
           <span class="js-lang-code">ES</span>
         </button>
       </div>
-    </div>
-  </main>
-
-  <!-- ══════════════════════════════
-       PANEL VERIFICAR EMAIL
-  ══════════════════════════════ -->
-  <main class="auth-card auth-card-hidden" id="card-verify" aria-hidden="true">
-    <div class="auth-card-inner verify-inner">
-      <div class="verify-icon" data-icon="mail" data-icon-size="28"></div>
-      <h1 class="auth-title" id="verify-title">Revisa tu correo</h1>
-      <p class="auth-sub" id="verify-text">Te hemos enviado un enlace de confirmación. Ábrelo para activar tu cuenta y después inicia sesión.</p>
-      <p class="verify-email" id="verify-email"></p>
-      <div class="error-msg info-msg" id="verify-msg" role="status" aria-live="polite" hidden></div>
-      <button type="button" class="btn-demo" id="btn-resend">
-        <span id="btn-resend-text">Reenviar email</span>
-      </button>
-      <p class="auth-switch">
-        <button class="link-btn" id="verify-go-login" type="button">Volver a iniciar sesión</button>
-      </p>
     </div>
   </main>
 
@@ -288,8 +264,8 @@
       <table>
         <thead><tr><th>Dato</th><th>Finalidad</th></tr></thead>
         <tbody>
-          <tr><td>Correo electrónico</td><td>Autenticación segura de cuenta y recuperación de acceso.</td></tr>
-          <tr><td>Nombre de usuario</td><td>Personalización de la interfaz en tu panel.</td></tr>
+          <tr><td>Correo electrónico</td><td>Identificación e inicio de sesión seguro en tu cuenta.</td></tr>
+          <tr><td>Nombre y apellidos</td><td>Personalización de la interfaz en tu panel.</td></tr>
           <tr><td>Compras y tickets</td><td>Cálculo de fechas límite y visualización de comprobantes.</td></tr>
         </tbody>
       </table>

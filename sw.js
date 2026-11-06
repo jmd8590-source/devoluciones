@@ -1,14 +1,14 @@
-/* ═══════════════════════════════════════════════════════════════
-   GarantíasPro — Service Worker
-   - Precache del esqueleto de la app (funciona sin conexión).
-   - NUNCA cachea datos privados: solo recursos estáticos del propio
+﻿/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   GarantÃ­asPro â€” Service Worker
+   - Precache del esqueleto de la app (funciona sin conexiÃ³n).
+   - NUNCA cachea datos privados: solo recursos estÃ¡ticos del propio
      dominio. Las llamadas a la base de datos y las URLs firmadas de
      los tickets son de otro origen y pasan siempre por la red.
    - Recibe los avisos push de plazos y los muestra.
-   ═══════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 'use strict';
 
-const VERSION = 'gp-v3';
+const VERSION = 'gp-v4';
 const STATIC_CACHE = `${VERSION}-static`;
 
 const PRECACHE = [
@@ -41,7 +41,7 @@ const PRECACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(STATIC_CACHE);
-    // Uno a uno: si un archivo falla no se rompe toda la instalación
+    // Uno a uno: si un archivo falla no se rompe toda la instalaciÃ³n
     await Promise.all(PRECACHE.map((url) =>
       cache.add(new Request(url, { cache: 'reload' })).catch(() => {})
     ));
@@ -65,11 +65,11 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
-  // Solo recursos del propio dominio; todo lo demás (datos, fuentes) va directo a la red
+  // Solo recursos del propio dominio; todo lo demÃ¡s (datos, fuentes) va directo a la red
   if (url.origin !== self.location.origin) return;
   if (url.pathname.endsWith('/sw.js')) return;
 
-  // Páginas: red primero (para recibir actualizaciones) y caché si no hay conexión
+  // PÃ¡ginas: red primero (para recibir actualizaciones) y cachÃ© si no hay conexiÃ³n
   if (req.mode === 'navigate') {
     event.respondWith((async () => {
       try {
@@ -85,7 +85,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Estáticos: caché primero y actualización en segundo plano
+  // EstÃ¡ticos: cachÃ© primero y actualizaciÃ³n en segundo plano
   event.respondWith((async () => {
     const cache = await caches.open(STATIC_CACHE);
     const cached = await cache.match(req);
@@ -97,12 +97,12 @@ self.addEventListener('fetch', (event) => {
   })());
 });
 
-/* ── Avisos push ───────────────────────────────────────────────── */
+/* â”€â”€ Avisos push â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 self.addEventListener('push', (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch { data = { body: event.data ? event.data.text() : '' }; }
 
-  const title = data.title || 'GarantíasPro';
+  const title = data.title || 'GarantÃ­asPro';
   const options = {
     body: data.body || 'Tienes plazos a punto de vencer.',
     icon: 'icons/icon-192.png',
