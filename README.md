@@ -60,13 +60,12 @@ npm test           # compila (ofuscado) y prueba en escritorio y móvil
 ## Despliegue
 
 - `npm run build` copia `public/` a `dist/` y ofusca el JavaScript propio.
-- GitHub Actions ejecuta comprobaciones y pruebas en cada cambio. Si pasan:
-  - ramas `mejora/**` → URL de pruebas (`wrangler deploy --env preview`);
-  - rama `main` → producción.
-- Secretos del repositorio necesarios: `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`.
-- Si el worker está conectado a Cloudflare Workers Builds, su comando de
-  compilación debe ser `npm ci && npm run build` (o desactivar esa conexión y
-  usar solo GitHub Actions) para que se publique `dist/` y no el repositorio entero.
+- Cloudflare Workers Builds (conectado al repositorio) ejecuta `npm run build` y publica:
+  - cualquier rama distinta de `main` → URL de pruebas `https://<rama>-devoluciones.jmd8590.workers.dev`
+    (por ejemplo `mejora/fase1-seguridad-ux` → `mejora-fase1-seguridad-ux-devoluciones…`);
+  - `main` → producción.
+- GitHub Actions ejecuta comprobaciones y pruebas en cada cambio. Recomendado: exigir
+  que el check `test` pase antes de fusionar en `main`.
 
 ---
 
