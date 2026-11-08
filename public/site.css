@@ -7,8 +7,8 @@
   --c-bg:        #0b1120;
   --c-surface:   #111a2e;
   --c-surface2:  #16213a;
-  --c-border:    rgba(255,255,255,0.08);
-  --c-border2:   rgba(255,255,255,0.14);
+  --c-border:    rgb(var(--ink) / 0.08);
+  --c-border2:   rgb(var(--ink) / 0.14);
   --c-primary:   #4a7dff;
   --c-primary-h: #3b6cf0;
   --c-teal:      #2de0c1;
@@ -56,7 +56,7 @@ a:hover { text-decoration: underline; }
 /* ── Header ────────────────────────────────────────────────── */
 .site-header {
   position: sticky; top: 0; z-index: 10;
-  background: rgba(11,17,32,0.85);
+  background: rgb(var(--paper) / 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--c-border);
@@ -89,7 +89,7 @@ a:hover { text-decoration: underline; }
 .btn-primary { background: var(--c-primary); color: #fff; }
 .btn-primary:hover { background: var(--c-primary-h); }
 .btn-ghost { color: var(--t-primary); border: 1px solid var(--c-border2); }
-.btn-ghost:hover { background: rgba(255,255,255,0.04); }
+.btn-ghost:hover { background: rgb(var(--ink) / 0.04); }
 .btn-lg { min-height: 50px; padding: 13px 24px; font-size: 15px; }
 
 /* ── Hero ──────────────────────────────────────────────────── */

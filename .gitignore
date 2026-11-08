@@ -37,3 +37,9 @@ secrets.*
 # Dependencias y caches
 node_modules/
 .wrangler/
+
+# Compilación y pruebas
+dist/
+node_modules/
+test-results/
+playwright-report/

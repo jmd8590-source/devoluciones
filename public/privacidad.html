@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Política de privacidad y aviso legal — GarantíasPro</title>
   <meta name="description" content="Política de privacidad y aviso legal de GarantíasPro: qué datos se recogen, para qué, dónde se guardan y cómo ejercer tus derechos conforme a RGPD y LOPD-GDD." />
   <meta name="author" content="Jesús Mendoza Domínguez" />
@@ -12,7 +12,7 @@
   <meta http-equiv="Content-Security-Policy"
         content="upgrade-insecure-requests;
                  default-src 'self';
-                 script-src 'self' 'unsafe-inline';
+                 script-src 'self';
                  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
                  font-src 'self' https://fonts.gstatic.com;
                  img-src 'self' data:;
@@ -25,8 +25,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="tokens.css" />
   <link rel="stylesheet" href="site.css" />
   <link rel="stylesheet" href="cookies.css" />
+  <link rel="stylesheet" href="ui.css" />
   <style>
     body {
       margin: 0;
@@ -226,7 +229,7 @@
     GarantíasPro no usa cookies publicitarias ni de seguimiento de terceros. Únicamente almacena en tu navegador el token de autenticación para mantener tu sesión activa y tu preferencia de idioma. Puedes consultar el inventario completo, finalidades, plazos de conservación y configurar o revocar tus preferencias en nuestra <a href="cookies.html"><strong>Política de cookies detallada</strong></a>.
   </p>
   <p>
-    <button type="button" class="btn btn-primary" onclick="window.openCookieSettings()" style="font-size:12px;padding:6px 12px;gap:6px;"><span data-icon="settings" data-icon-size="14"></span> Gestionar preferencias de cookies</button>
+    <button type="button" class="btn btn-primary" data-open-cookies><span data-icon="settings" data-icon-size="14"></span> Gestionar preferencias de cookies</button>
   </p>
 
   <h2>7. Conservación de datos y copia de seguridad</h2>
@@ -262,20 +265,6 @@
 
 <script src="icons.js"></script>
 <script src="cookies.js"></script>
-<script>
-  (function() {
-    const emailParts = ['jemendo90', 'gmail.com'];
-    const email = emailParts.join('@');
-    document.querySelectorAll('.js-contact-target').forEach(el => {
-      const a = document.createElement('a');
-      a.href = 'mailto:' + email + '?subject=' + encodeURIComponent('[GarantíasPro] Consulta Legal / Privacidad');
-      a.textContent = email;
-      el.replaceWith(a);
-    });
-    document.querySelectorAll('.js-contact-link').forEach(el => {
-      el.href = 'mailto:' + email + '?subject=' + encodeURIComponent('[GarantíasPro] Contacto');
-    });
-  })();
-</script>
+<script src="legal-page.js"></script>
 </body>
 </html>

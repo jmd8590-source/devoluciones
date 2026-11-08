@@ -13,6 +13,7 @@
 const TRANSLATIONS = {
   es: {
     'nav.dashboard':  'Inicio',
+    'tour.btn': 'Guía', 'a11y.skip': 'Saltar al contenido',
     'nav.products':   'Productos',
     'nav.alerts':     'Alertas',
     'btn.addProduct': 'Nuevo producto',
@@ -173,6 +174,7 @@ const TRANSLATIONS = {
   },
   en: {
     'nav.dashboard':  'Home',
+    'tour.btn': 'Guide', 'a11y.skip': 'Skip to content',
     'nav.products':   'Products',
     'nav.alerts':     'Alerts',
     'btn.addProduct': 'New product',
@@ -361,6 +363,7 @@ function applyTranslations() {
   const codeEl = document.getElementById('lang-code');
   if (codeEl) codeEl.textContent = currentLang === 'es' ? 'ES' : 'EN';
   document.documentElement.lang = currentLang;
+  try { document.dispatchEvent(new CustomEvent('gp:langchange', { detail: { lang: currentLang } })); } catch (e) { /* navegadores antiguos */ }
 }
 
 /* ══════════════════════════════════════════════════════════════

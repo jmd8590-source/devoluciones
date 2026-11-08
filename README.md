@@ -25,27 +25,48 @@ Aplicación web para registrar compras y controlar los plazos de devolución y f
 - **Aislamiento de datos:** Políticas RLS en PostgreSQL donde cada usuario autenticado solo puede consultar, insertar, modificar o borrar sus propias filas (`auth.uid() = user_id`).
 - **Almacenamiento de archivos:** Bucket privado en Supabase Storage con URLs temporales firmadas y expiración automática.
 - **Políticas de contenido (CSP):** Directivas `Content-Security-Policy` estrictas en todas las páginas HTML para prevenir XSS y ataques de inyección.
-- **Privacidad y RGPD:** Política de privacidad completa disponible en [privacidad.html](privacidad.html).
+- **Privacidad y RGPD:** Política de privacidad completa disponible en [privacidad.html](public/privacidad.html).
 
 ---
 
 ## Estructura del proyecto
 
 ```text
-├── index.html          # Página pública de inicio (presentación y acceso)
-├── auth.html           # Pantalla de acceso, registro y recuperación
-├── app.html            # Panel principal de gestión de productos
-├── privacidad.html     # Política de privacidad y aviso legal
-├── site.css            # Estilos de páginas públicas
-├── auth.css            # Estilos del panel de autenticación
-├── styles.css          # Estilos del panel principal de usuario
-├── icons.js            # Iconografía SVG uniforme
-├── auth.js             # Lógica de login, registro y validaciones
-├── session.js          # Verificación de sesión con Supabase
-├── session-guard.js    # Guardia de acceso a app.html
-├── supabase-client.js  # Cliente de conexión con Supabase
-└── urgent-alert.js     # Detector y renderizador de alertas urgentes
+├── public/                 # Lo único que se publica en la web
+│   ├── index.html          # Panel principal (requiere sesión o demo)
+│   ├── auth.html           # Acceso, registro y recuperación de contraseña
+│   ├── privacidad.html / cookies.html / 404.html
+│   ├── tokens.css          # Colores de los temas claro y oscuro
+│   ├── styles.css · auth.css · site.css · ui.css
+│   ├── theme.js            # Conmutador de modo claro / oscuro
+│   ├── tour.js             # Tour guiado (botón «Guía», arriba a la derecha)
+│   ├── app.js · auth.js · session.js · push.js · urgent-alert.js …
+│   └── _headers · _redirects (cabeceras de seguridad de Cloudflare)
+├── supabase/               # Migraciones SQL y Edge Functions (no se publican)
+├── scripts/                # build (ofuscación), check y servidor local
+├── tests/                  # Pruebas de extremo a extremo (Playwright)
+└── .github/workflows/ci.yml
 ```
+
+## Desarrollo
+
+```bash
+npm ci
+npm run serve      # http://localhost:8787 con el código sin ofuscar
+npm run check      # sintaxis, secretos y ficheros que no deben publicarse
+npm test           # compila (ofuscado) y prueba en escritorio y móvil
+```
+
+## Despliegue
+
+- `npm run build` copia `public/` a `dist/` y ofusca el JavaScript propio.
+- GitHub Actions ejecuta comprobaciones y pruebas en cada cambio. Si pasan:
+  - ramas `mejora/**` → URL de pruebas (`wrangler deploy --env preview`);
+  - rama `main` → producción.
+- Secretos del repositorio necesarios: `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`.
+- Si el worker está conectado a Cloudflare Workers Builds, su comando de
+  compilación debe ser `npm ci && npm run build` (o desactivar esa conexión y
+  usar solo GitHub Actions) para que se publique `dist/` y no el repositorio entero.
 
 ---
 

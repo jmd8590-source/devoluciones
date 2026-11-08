@@ -12,14 +12,14 @@
   max-width: 960px;
   margin: 0 auto;
   z-index: 99999;
-  background: rgba(14, 21, 37, 0.94);
+  background: rgb(var(--paper) / 0.94);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid rgba(79, 140, 255, 0.25);
   border-radius: 18px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.65), 0 0 20px rgba(79, 140, 255, 0.15);
   padding: 22px 26px;
-  color: var(--t-primary, #f0f4ff);
+  color: var(--t-primary, var(--t-primary));
   font-family: var(--font-body, 'Plus Jakarta Sans', system-ui, sans-serif);
   animation: slideUpFade 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   display: flex;
@@ -62,18 +62,18 @@
 .cookie-banner-text {
   font-size: 13.5px;
   line-height: 1.6;
-  color: var(--t-secondary, #94a3c0);
+  color: var(--t-secondary, var(--t-secondary));
   margin: 0;
 }
 
 .cookie-banner-text a {
-  color: var(--c-primary, #4f8cff);
+  color: var(--c-primary, var(--c-primary));
   text-decoration: underline;
   font-weight: 500;
 }
 
 .cookie-banner-text a:hover {
-  color: #79a8ff;
+  color: var(--tx-blue);
 }
 
 /* ── Botones del banner (AEPD: Rechazar y Aceptar al mismo nivel) ── */
@@ -102,9 +102,9 @@
 }
 
 .btn-cookie-accept {
-  background: #4f8cff;
+  background: var(--c-primary);
   color: #fff;
-  border-color: #4f8cff;
+  border-color: var(--c-primary);
 }
 
 .btn-cookie-accept:hover {
@@ -114,28 +114,28 @@
 }
 
 .btn-cookie-reject {
-  background: rgba(255, 255, 255, 0.06);
-  color: #e2e8f0;
-  border-color: rgba(255, 255, 255, 0.18);
+  background: rgb(var(--ink) / 0.06);
+  color: var(--t-primary);
+  border-color: rgb(var(--ink) / 0.18);
 }
 
 .btn-cookie-reject:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: rgb(var(--ink) / 0.12);
+  border-color: rgb(var(--ink) / 0.3);
   transform: translateY(-1px);
 }
 
 .btn-cookie-settings {
   background: transparent;
-  color: var(--t-secondary, #94a3c0);
-  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--t-secondary, var(--t-secondary));
+  border-color: rgb(var(--ink) / 0.1);
   margin-right: auto;
 }
 
 .btn-cookie-settings:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgb(var(--ink) / 0.04);
   color: #fff;
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgb(var(--ink) / 0.2);
 }
 
 /* ── Modal de Configuración de Preferencias ── */
@@ -159,8 +159,8 @@
 }
 
 .cookie-modal-card {
-  background: #0e1525;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--c-surface);
+  border: 1px solid rgb(var(--ink) / 0.12);
   border-radius: 20px;
   width: 100%;
   max-width: 620px;
@@ -168,13 +168,13 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8);
-  color: var(--t-primary, #f0f4ff);
+  color: var(--t-primary, var(--t-primary));
   overflow: hidden;
 }
 
 .cookie-modal-header {
   padding: 20px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgb(var(--ink) / 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -191,7 +191,7 @@
 .cookie-modal-close {
   background: transparent;
   border: none;
-  color: var(--t-secondary, #94a3c0);
+  color: var(--t-secondary, var(--t-secondary));
   font-size: 22px;
   cursor: pointer;
   padding: 4px;
@@ -208,7 +208,7 @@
   overflow-y: auto;
   font-family: var(--font-body, 'Plus Jakarta Sans', system-ui, sans-serif);
   font-size: 13.5px;
-  color: var(--t-secondary, #94a3c0);
+  color: var(--t-secondary, var(--t-secondary));
   line-height: 1.6;
   display: flex;
   flex-direction: column;
@@ -216,8 +216,8 @@
 }
 
 .cookie-category-item {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgb(var(--ink) / 0.03);
+  border: 1px solid rgb(var(--ink) / 0.07);
   border-radius: 12px;
   padding: 16px;
 }
@@ -242,7 +242,7 @@
 .cookie-badge-req {
   font-size: 11px;
   font-weight: 700;
-  color: #2de0c1;
+  color: var(--c-teal);
   background: rgba(45, 224, 193, 0.12);
   border: 1px solid rgba(45, 224, 193, 0.25);
   border-radius: 999px;
@@ -268,7 +268,7 @@
   position: absolute;
   cursor: pointer;
   inset: 0;
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: rgb(var(--ink) / 0.15);
   transition: 0.25s;
   border-radius: 24px;
 }
@@ -286,7 +286,7 @@
 }
 
 .cookie-switch input:checked + .cookie-slider {
-  background-color: #4f8cff;
+  background-color: var(--c-primary);
 }
 
 .cookie-switch input:checked + .cookie-slider:before {
@@ -296,12 +296,12 @@
 .cookie-switch input:disabled + .cookie-slider {
   opacity: 0.5;
   cursor: not-allowed;
-  background-color: #2de0c1;
+  background-color: var(--c-teal);
 }
 
 .cookie-modal-footer {
   padding: 16px 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgb(var(--ink) / 0.08);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -316,13 +316,13 @@
   bottom: 18px;
   left: 18px;
   z-index: 9998;
-  background: rgba(14, 21, 37, 0.85);
+  background: rgb(var(--paper) / 0.85);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgb(var(--ink) / 0.12);
   border-radius: 999px;
   padding: 6px 14px 6px 8px;
-  color: var(--t-secondary, #94a3c0);
+  color: var(--t-secondary, var(--t-secondary));
   font-family: var(--font-body, 'Plus Jakarta Sans', system-ui, sans-serif);
   font-size: 12px;
   font-weight: 600;
@@ -331,7 +331,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 0 1px rgb(var(--ink) / 0.04) inset;
   transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   user-select: none;
 }
@@ -360,9 +360,9 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #31e08f;
-  border: 1.5px solid #0e1525;
-  box-shadow: 0 0 6px #31e08f;
+  background: var(--c-green);
+  border: 1.5px solid var(--c-surface);
+  box-shadow: 0 0 6px var(--c-green);
 }
 
 .cookie-trigger-label {

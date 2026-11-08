@@ -58,6 +58,22 @@ const AUTH_STRINGS = {
     'demo.btn':         'Ver demo',
     'pwd.show':         'Mostrar contraseña',
     'pwd.hide':         'Ocultar contraseña',
+    'forgot.link':      '¿Has olvidado la contraseña?',
+    'forgot.title':     'Recupera tu contraseña',
+    'forgot.sub':       'Escribe tu correo y te enviaremos un enlace para crear una nueva.',
+    'forgot.btn':       'Enviar enlace',
+    'forgot.back':      'Volver a iniciar sesión',
+    'forgot.ok':        'Si existe una cuenta con ese correo, te hemos enviado un enlace. Revisa también la carpeta de spam.',
+    'reset.title':      'Crea una contraseña nueva',
+    'reset.sub':        'Elige una contraseña que no uses en otros sitios.',
+    'reset.label':      'Nueva contraseña',
+    'reset.label2':     'Repite la contraseña',
+    'reset.btn':        'Guardar y entrar',
+    'err.pwd.match':    'Las dos contraseñas no coinciden.',
+    'err.reset.expired':'El enlace ha caducado o ya se ha usado. Pide uno nuevo.',
+    'contact.name':     'Tu nombre',
+    'contact.subject':  'Asunto',
+    'contact.msg':      'Mensaje',
   },
   en: {
     'login.title':      'Welcome back',
@@ -98,6 +114,22 @@ const AUTH_STRINGS = {
     'demo.btn':         'Try demo',
     'pwd.show':         'Show password',
     'pwd.hide':         'Hide password',
+    'forgot.link':      'Forgot your password?',
+    'forgot.title':     'Reset your password',
+    'forgot.sub':       "Enter your email and we'll send you a link to create a new one.",
+    'forgot.btn':       'Send link',
+    'forgot.back':      'Back to sign in',
+    'forgot.ok':        'If an account exists for that email, we have sent you a link. Check your spam folder too.',
+    'reset.title':      'Create a new password',
+    'reset.sub':        "Choose a password you don't use anywhere else.",
+    'reset.label':      'New password',
+    'reset.label2':     'Repeat password',
+    'reset.btn':        'Save and sign in',
+    'err.pwd.match':    'The two passwords do not match.',
+    'err.reset.expired':'This link has expired or was already used. Request a new one.',
+    'contact.name':     'Your name',
+    'contact.subject':  'Subject',
+    'contact.msg':      'Message',
   }
 };
 
@@ -139,6 +171,22 @@ function applyAuthLang() {
   setPlaceholder('reg-name',      at('ph.name'));
   setPlaceholder('reg-lastname',  at('ph.lastname'));
   setPlaceholder('reg-password',  at('ph.pwd.new'));
+  setPlaceholder('reset-password', at('ph.pwd.new'));
+  setText('go-forgot',         at('forgot.link'));
+  setText('forgot-title',      at('forgot.title'));
+  setText('forgot-sub',        at('forgot.sub'));
+  setText('label-email-forgot',at('label.email'));
+  setText('btn-forgot-text',   at('forgot.btn'));
+  setText('forgot-back',       at('forgot.back'));
+  setText('reset-title',       at('reset.title'));
+  setText('reset-sub',         at('reset.sub'));
+  setText('label-pwd-reset',   at('reset.label'));
+  setText('label-pwd-reset2',  at('reset.label2'));
+  setText('reset-hint',        at('pwd.hint'));
+  setText('btn-reset-text',    at('reset.btn'));
+  document.querySelectorAll('label[for="contact-name"]').forEach(l => { l.textContent = at('contact.name'); });
+  document.querySelectorAll('label[for="contact-subject"]').forEach(l => { l.textContent = at('contact.subject'); });
+  document.querySelectorAll('label[for="contact-msg"]').forEach(l => { l.textContent = at('contact.msg'); });
 
   document.querySelectorAll('.js-lang-code').forEach(el => {
     el.textContent = currentLang === 'es' ? 'ES' : 'EN';
@@ -149,6 +197,7 @@ function applyAuthLang() {
   });
 
   document.documentElement.lang = currentLang;
+  try { document.dispatchEvent(new CustomEvent('gp:langchange', { detail: { lang: currentLang } })); } catch {}
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -268,18 +317,103 @@ function updateStrengthMeter(pwd) {
 /* ══════════════════════════════════════════════════════════════
    7. PANEL SWITCHING
 ══════════════════════════════════════════════════════════════ */
+const AUTH_CARDS = ['login', 'register', 'forgot', 'reset'];
+
 function showCard(which) {
-  ['login', 'register'].forEach(name => {
+  // Si la tarjeta ya está visible no se repinta (evita borrar mensajes por respuestas tardías)
+  const current = document.getElementById('card-' + which);
+  if (current && !current.classList.contains('auth-card-hidden')) return;
+  AUTH_CARDS.forEach(name => {
     const card = document.getElementById('card-' + name);
     if (!card) return;
     const active = name === which;
     card.classList.toggle('auth-card-hidden', !active);
     card.setAttribute('aria-hidden', active ? 'false' : 'true');
   });
-  hideError('login-error');
-  hideError('register-error');
+  ['login-error', 'register-error', 'forgot-error', 'reset-error'].forEach(hideError);
+  const ok = document.getElementById('forgot-ok');
+  if (ok) ok.hidden = true;
   if (which === 'login')    document.getElementById('login-email')?.focus();
   if (which === 'register') document.getElementById('reg-name')?.focus();
+  if (which === 'reset')    document.getElementById('reset-password')?.focus();
+  if (which === 'forgot') {
+    const f = document.getElementById('forgot-email');
+    const l = document.getElementById('login-email');
+    if (f && l && !f.value && l.value) f.value = l.value.trim();
+    f?.focus();
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   8b. RECUPERACIÓN DE CONTRASEÑA
+   - Mensaje neutro: no revela si el correo está registrado.
+   - El enlace del email vuelve a auth.html con type=recovery y
+     Supabase abre una sesión temporal solo para cambiar la contraseña.
+══════════════════════════════════════════════════════════════ */
+const RECOVERY_COOLDOWN_MS = 60000;
+let lastRecoveryRequest = 0;
+
+// Detectado ANTES de que Supabase limpie la URL
+const RECOVERY_IN_URL = (() => {
+  const h = window.location.hash || '';
+  const q = window.location.search || '';
+  return h.includes('type=recovery') || q.includes('type=recovery') || q.includes('reset=1');
+})();
+let recoveryMode = RECOVERY_IN_URL;
+
+async function handleForgot(e) {
+  e.preventDefault();
+  hideError('forgot-error');
+  const ok = document.getElementById('forgot-ok');
+  if (ok) ok.hidden = true;
+
+  const email = (document.getElementById('forgot-email')?.value || '').trim().toLowerCase();
+  if (!email)               return showError('forgot-error', at('err.required'));
+  if (!isValidEmail(email)) return showError('forgot-error', at('err.email'));
+  if (Date.now() - lastRecoveryRequest < RECOVERY_COOLDOWN_MS) return showError('forgot-error', at('err.ratelimit'));
+
+  setLoading('btn-forgot', true);
+  try {
+    const redirectTo = new URL('auth.html?reset=1', window.location.href).href;
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
+    lastRecoveryRequest = Date.now();
+    // Errores de red o de límite sí se muestran; el resto se trata como éxito (mensaje neutro)
+    if (error && (error.status === 429 || (error.code || '').startsWith('over_') || error.name === 'AuthRetryableFetchError')) {
+      return showError('forgot-error', mapAuthError(error));
+    }
+    if (ok) { ok.textContent = at('forgot.ok'); ok.hidden = false; }
+  } catch (err) {
+    showError('forgot-error', mapAuthError(err));
+  } finally {
+    setLoading('btn-forgot', false);
+  }
+}
+
+async function handleReset(e) {
+  e.preventDefault();
+  hideError('reset-error');
+  const pwd  = document.getElementById('reset-password')?.value || '';
+  const pwd2 = document.getElementById('reset-password2')?.value || '';
+
+  if (!pwd || !pwd2)                               return showError('reset-error', at('err.required'));
+  if (pwd.length < MIN_PWD_LEN)                    return showError('reset-error', at('err.pwd.short'));
+  if (!/[A-Za-z]/.test(pwd) || !/[0-9]/.test(pwd)) return showError('reset-error', at('err.pwd.weak'));
+  if (pwd !== pwd2)                                return showError('reset-error', at('err.pwd.match'));
+
+  setLoading('btn-reset', true);
+  try {
+    const { data: sess } = await sb.auth.getSession();
+    if (!sess || !sess.session) return showError('reset-error', at('err.reset.expired'));
+    const { error } = await sb.auth.updateUser({ password: pwd });
+    if (error) return showError('reset-error', mapAuthError(error));
+    recoveryMode = false;
+    clearDemoSession();
+    window.location.replace('index.html');
+  } catch (err) {
+    showError('reset-error', mapAuthError(err));
+  } finally {
+    setLoading('btn-reset', false);
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -450,6 +584,10 @@ function handleDemo() {
 async function redirectIfLoggedIn() {
   try {
     const { data } = await sb.auth.getSession();
+    if (recoveryMode) {
+      if (data && data.session) showCard('reset');
+      return;
+    }
     if (data && data.session) {
       clearDemoSession();
       window.location.replace('index.html');
@@ -471,6 +609,7 @@ function initAuth() {
     if (code && sb.auth.exchangeCodeForSession) {
       sb.auth.exchangeCodeForSession(code).then(({ data, error }) => {
         if (!error && data && data.session) {
+          if (recoveryMode) { showCard('reset'); return; }
           clearDemoSession();
           window.location.replace('index.html');
         }
@@ -479,7 +618,19 @@ function initAuth() {
   }
 
   // Si ya existe una sesión activa, entrar directamente en la app
+  if (recoveryMode) showCard('reset');
+  if ((window.location.hash || '').includes('error=')) {
+    showCard('forgot');
+    showError('forgot-error', at('err.reset.expired'));
+  }
+
   sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      recoveryMode = true;
+      showCard('reset');
+      return;
+    }
+    if (recoveryMode) return;
     if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
       clearDemoSession();
       window.location.replace('index.html');
@@ -490,6 +641,10 @@ function initAuth() {
   document.getElementById('go-register')?.addEventListener('click', () => showCard('register'));
   document.getElementById('go-login')?.addEventListener('click', () => showCard('login'));
   document.getElementById('btn-demo')?.addEventListener('click', handleDemo);
+  document.getElementById('go-forgot')?.addEventListener('click', () => showCard('forgot'));
+  document.getElementById('forgot-back')?.addEventListener('click', () => showCard('login'));
+  document.getElementById('forgot-form')?.addEventListener('submit', handleForgot);
+  document.getElementById('reset-form')?.addEventListener('submit', handleReset);
 
   document.getElementById('login-form')?.addEventListener('submit', handleLogin);
   document.getElementById('register-form')?.addEventListener('submit', handleRegister);

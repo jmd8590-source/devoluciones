@@ -6,8 +6,8 @@
   --c-bg:        #0b1120;
   --c-surface:   #111a2e;
   --c-surface2:  #16213a;
-  --c-border:    rgba(255,255,255,0.08);
-  --c-border2:   rgba(255,255,255,0.14);
+  --c-border:    rgb(var(--ink) / 0.08);
+  --c-border2:   rgb(var(--ink) / 0.14);
   --c-primary:   #4a7dff;
   --c-primary-h: #3b6cf0;
   --c-red:       #e5484d;
@@ -187,7 +187,7 @@ button { font: inherit; color: inherit; }
 .s-bar {
   width: 36px; height: 4px;
   border-radius: var(--r-full);
-  background: rgba(255,255,255,0.08);
+  background: rgb(var(--ink) / 0.08);
   transition: background var(--dur);
 }
 .strength-label { font-size: 12px; font-weight: 600; color: var(--t-muted); }
@@ -200,12 +200,12 @@ button { font: inherit; color: inherit; }
   border-radius: var(--r-sm);
   font-size: 13px;
   line-height: 1.45;
-  color: #ff9b9e;
+  color: var(--tx-red);
 }
 .error-msg.info-msg {
   background: rgba(48,164,108,0.1);
   border-color: rgba(48,164,108,0.3);
-  color: #7fd6a8;
+  color: var(--tx-green);
 }
 
 /* ── Auth button ───────────────────────────────────────────── */
@@ -235,7 +235,7 @@ button { font: inherit; color: inherit; }
 
 .btn-spinner {
   width: 18px; height: 18px;
-  border: 2px solid rgba(255,255,255,0.35);
+  border: 2px solid rgb(var(--ink) / 0.35);
   border-top-color: #fff;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
@@ -326,7 +326,7 @@ button { font: inherit; color: inherit; }
   transition: background var(--dur), border-color var(--dur);
 }
 .btn-demo span { display: flex; }
-.btn-demo:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.22); }
+.btn-demo:hover { background: rgb(var(--ink) / 0.04); border-color: rgb(var(--ink) / 0.22); }
 
 /* ── Verify panel ──────────────────────────────────────────── */
 .verify-inner {

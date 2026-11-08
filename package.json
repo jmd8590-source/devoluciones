@@ -1,0 +1,20 @@
+{
+  "name": "garantiaspro",
+  "version": "1.1.0",
+  "private": true,
+  "description": "GarantíasPro — control de devoluciones y garantías",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "serve": "node scripts/serve.mjs public 8787",
+    "serve:dist": "node scripts/serve.mjs dist 8788",
+    "test": "playwright test",
+    "check": "node scripts/check.mjs",
+    "deploy:preview": "npm run build && wrangler deploy --env preview",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0",
+    "javascript-obfuscator": "5.10.0",
+    "wrangler": "4.158.0"
+  }
+}

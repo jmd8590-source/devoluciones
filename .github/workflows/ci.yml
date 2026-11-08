@@ -1,0 +1,85 @@
+# GarantíasPro — Integración y despliegue continuos
+# - En cada cambio: comprobaciones + compilación ofuscada + pruebas en navegador (escritorio y móvil).
+# - Ramas «mejora/**»: si todo pasa, se publica en la URL de pruebas (garantiaspro-preview).
+# - Rama «main»: si todo pasa, se publica en producción.
+# Secretos necesarios (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN  (plantilla «Edit Cloudflare Workers»)
+#   CLOUDFLARE_ACCOUNT_ID
+name: CI
+
+on:
+  push:
+    branches: [main, 'mejora/**']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Comprobaciones (sintaxis, secretos, ficheros prohibidos)
+        run: npm run check
+      - name: Instalar navegador de pruebas
+        run: npx playwright install --with-deps chromium
+      - name: Pruebas de extremo a extremo
+        run: npm test
+        env:
+          CI: true
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: informe-pruebas
+          path: test-results/
+          retention-days: 7
+
+  deploy-preview:
+    needs: test
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/mejora/')
+    runs-on: ubuntu-latest
+    environment: preview
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Publicar en la URL de pruebas
+        run: npx wrangler deploy --env preview
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  deploy-production:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Publicar en producción
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

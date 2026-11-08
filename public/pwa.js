@@ -32,10 +32,12 @@
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.textContent = tx().reload;
-    btn.addEventListener('click', () => worker.postMessage({ type: 'SKIP_WAITING' }));
+    btn.addEventListener('click', () => { updateAccepted = true; worker.postMessage({ type: 'SKIP_WAITING' }); });
     bar.append(msg, btn);
     document.body.appendChild(bar);
   }
+
+  let updateAccepted = false;
 
   async function registerSW() {
     if (!('serviceWorker' in navigator)) return;
@@ -51,8 +53,11 @@
         });
       });
       let reloading = false;
+      // Solo se recarga cuando el usuario pulsa «Actualizar». Antes, la primera
+      // visita recargaba la página al activarse el service worker y borraba
+      // lo que el usuario estuviera escribiendo (p. ej. el formulario de registro).
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (reloading) return;
+        if (reloading || !updateAccepted) return;
         reloading = true;
         window.location.reload();
       });

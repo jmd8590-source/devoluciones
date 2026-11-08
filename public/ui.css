@@ -1,0 +1,190 @@
+/* ═══════════════════════════════════════════════════════════════
+   GarantíasPro — Componentes nuevos y ajustes transversales
+   (tema, tour, recuperación de contraseña, márgenes seguros en móvil)
+   Se carga la última para poder ajustar estilos anteriores.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Altura real de pantalla en móviles (barra del navegador) ── */
+body { min-height: 100vh; min-height: 100dvh; }
+
+/* ── Botones de icono de la cabecera (tema y guía) ───────────── */
+.icon-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: var(--r-sm, 10px);
+  background: var(--c-glass);
+  border: 1px solid var(--c-border);
+  color: var(--t-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+.icon-toggle:hover { background: var(--c-glass-hover); color: var(--t-primary); border-color: var(--c-border2); }
+.icon-toggle span { display: inline-flex; }
+.btn-tour { color: var(--c-primary); }
+
+@media (max-width: 1100px) { .icon-toggle .btn-tour-label { display: none; } .btn-tour { padding: 0; width: 36px; } }
+@media (max-width: 768px) {
+  .icon-toggle { min-width: 32px; width: 32px; height: 32px; padding: 0; }
+}
+@media (max-width: 360px) {
+  .icon-toggle { min-width: 28px; width: 28px; height: 28px; }
+}
+
+/* ── Márgenes seguros (iPhone con notch / barra de gestos) ───── */
+.app-header { padding-top: env(safe-area-inset-top, 0px); height: calc(var(--header-h) + env(safe-area-inset-top, 0px)); }
+.app-main { padding-top: calc(var(--header-h) + env(safe-area-inset-top, 0px) + 32px); }
+@media (max-width: 768px) {
+  .app-main { padding-top: calc(var(--header-h) + env(safe-area-inset-top, 0px) + 16px);
+              padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+  .header-nav { height: calc(60px + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .btn-fab { bottom: calc(74px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (max-height: 500px) and (orientation: landscape) and (max-width: 900px) {
+  .app-main { padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); }
+}
+
+/* ── Accesibilidad ───────────────────────────────────────────── */
+#main-content:focus { outline: none; }
+@media (prefers-reduced-motion: reduce) {
+  .btn-fab::after { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TOUR GUIADO
+═══════════════════════════════════════════════════════════════ */
+.tour-overlay {
+  position: fixed; inset: 0; z-index: 9000;
+  background: transparent;
+}
+.tour-overlay.is-dim { background: rgb(5 8 16 / 0.62); }
+.tour-spot {
+  position: fixed; z-index: 9001; pointer-events: none;
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgb(5 8 16 / 0.62), 0 0 0 2px var(--c-primary);
+  transition: left 220ms ease, top 220ms ease, width 220ms ease, height 220ms ease;
+}
+.tour-pop {
+  position: fixed; z-index: 9002;
+  padding: 18px 18px 14px;
+  border-radius: 16px;
+  background: var(--c-surface);
+  color: var(--t-primary);
+  border: 1px solid var(--c-border2);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.35);
+  transition: left 220ms ease, top 220ms ease;
+}
+.tour-count { font-size: 12px; font-weight: 600; color: var(--t-muted); margin: 0 0 6px; letter-spacing: 0.02em; }
+.tour-title { font-family: var(--font-display); font-size: 18px; line-height: 1.25; margin: 0 0 6px; }
+.tour-text { font-size: 14.5px; line-height: 1.55; color: var(--t-secondary); margin: 0 0 14px; }
+.tour-progress { height: 4px; border-radius: 4px; background: rgb(var(--ink) / 0.08); overflow: hidden; margin-bottom: 14px; }
+.tour-progress span { display: block; height: 100%; background: var(--c-primary); border-radius: 4px; transition: width 220ms ease; }
+.tour-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tour-actions-right { display: flex; gap: 8px; margin-left: auto; }
+.tour-btn {
+  min-height: 40px; padding: 0 14px; border-radius: 10px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  border: 1px solid transparent; background: none; color: inherit;
+}
+.tour-skip { color: var(--t-muted); padding: 0 6px; }
+.tour-skip:hover { color: var(--t-primary); text-decoration: underline; }
+.tour-prev { border-color: var(--c-border2); color: var(--t-primary); }
+.tour-next { background: var(--c-primary); color: #fff; }
+.tour-next:hover { filter: brightness(1.08); }
+.tour-btn[hidden] { display: none; }
+html.tour-open .btn-fab::after { display: none; }
+
+/* ═══════════════════════════════════════════════════════════════
+   PANTALLA DE ACCESO: recuperación de contraseña
+═══════════════════════════════════════════════════════════════ */
+.forgot-row { display: flex; justify-content: flex-end; margin-top: 6px; }
+.ok-msg {
+  padding: 10px 12px;
+  border-radius: var(--r-sm, 10px);
+  font-size: 13px; line-height: 1.45;
+  background: rgb(48 164 108 / 0.12);
+  border: 1px solid rgb(48 164 108 / 0.35);
+  color: var(--tx-green);
+}
+.contact-label { font-size: 12px; color: var(--t-muted); display: block; margin-bottom: 4px; }
+.lang-row { gap: 8px; }
+.lang-row .js-theme-toggle { padding: 6px 10px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   AJUSTES DEL TEMA CLARO
+═══════════════════════════════════════════════════════════════ */
+html[data-theme="light"] .error-msg { color: var(--tx-red); background: rgb(200 36 63 / 0.07); border-color: rgb(200 36 63 / 0.28); }
+html[data-theme="light"] .app-header,
+html[data-theme="light"] .header-nav { box-shadow: 0 1px 0 rgb(var(--ink) / 0.06); }
+html[data-theme="light"] .modal-overlay,
+html[data-theme="light"] .cookie-modal-overlay { background-color: rgb(22 28 45 / 0.45); }
+html[data-theme="light"] .tour-pop { box-shadow: 0 20px 50px rgb(22 28 45 / 0.22); }
+html[data-theme="light"] .ticket-preview,
+html[data-theme="light"] .ticket-viewer-img { background: var(--c-surface2); }
+
+/* ── Antes eran estilos en línea (bloqueados por la CSP de auth.html) ── */
+.modal-footer-end { margin-top: 16px; display: flex; justify-content: flex-end; }
+.contact-form { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+.contact-form .form-input { width: 100%; box-sizing: border-box; }
+.contact-form .form-textarea { min-height: 90px; }
+.contact-submit { margin-top: 6px; }
+.commit-title { color: var(--t-primary); display: block; margin-bottom: 6px; font-size: 15px; }
+.commit-text { margin: 0; font-size: 13.5px; color: var(--t-secondary); }
+.commit-actions { margin-top: 14px; }
+
+/* ── Cabecera de escritorio sin desbordamiento ────────────────
+   El saludo con el estado de sincronización ocupaba ~320 px y
+   empujaba «Nuevo producto» fuera de la pantalla en portátiles. */
+@media (min-width: 769px) {
+  .header-actions { min-width: 0; gap: 8px; }
+  .user-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+@media (min-width: 769px) and (max-width: 1560px) {
+  .session-sync-pill { display: none !important; }
+}
+@media (min-width: 769px) and (max-width: 1360px) {
+  .btn-account > span, .btn-logout > span { display: none; }
+  .btn-account, .btn-logout { padding-left: 10px; padding-right: 10px; }
+  .user-name { display: none; }
+}
+@media (min-width: 769px) and (max-width: 1100px) {
+  .header-nav .nav-btn > span[data-i18n] { display: none; }
+  .lang-code { display: none; }
+}
+
+/* ── Página 404 ─────────────────────────────────────────────── */
+.notfound { max-width: 520px; margin: 0 auto; padding: 18vh 24px 48px; text-align: center; }
+.notfound-code { font-family: var(--font-display); font-size: 64px; font-weight: 800; color: var(--c-primary); margin: 0; }
+.notfound h1 { font-size: 24px; margin: 8px 0 10px; }
+.notfound p { color: var(--t-secondary); line-height: 1.6; }
+.notfound-en { font-size: 14px; color: var(--t-muted); }
+.notfound-btn { display: inline-block; margin-top: 20px; padding: 12px 20px; border-radius: 12px; background: var(--c-primary); color: #fff; font-weight: 600; text-decoration: none; }
+.legal-cookie-btn, [data-open-cookies].btn { font-size: 12px; padding: 6px 12px; gap: 6px; }
+
+/* ── Barra inferior móvil ────────────────────────────────────
+   Error previo: el desenfoque (backdrop-filter) de la cabecera la
+   convertía en el contenedor de la barra «fija», que acababa dibujada
+   ARRIBA tapando el logo y los botones. El desenfoque pasa a un
+   pseudo-elemento, que no afecta a sus hijos. */
+@media (max-width: 768px) {
+  .app-header { backdrop-filter: none; -webkit-backdrop-filter: none; background: transparent; }
+  .app-header::before {
+    content: ''; position: absolute; inset: 0; z-index: -1;
+    background: rgb(var(--paper) / 0.82);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+  }
+}
+
+/* En móvil «Mi cuenta» y «Salir» ya están en la barra inferior: se quitan de
+   la cabecera para que no se dupliquen ni se salgan de la pantalla. */
+@media (max-width: 768px) {
+  .header-actions .btn-account,
+  .header-actions .btn-logout { display: none !important; }
+}

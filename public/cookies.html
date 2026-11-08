@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="description" content="Política de cookies de GarantíasPro. Información detallada sobre el uso de cookies y almacenamiento local conforme al RGPD, LOPDGDD y LSSI-CE." />
   <meta name="theme-color" content="#0b1120" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -10,7 +10,7 @@
   <meta http-equiv="Content-Security-Policy"
         content="upgrade-insecure-requests;
                  default-src 'self';
-                 script-src 'self' 'unsafe-inline';
+                 script-src 'self';
                  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
                  font-src 'self' https://fonts.gstatic.com;
                  img-src 'self' data:;
@@ -23,8 +23,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="tokens.css" />
   <link rel="stylesheet" href="site.css" />
   <link rel="stylesheet" href="cookies.css" />
+  <link rel="stylesheet" href="ui.css" />
   <title>Política de Cookies — GarantíasPro</title>
   <style>
     body {
@@ -176,12 +179,12 @@
   <div class="updated">Última actualización conforme a normativa AEPD y RGPD: Octubre de 2026</div>
 
   <div class="highlight-card">
-    <strong style="color:#fff;display:block;margin-bottom:6px;font-size:15px;">Compromiso de Privacidad de GarantíasPro:</strong>
-    <p style="margin:0;font-size:13.5px;color:#cbd5e1;">
+    <strong class="commit-title">Compromiso de Privacidad de GarantíasPro:</strong>
+    <p class="commit-text">
       En <strong>GarantíasPro</strong> respetamos profundamente tu intimidad. <strong>No utilizamos cookies publicitarias, ni realizamos perfiles comerciales ni vendemos información a terceros</strong>. Únicamente utilizamos tecnologías esenciales para mantener tu sesión segura y recordar tus preferencias.
     </p>
-    <div style="margin-top:14px;">
-      <button type="button" class="btn btn-primary" onclick="window.openCookieSettings()">
+    <div class="commit-actions">
+      <button type="button" class="btn btn-primary" data-open-cookies>
         Configurar o modificar mis preferencias de cookies
       </button>
     </div>
@@ -276,7 +279,7 @@
     Puedes modificar o retirar tu consentimiento en cualquier momento mediante nuestro botón persistente de <strong>«Cookies»</strong> situado en la esquina inferior izquierda de la pantalla, o pulsando el siguiente enlace:
   </p>
   <p>
-    <button type="button" class="btn btn-primary" onclick="window.openCookieSettings()">Abrir panel de configuración de cookies</button>
+    <button type="button" class="btn btn-primary" data-open-cookies>Abrir panel de configuración de cookies</button>
   </p>
 
   <h2>6. Desactivación o eliminación a través del navegador</h2>
@@ -300,5 +303,6 @@
 </main>
 
 <script src="cookies.js"></script>
+<script src="legal-page.js"></script>
 </body>
 </html>

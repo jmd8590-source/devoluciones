@@ -1,0 +1,21 @@
+# GarantíasPro — configuración de despliegue en Cloudflare Workers (solo ficheros estáticos)
+# Solo se publica la carpeta public/: el código de servidor, la documentación
+# y la carpeta .git nunca llegan a la web.
+
+name = "devoluciones"
+compatibility_date = "2026-11-01"
+
+[assets]
+directory = "./dist"
+not_found_handling = "404-page"
+html_handling = "auto-trailing-slash"
+
+# Entorno de pruebas: https://garantiaspro-preview.<subdominio>.workers.dev
+# Despliegue: npx wrangler deploy --env preview
+[env.preview]
+name = "garantiaspro-preview"
+
+[env.preview.assets]
+directory = "./dist"
+not_found_handling = "404-page"
+html_handling = "auto-trailing-slash"

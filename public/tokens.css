@@ -1,0 +1,106 @@
+/* ═══════════════════════════════════════════════════════════════
+   GarantíasPro — Tokens de color compartidos (tema oscuro y claro)
+   Se carga antes que el resto de hojas en todas las páginas.
+   --ink   = color de primer plano (RGB) para bordes y velos translúcidos
+   --paper = color de fondo (RGB) para cabeceras y capas translúcidas
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  color-scheme: dark;
+  --ink:   255 255 255;
+  --paper: 8 13 26;
+
+  --c-teal:   #2de0c1;
+  --c-pink:   #ff6ca8;
+  --c-amber:  #ffbe3d;
+  --c-green:  #31e08f;
+  --c-red:    #ff4f6e;
+  --c-orange: #ff8c42;
+
+  /* Texto de color sobre fondo (legible en cada tema) */
+  --tx-red:    #ff9b9e;
+  --tx-purple: #a596ff;
+  --tx-blue:   #8bb1ff;
+  --tx-amber:  #f5b041;
+  --tx-green:  #4cc98a;
+  --tx-sky:    #38bdf8;
+  --tx-orange: #ff8a3d;
+}
+
+/* ── TEMA CLARO ─────────────────────────────────────────────
+   Especificidad mayor que :root, así gana aunque otras hojas
+   redefinan las variables en su propio :root.               */
+html[data-theme="light"] {
+  color-scheme: light;
+  --ink:   22 28 45;
+  --paper: 246 244 239;
+
+  --c-bg:        #f6f4ef;
+  --c-surface:   #ffffff;
+  --c-surface2:  #efece5;
+  --c-glass:       rgb(255 255 255 / 0.72);
+  --c-glass-hover: rgb(255 255 255 / 0.95);
+  --c-border:    rgb(22 28 45 / 0.10);
+  --c-border2:   rgb(22 28 45 / 0.18);
+
+  --c-primary:   #2f62e0;
+  --c-primary-h: #244fbf;
+  --c-teal:      #0b8a76;
+  --c-pink:      #c2306e;
+  --c-amber:     #a86a00;
+  --c-green:     #1a8a55;
+  --c-red:       #c8243f;
+  --c-orange:    #c2541a;
+
+  --tx-red:    #b4232f;
+  --tx-purple: #5b45d6;
+  --tx-blue:   #2453c7;
+  --tx-amber:  #8f5a00;
+  --tx-green:  #1a7a4c;
+  --tx-sky:    #0b6c9c;
+  --tx-orange: #b04a12;
+
+  --t-primary:   #161c2c;
+  --t-secondary: #47526b;
+  --t-muted:     #636d86;
+
+  --sh-card:  0 1px 2px rgb(22 28 45 / 0.06), 0 6px 20px rgb(22 28 45 / 0.06);
+  --sh-modal: 0 24px 64px rgb(22 28 45 / 0.22);
+  --sh-glow-b: 0 6px 18px rgb(47 98 224 / 0.25);
+  --sh-glow-p: 0 6px 18px rgb(91 69 214 / 0.22);
+}
+
+html[data-theme="light"] body { background: var(--c-bg); color: var(--t-primary); }
+
+/* Transición suave al cambiar de tema (desactivada si el usuario reduce el movimiento) */
+html.theme-anim, html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after {
+  transition: background-color 220ms ease, border-color 220ms ease, color 220ms ease !important;
+}
+
+/* ── MOVIMIENTO REDUCIDO ─────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── UTILIDADES COMPARTIDAS ──────────────────────────────── */
+/* El atributo hidden siempre oculta. Antes, reglas como «display:flex»
+   lo anulaban y en «Nuevo producto» aparecían a la vez el escáner
+   «Analizando…» y «¡Ticket analizado con éxito!» sin haber subido nada. */
+[hidden] { display: none !important; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.skip-link {
+  position: absolute; left: 12px; top: -60px; z-index: 10000;
+  padding: 10px 16px; border-radius: 10px;
+  background: var(--c-primary); color: #fff; font-weight: 600;
+  text-decoration: none; transition: top 150ms ease;
+}
+.skip-link:focus { top: 12px; }
