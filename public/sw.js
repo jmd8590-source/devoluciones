@@ -8,7 +8,7 @@
    ═══════════════════════════════════════════════════════════════ */
 'use strict';
 
-const VERSION = 'gp-v6';
+const VERSION = 'gp-v7';
 const STATIC_CACHE = `${VERSION}-static`;
 
 const PRECACHE = [
@@ -47,6 +47,9 @@ const PRECACHE = [
 ];
 
 self.addEventListener('install', (event) => {
+  // La versión nueva toma el control en cuanto se instala (antes quedaba
+  // «en espera» hasta cerrar todas las pestañas y el móvil veía la antigua).
+  self.skipWaiting();
   event.waitUntil((async () => {
     const cache = await caches.open(STATIC_CACHE);
     // Uno a uno: si un archivo falla no se rompe toda la instalación
@@ -93,15 +96,34 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Estáticos: caché primero y actualización en segundo plano
-  event.respondWith((async () => {
-    const cache = await caches.open(STATIC_CACHE);
-    const cached = await cache.match(req);
-    const network = fetch(req).then((res) => {
+  // Ficheros que no cambian nunca (fuentes, iconos, librerías): caché primero.
+  const immutable = /\/(fonts|icons|vendor)\//.test(url.pathname);
+  if (immutable) {
+    event.respondWith((async () => {
+      const cache = await caches.open(STATIC_CACHE);
+      const cached = await cache.match(req);
+      if (cached) return cached;
+      const res = await fetch(req);
       if (res && res.ok) cache.put(req, res.clone()).catch(() => {});
       return res;
-    }).catch(() => null);
-    return cached || (await network) || Response.error();
+    })());
+    return;
+  }
+
+  // Código y estilos de la app: red primero (siempre la última versión)
+  // y la copia guardada solo si no hay conexión.
+  event.respondWith((async () => {
+    try {
+      const res = await fetch(req);
+      if (res && res.ok && req.cache !== 'no-store') {
+        const cache = await caches.open(STATIC_CACHE);
+        cache.put(req, res.clone()).catch(() => {});
+      }
+      return res;
+    } catch {
+      const cached = await caches.match(req, { ignoreSearch: true });
+      return cached || Response.error();
+    }
   })());
 });
 

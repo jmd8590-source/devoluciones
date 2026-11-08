@@ -32,32 +32,42 @@
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.textContent = tx().reload;
-    btn.addEventListener('click', () => { updateAccepted = true; worker.postMessage({ type: 'SKIP_WAITING' }); });
+    btn.addEventListener('click', () => {
+      updateAccepted = true;
+      if (worker) worker.postMessage({ type: 'SKIP_WAITING' });
+      else window.location.reload();
+    });
     bar.append(msg, btn);
     document.body.appendChild(bar);
   }
 
   let updateAccepted = false;
+  let hadController = false;
 
   async function registerSW() {
     if (!('serviceWorker' in navigator)) return;
     // Solo en HTTPS (o localhost)
     if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return;
     try {
+      hadController = !!navigator.serviceWorker.controller;
       const reg = await navigator.serviceWorker.register('sw.js');
-      reg.addEventListener('updatefound', () => {
-        const nw = reg.installing;
-        if (!nw) return;
-        nw.addEventListener('statechange', () => {
-          if (nw.state === 'installed' && navigator.serviceWorker.controller) showUpdateBar(nw);
-        });
+      // Comprobar si hay versión nueva cada vez que se vuelve a la app
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') reg.update().catch(() => {});
       });
       let reloading = false;
-      // Solo se recarga cuando el usuario pulsa «Actualizar». Antes, la primera
-      // visita recargaba la página al activarse el service worker y borraba
-      // lo que el usuario estuviera escribiendo (p. ej. el formulario de registro).
+      // Cuando una versión nueva toma el control:
+      //  - primera visita (no había service worker): no se recarga nada;
+      //  - actualización: se recarga sola, salvo que el usuario esté escribiendo
+      //    o tenga una ventana abierta; entonces se le ofrece «Actualizar».
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (reloading || !updateAccepted) return;
+        if (reloading) return;
+        if (!updateAccepted) {
+          if (!hadController) return;
+          const busy = document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+          const modalOpen = !!document.querySelector('.modal-overlay:not([hidden]), .tour-pop');
+          if (busy || modalOpen) { showUpdateBar(null); return; }
+        }
         reloading = true;
         window.location.reload();
       });
