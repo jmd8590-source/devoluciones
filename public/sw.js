@@ -8,7 +8,7 @@
    ═══════════════════════════════════════════════════════════════ */
 'use strict';
 
-const VERSION = 'gp-v5';
+const VERSION = 'gp-v6';
 const STATIC_CACHE = `${VERSION}-static`;
 
 const PRECACHE = [
@@ -19,8 +19,12 @@ const PRECACHE = [
   'auth.css',
   'urgent-alert.css',
   'cookies.css',
+  'fonts.css',
   'tokens.css',
+  'fonts/figtree-latin-wght-normal.woff2',
+  'fonts/bricolage-grotesque-latin-wght-normal.woff2',
   'ui.css',
+  'cercana.css',
   'theme.js',
   'tour.js',
   'icons.js',

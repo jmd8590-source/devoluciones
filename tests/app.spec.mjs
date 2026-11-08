@@ -71,7 +71,7 @@ test('tema: cambia entre oscuro y claro y se recuerda al recargar', async ({ pag
   await page.reload();
   await expect(html).toHaveAttribute('data-theme', 'light');
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  expect(bg).toBe('rgb(246, 244, 239)');
+  expect(bg).toBe('rgb(251, 245, 236)'); // crema de la identidad «Cercana»
 });
 
 test('demo: entra en la app, el tour arranca solo y se puede cerrar con Esc', async ({ page }) => {
@@ -151,4 +151,28 @@ test('enlace de recuperación que llega a la página principal: lleva a «Crea u
   await page.goto('/index.html#access_token=x&refresh_token=y&type=recovery');
   await page.waitForURL('**/auth.html?reset=1*');
   await expect(page.locator('#card-reset')).toBeVisible();
+});
+
+test('inicio: «Lo próximo que vence» muestra la compra más urgente con su cuenta atrás', async ({ page }) => {
+  await page.addInitScript(`localStorage.setItem('gp_tour_done_v1','1');`);
+  await page.goto('/auth.html');
+  await page.click('#btn-demo');
+  await page.waitForURL('**/index.html');
+  const box = page.locator('#next-up');
+  await expect(box).toBeVisible();
+  await expect(page.locator('#next-up-name')).toHaveText('Sony WH-1000XM5'); // la demo: devolución en 2 días
+  await expect(page.locator('#next-up-num')).toHaveText('2');
+  await expect(box).toHaveAttribute('data-level', 'danger');
+  await page.click('#next-up-open');
+  await expect(page.locator('#detail-overlay')).toBeVisible();
+});
+
+test('tipografías propias: no se carga nada de Google Fonts', async ({ page }) => {
+  const external = [];
+  page.on('request', r => { if (/fonts\.(googleapis|gstatic)\.com/.test(r.url())) external.push(r.url()); });
+  await page.goto('/auth.html');
+  await page.waitForLoadState('networkidle');
+  expect(external).toEqual([]);
+  const fam = await page.evaluate(() => getComputedStyle(document.querySelector('.auth-title')).fontFamily);
+  expect(fam).toContain('Bricolage');
 });

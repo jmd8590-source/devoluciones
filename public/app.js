@@ -14,6 +14,10 @@ const TRANSLATIONS = {
   es: {
     'nav.dashboard':  'Inicio',
     'tour.btn': 'Guía', 'a11y.skip': 'Saltar al contenido',
+    'next.eyebrow': 'Lo próximo que vence', 'next.ret.sub': 'Devolución en {store}', 'next.war.sub': 'Garantía · {store}',
+    'next.unit.ret': 'para devolver', 'next.unit.war': 'de garantía', 'next.today': 'Hoy', 'next.today.unit': 'último día para devolver',
+    'next.today.war': 'último día de garantía', 'next.btn.ret': 'Preparar devolución', 'next.btn.war': 'Ver garantía', 'next.cal': 'Añadir al calendario',
+    'unit.day': 'día', 'unit.days': 'días', 'unit.month': 'mes', 'unit.months': 'meses', 'unit.year': 'año', 'unit.years': 'años',
     'nav.products':   'Productos',
     'nav.alerts':     'Alertas',
     'btn.addProduct': 'Nuevo producto',
@@ -175,6 +179,10 @@ const TRANSLATIONS = {
   en: {
     'nav.dashboard':  'Home',
     'tour.btn': 'Guide', 'a11y.skip': 'Skip to content',
+    'next.eyebrow': 'Next deadline', 'next.ret.sub': 'Return at {store}', 'next.war.sub': 'Warranty · {store}',
+    'next.unit.ret': 'left to return', 'next.unit.war': 'of warranty left', 'next.today': 'Today', 'next.today.unit': 'last day to return',
+    'next.today.war': 'last day of warranty', 'next.btn.ret': 'Prepare return', 'next.btn.war': 'View warranty', 'next.cal': 'Add to calendar',
+    'unit.day': 'day', 'unit.days': 'days', 'unit.month': 'month', 'unit.months': 'months', 'unit.year': 'year', 'unit.years': 'years',
     'nav.products':   'Products',
     'nav.alerts':     'Alerts',
     'btn.addProduct': 'New product',
@@ -715,6 +723,8 @@ function renderDashboard() {
     badge.hidden = urgentCount === 0;
   }
 
+  renderNextUp(products);
+
   const urgentList = document.getElementById('urgent-list');
   if (urgentList) {
     const urgents = products.filter(isUrgent)
@@ -746,6 +756,55 @@ function setEl(id, val) {
   if (el) el.textContent = val;
 }
 
+/* ── «Lo próximo que vence»: el plazo vivo más cercano, con cuenta atrás ── */
+function pickNextDeadline(products) {
+  let best = null;
+  products.forEach(p => {
+    const rs = getReturnStatus(p);
+    const ws = getWarrantyStatus(p);
+    if (rs.days !== null && rs.days >= 0 && (!best || rs.days < best.days)) best = { p, kind: 'ret', days: rs.days, date: getReturnDeadline(p) };
+    if (ws.days !== null && ws.days >= 0 && (!best || ws.days < best.days)) best = { p, kind: 'war', days: ws.days, date: getWarrantyDeadline(p) };
+  });
+  return best;
+}
+
+function humanCount(days) {
+  if (days < 100) return { num: String(days), unit: t(days === 1 ? 'unit.day' : 'unit.days') };
+  const months = Math.floor(days / 30.44);
+  if (months < 24) return { num: String(months), unit: t(months === 1 ? 'unit.month' : 'unit.months') };
+  const years = Math.floor(days / 365.25);
+  return { num: String(years), unit: t(years === 1 ? 'unit.year' : 'unit.years') };
+}
+
+let nextUpCurrent = null;
+
+function renderNextUp(products) {
+  const box = document.getElementById('next-up');
+  if (!box) return;
+  const next = pickNextDeadline(products);
+  nextUpCurrent = next;
+  if (!next) { box.hidden = true; return; }
+  box.hidden = false;
+  const { p, kind, days } = next;
+  box.dataset.kind = kind;
+  box.dataset.level = days <= 3 ? 'danger' : days <= (kind === 'ret' ? 7 : 90) ? 'warn' : 'ok';
+  setEl('next-up-name', p.name);
+  const store = p.store || (currentLang === 'en' ? 'the store' : 'la tienda');
+  const price = p.price ? ' · ' + Number(p.price).toLocaleString(currentLang === 'en' ? 'en-GB' : 'es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' €' : '';
+  setEl('next-up-sub', t(kind === 'ret' ? 'next.ret.sub' : 'next.war.sub', { store }) + price);
+  if (days === 0) {
+    setEl('next-up-num', t('next.today'));
+    setEl('next-up-unit', t(kind === 'ret' ? 'next.today.unit' : 'next.today.war'));
+  } else {
+    const c = humanCount(days);
+    setEl('next-up-num', c.num);
+    setEl('next-up-unit', c.unit + ' ' + t(kind === 'ret' ? 'next.unit.ret' : 'next.unit.war'));
+  }
+  setEl('next-up-open', t(kind === 'ret' ? 'next.btn.ret' : 'next.btn.war'));
+  const cal = document.getElementById('next-up-cal');
+  if (cal) { cal.setAttribute('aria-label', t('next.cal')); cal.title = t('next.cal'); }
+}
+
 function buildMiniCard(p, mode) {
   const rs = getReturnStatus(p);
   const ws = getWarrantyStatus(p);
@@ -768,7 +827,7 @@ function buildMiniCard(p, mode) {
   const badgeStyle = { ok: 'pill-ok', warn: 'pill-warn', danger: 'pill-danger', expired: 'pill-expired', none: '' };
 
   const card = document.createElement('div');
-  card.className = 'mini-card';
+  card.className = 'mini-card is-' + statusType;
   card.setAttribute('role', 'listitem');
 
   const dot = document.createElement('div');
@@ -3569,6 +3628,17 @@ async function init() {
 
   // ── Onboarding hero actions
   document.getElementById('btn-hero-add')?.addEventListener('click', openAdd);
+  document.getElementById('next-up-open')?.addEventListener('click', () => {
+    if (nextUpCurrent) openDetail(nextUpCurrent.p.id);
+  });
+  document.getElementById('next-up-cal')?.addEventListener('click', () => {
+    if (!nextUpCurrent) return;
+    const { p, kind, date } = nextUpCurrent;
+    const en = currentLang === 'en';
+    const title = kind === 'ret' ? (en ? 'Return: ' : 'Devolución: ') + p.name : (en ? 'Warranty: ' : 'Garantía: ') + p.name;
+    const desc = (en ? 'GarantíasPro reminder. Store: ' : 'Recordatorio de GarantíasPro. Tienda: ') + (p.store || '—');
+    downloadIcsFile({ title, description: desc, dateStr: date, filename: (kind === 'ret' ? 'devolucion_' : 'garantia_') + p.name.replace(/[^\w-]+/g, '_') });
+  });
   document.getElementById('btn-hero-sample')?.addEventListener('click', async () => {
     const sampleProducts = [
       {
