@@ -5,6 +5,11 @@
 name = "devoluciones"
 compatibility_date = "2026-11-01"
 
+# Antes de publicar, compila public/ -> dist/ (JavaScript ofuscado).
+# Lo usan tanto Cloudflare Workers Builds como «wrangler deploy».
+[build]
+command = "npm run build"
+
 [assets]
 directory = "./dist"
 not_found_handling = "404-page"

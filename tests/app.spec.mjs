@@ -146,3 +146,9 @@ test('móvil: la barra de navegación inferior está abajo y no tapa la cabecera
   expect(nav.y).toBeGreaterThan(vh / 2);
   await expect(page.locator('.logo-text')).toBeVisible();
 });
+
+test('enlace de recuperación que llega a la página principal: lleva a «Crea una contraseña nueva»', async ({ page }) => {
+  await page.goto('/index.html#access_token=x&refresh_token=y&type=recovery');
+  await page.waitForURL('**/auth.html?reset=1*');
+  await expect(page.locator('#card-reset')).toBeVisible();
+});

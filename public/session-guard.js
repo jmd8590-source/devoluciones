@@ -13,6 +13,13 @@
     // NO redirigir: dejar que Supabase procese el token en el body
     var h = window.location.hash || '';
     var q = window.location.search || '';
+    // Enlace de «¿Has olvidado la contraseña?»: si Supabase devuelve al usuario
+    // a la página principal (URL por defecto del proyecto), se le lleva a la
+    // pantalla de nueva contraseña conservando el token.
+    if (h.indexOf('type=recovery') !== -1 || q.indexOf('type=recovery') !== -1) {
+      window.location.replace('auth.html' + (q.indexOf('reset=1') === -1 ? (q ? q + '&reset=1' : '?reset=1') : q) + h);
+      return;
+    }
     if (h.indexOf('access_token=') !== -1 ||
         h.indexOf('refresh_token=') !== -1 ||
         h.indexOf('error=') !== -1 ||
