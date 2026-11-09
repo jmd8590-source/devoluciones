@@ -238,3 +238,28 @@ html[data-theme="light"] .year-eyebrow { color: var(--tx-red); }
 .push-status, .claim-type-grid .type-desc { color: var(--t-secondary) !important; }
 .btn-claim-type.active { background: var(--tint-brand) !important; border-color: var(--c-primary) !important; }
 .btn-channel-action:not(.btn-granted):not(.btn-warn) { background: var(--c-primary); color: var(--on-primary); border-radius: 999px; }
+
+/* ── 13. MÓVILES PEQUEÑOS (≤ 480 px) ───────────────────────────
+   La fila de filtros no se encogía y ensanchaba la página a 353 px
+   en pantallas de 320 px: el navegador alejaba el zoom y la barra
+   inferior quedaba parcialmente fuera de la vista. */
+@media (max-width: 480px) {
+  .view-header, .view-controls { min-width: 0; max-width: 100%; }
+  .view-header > *, .view-controls > * { min-width: 0; max-width: 100%; }
+  .view-controls { width: 100%; }
+  .search-box { width: 100%; }
+  .filter-group { width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .toast-container { left: 12px; right: 12px; width: auto; max-width: none; }
+}
+
+/* ── 14. AVISO Y PANEL DE COOKIES ──────────────────────────────
+   Tenían títulos en blanco fijo: invisibles sobre el fondo crema. */
+.cookie-banner-title, .cookie-modal-header h3, .cookie-category-title,
+.btn-cookie-settings:hover, .cookie-modal-close:hover { color: var(--t-primary) !important; }
+.cookie-reopen-trigger:hover { background: var(--c-surface) !important; color: var(--t-primary) !important; border-color: var(--c-border2) !important; }
+.cookie-banner-wrap, .cookie-modal-card { background: var(--c-surface) !important; color: var(--t-secondary); border-color: var(--c-border) !important; }
+.ck-ico { vertical-align: middle; margin-right: 4px; }
+.ck-intro { margin: 0 0 4px; }
+.ck-cat-name { display: inline-flex; align-items: center; gap: 6px; }
+.ck-cat-desc { margin: 0; font-size: 12.5px; color: var(--t-secondary); }
+.ck-link { color: var(--c-primary); text-decoration: underline; }

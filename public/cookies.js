@@ -64,7 +64,7 @@
       </p>
       <div class="cookie-banner-actions">
         <button type="button" class="btn-cookie btn-cookie-settings" id="gp-cookie-btn-settings">
-          <span data-icon="settings" data-icon-size="13" style="vertical-align:middle;margin-right:4px;"></span>Configurar
+          <span data-icon="settings" data-icon-size="13" class="ck-ico"></span>Configurar
         </button>
         <button type="button" class="btn-cookie btn-cookie-reject" id="gp-cookie-btn-reject">
           Rechazar no esenciales
@@ -115,23 +115,23 @@
           <button type="button" class="cookie-modal-close" id="gp-cookie-modal-close" aria-label="Cerrar">&times;</button>
         </div>
         <div class="cookie-modal-body">
-          <p style="margin:0 0 4px 0;">
-            Puedes activar o desactivar cada categoría de cookies. La legislación española (AEPD) exige que el consentimiento sea informado y granular. Para más detalles, consulta nuestra <a href="cookies.html" target="_blank" rel="noopener" style="color:#4f8cff;text-decoration:underline;">Política de cookies</a>.
+          <p class="ck-intro">
+            Puedes activar o desactivar cada categoría de cookies. La legislación española (AEPD) exige que el consentimiento sea informado y granular. Para más detalles, consulta nuestra <a href="cookies.html" target="_blank" rel="noopener" class="ck-link">Política de cookies</a>.
           </p>
 
           <!-- Categoría 1: Técnicas y Obligatorias -->
           <div class="cookie-category-item">
             <div class="cookie-category-top">
               <span class="cookie-category-title">
-                <span style="display:inline-flex;align-items:center;gap:6px;"><span data-icon="shield" data-icon-size="15"></span>Cookies Técnicas y de Seguridad</span>
+                <span class="ck-cat-name"><span data-icon="shield" data-icon-size="15"></span>Cookies Técnicas y de Seguridad</span>
                 <span class="cookie-badge-req">Obligatorias</span>
               </span>
               <label class="cookie-switch">
-                <input type="checkbox" checked disabled />
+                <input type="checkbox" checked disabled aria-label="Cookies técnicas y de seguridad (obligatorias)" />
                 <span class="cookie-slider"></span>
               </label>
             </div>
-            <p style="margin:0;font-size:12.5px;color:var(--t-muted,#8899bb);">
+            <p class="ck-cat-desc">
               Imprescindibles para que la aplicación funcione. Permiten la autenticación segura mediante tokens cifrados (sesión en la nube), la custodia digital de tickets y la protección contra ataques informáticos. No se pueden desactivar.
             </p>
           </div>
@@ -140,14 +140,14 @@
           <div class="cookie-category-item">
             <div class="cookie-category-top">
               <span class="cookie-category-title">
-                <span style="display:inline-flex;align-items:center;gap:6px;"><span data-icon="globe" data-icon-size="15"></span>Preferencias de Usuario</span>
+                <span class="ck-cat-name"><span data-icon="globe" data-icon-size="15"></span>Preferencias de Usuario</span>
               </span>
               <label class="cookie-switch">
-                <input type="checkbox" id="gp-pref-cookies" ${current.preferences ? 'checked' : ''} />
+                <input type="checkbox" id="gp-pref-cookies" aria-label="Preferencias de usuario" ${current.preferences ? 'checked' : ''} />
                 <span class="cookie-slider"></span>
               </label>
             </div>
-            <p style="margin:0;font-size:12.5px;color:var(--t-muted,#8899bb);">
+            <p class="ck-cat-desc">
               Permiten recordar tu idioma preferido (español o inglés) y la configuración de vista del panel entre sesiones.
             </p>
           </div>
@@ -156,14 +156,14 @@
           <div class="cookie-category-item">
             <div class="cookie-category-top">
               <span class="cookie-category-title">
-                <span style="display:inline-flex;align-items:center;gap:6px;"><span data-icon="clock" data-icon-size="15"></span>Métricas de Rendimiento Anónimas</span>
+                <span class="ck-cat-name"><span data-icon="clock" data-icon-size="15"></span>Métricas de Rendimiento Anónimas</span>
               </span>
               <label class="cookie-switch">
-                <input type="checkbox" id="gp-pref-analytics" ${current.analytics ? 'checked' : ''} />
+                <input type="checkbox" id="gp-pref-analytics" aria-label="Métricas de rendimiento" ${current.analytics ? 'checked' : ''} />
                 <span class="cookie-slider"></span>
               </label>
             </div>
-            <p style="margin:0;font-size:12.5px;color:var(--t-muted,#8899bb);">
+            <p class="ck-cat-desc">
               Nos ayudan a conocer el rendimiento y tiempos de carga de la web de forma 100% agregada y sin identificar a ningún usuario. No se utilizan con fines publicitarios.
             </p>
           </div>

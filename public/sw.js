@@ -8,7 +8,7 @@
    ═══════════════════════════════════════════════════════════════ */
 'use strict';
 
-const VERSION = 'gp-v8';
+const VERSION = 'gp-v10';
 const STATIC_CACHE = `${VERSION}-static`;
 
 const PRECACHE = [
@@ -25,6 +25,7 @@ const PRECACHE = [
   'fonts/bricolage-grotesque-latin-wght-normal.woff2',
   'ui.css',
   'cercana.css',
+  'legal.css',
   'theme.js',
   'tour.js',
   'claim-pdf.js',

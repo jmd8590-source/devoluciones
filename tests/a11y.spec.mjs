@@ -26,3 +26,20 @@ for (const scheme of ['light', 'dark']) {
     expect(found).toEqual([]);
   });
 }
+
+for (const scheme of ['light', 'dark']) {
+  test(`aviso de cookies: accesible y sin errores de seguridad · tema ${scheme}`, async ({ page }) => {
+    const errors = [];
+    page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+    await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
+    await page.goto('/auth.html');
+    await expect(page.locator('#gp-cookie-banner')).toBeVisible();
+    let r = await new AxeBuilder({ page }).include('#gp-cookie-banner').withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(r.violations.map(v => v.id)).toEqual([]);
+    await page.locator('#gp-cookie-banner button', { hasText: /Configurar|Settings/ }).first().click();
+    await expect(page.locator('#gp-cookie-modal')).toBeVisible();
+    r = await new AxeBuilder({ page }).include('#gp-cookie-modal').withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(r.violations.map(v => v.id)).toEqual([]);
+    expect(errors.filter(e => !/Failed to load resource/.test(e))).toEqual([]);
+  });
+}
