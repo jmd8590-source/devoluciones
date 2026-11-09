@@ -208,3 +208,33 @@ h1, h2, h3, h4, .view-title, .section-title, .modal-title, .stat-num, .logo-text
   .stat-num { font-size: 24px; }
   .stat-label { font-size: 11px; line-height: 1.25; }
 }
+
+/* ── 11. «TU AÑO» ──────────────────────────────────────────── */
+.year-card { margin: 0 0 32px; padding: 22px; border-radius: 26px; background: var(--c-surface); box-shadow: var(--sh-card); }
+.year-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.year-eyebrow { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-coral); }
+.year-title { margin: 4px 0 0; font-family: var(--font-display); font-size: clamp(20px, 3.4vw, 24px); font-weight: 800; }
+.year-share {
+  display: inline-flex; align-items: center; gap: 8px; flex: none; min-height: 40px; padding: 0 16px;
+  border-radius: 999px; border: 1.5px solid var(--c-border2); background: transparent;
+  color: var(--t-primary); font: 600 14px var(--font-body); cursor: pointer;
+}
+.year-share:hover { background: var(--tint-brand); }
+.year-share span { display: inline-flex; }
+.year-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 0; }
+.year-grid > div { padding: 14px; border-radius: 18px; background: var(--tint-brand); }
+.year-grid > div:first-child { background: var(--tint-ok); }
+.year-grid dt { font-size: 12.5px; line-height: 1.3; color: var(--t-secondary); }
+.year-grid dd { margin: 6px 0 0; font-family: var(--font-display); font-size: 26px; font-weight: 800; color: var(--t-primary); }
+.year-grid > div:first-child dd { color: var(--st-ok); }
+@media (max-width: 768px) {
+  .year-grid { grid-template-columns: 1fr 1fr; }
+  .year-grid dd { font-size: 22px; }
+}
+@media (max-width: 380px) { .year-share > span:last-child { display: none; } .year-share { width: 40px; padding: 0; justify-content: center; } }
+
+/* ── 12. CONTRASTE (auditoría axe, WCAG 2.1 AA) ────────────── */
+html[data-theme="light"] .year-eyebrow { color: var(--tx-red); }
+.push-status, .claim-type-grid .type-desc { color: var(--t-secondary) !important; }
+.btn-claim-type.active { background: var(--tint-brand) !important; border-color: var(--c-primary) !important; }
+.btn-channel-action:not(.btn-granted):not(.btn-warn) { background: var(--c-primary); color: var(--on-primary); border-radius: 999px; }

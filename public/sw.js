@@ -8,7 +8,7 @@
    ═══════════════════════════════════════════════════════════════ */
 'use strict';
 
-const VERSION = 'gp-v7';
+const VERSION = 'gp-v8';
 const STATIC_CACHE = `${VERSION}-static`;
 
 const PRECACHE = [
@@ -27,10 +27,12 @@ const PRECACHE = [
   'cercana.css',
   'theme.js',
   'tour.js',
+  'claim-pdf.js',
   'icons.js',
   'supabase-client.js',
   'session-guard.js',
   'session.js',
+  'i18n.js',
   'app.js',
   'auth.js',
   'urgent-alert.js',

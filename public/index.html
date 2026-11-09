@@ -61,29 +61,24 @@
     </div>
 
     <nav class="header-nav" aria-label="Navegación principal">
-      <button class="nav-btn active" data-view="dashboard" id="nav-dashboard"
-              aria-label="Inicio" title="Dashboard">
+      <button class="nav-btn active" data-view="dashboard" id="nav-dashboard" >
         <span data-icon="inbox" data-icon-size="18"></span>
         <span data-i18n="nav.dashboard">Inicio</span>
       </button>
-      <button class="nav-btn" data-view="products" id="nav-products"
-              aria-label="Mis productos" title="Productos">
+      <button class="nav-btn" data-view="products" id="nav-products" title="Productos">
         <span data-icon="package" data-icon-size="18"></span>
         <span data-i18n="nav.products">Productos</span>
       </button>
-      <button class="nav-btn" data-view="alerts" id="nav-alerts"
-              aria-label="Alertas">
+      <button class="nav-btn" data-view="alerts" id="nav-alerts">
         <span data-icon="bell" data-icon-size="18"></span>
         <span data-i18n="nav.alerts">Alertas</span>
         <span class="badge" id="alerts-badge" hidden>0</span>
       </button>
-      <button class="nav-btn nav-btn-mobile-account" id="nav-account"
-              aria-label="Mi cuenta" title="Mi cuenta">
+      <button class="nav-btn nav-btn-mobile-account" id="nav-account" title="Mi cuenta">
         <span data-icon="user" data-icon-size="18"></span>
         <span data-i18n="btn.account">Mi cuenta</span>
       </button>
-      <button class="nav-btn nav-btn-mobile-logout" id="nav-logout"
-              aria-label="Cerrar sesión" title="Salir">
+      <button class="nav-btn nav-btn-mobile-logout" id="nav-logout" title="Salir">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
         </svg>
@@ -100,7 +95,8 @@
       </div>
 
       <!-- Language Toggle -->
-      <button class="lang-toggle" id="lang-toggle" aria-label="Cambiar idioma / Change language" title="ES / EN">
+      <button class="lang-toggle" id="lang-toggle" title="Idioma / Language">
+        <span class="sr-only" data-i18n="a11y.lang">Idioma:</span>
         <span data-icon="globe" data-icon-size="15"></span>
         <span class="lang-code" id="lang-code">ES</span>
       </button>
@@ -117,7 +113,7 @@
       </button>
 
       <!-- Mi cuenta -->
-      <button class="btn-account" id="btn-account" aria-label="Mi cuenta" title="Mi cuenta">
+      <button class="btn-account" id="btn-account" title="Mi cuenta">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>
         </svg>
@@ -125,14 +121,14 @@
       </button>
 
       <!-- Logout -->
-      <button class="btn-logout" id="btn-logout" aria-label="Cerrar sesión" title="Cerrar sesión">
+      <button class="btn-logout" id="btn-logout" title="Cerrar sesión">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
         </svg>
         <span data-i18n="btn.logout">Salir</span>
       </button>
 
-      <button class="btn-add-main" id="btn-add-main" aria-label="Añadir producto">
+      <button class="btn-add-main" id="btn-add-main">
         <span data-icon="check" data-icon-size="16" style="display:none"></span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -260,15 +256,33 @@
     </div>
 
     <!-- Urgent Products -->
+    <section class="year-card" id="year-card" aria-labelledby="year-title" hidden>
+      <div class="year-head">
+        <div>
+          <p class="year-eyebrow" id="year-eyebrow"></p>
+          <h2 class="year-title" id="year-title" data-i18n="year.title">Tu año, bajo control</h2>
+        </div>
+        <button type="button" class="year-share" id="year-share">
+          <span data-icon="share" data-icon-size="16"></span><span data-i18n="year.share">Compartir</span>
+        </button>
+      </div>
+      <dl class="year-grid">
+        <div><dt data-i18n="year.protected">Valor protegido ahora</dt><dd id="year-protected">0 €</dd></div>
+        <div><dt data-i18n="year.bought">Compras guardadas este año</dt><dd id="year-bought">0</dd></div>
+        <div><dt data-i18n="year.watch">Plazos vigilados</dt><dd id="year-watch">0</dd></div>
+        <div><dt data-i18n="year.tickets">Tickets a salvo del papel térmico</dt><dd id="year-tickets">0</dd></div>
+      </dl>
+    </section>
+
     <div class="section-block" id="urgent-block">
       <h2 class="section-title" data-i18n="dashboard.urgent">Urgentes</h2>
-      <div class="urgent-list" id="urgent-list"></div>
+      <div class="urgent-list" id="urgent-list" role="list"></div>
     </div>
 
     <!-- Recent -->
     <div class="section-block">
       <h2 class="section-title" data-i18n="dashboard.recent">Recientes</h2>
-      <div class="recent-list" id="recent-list"></div>
+      <div class="recent-list" id="recent-list" role="list"></div>
     </div>
   </section>
 
@@ -858,7 +872,7 @@
           <span class="preview-badge"><span data-icon="fileText" data-icon-size="13" style="vertical-align:middle;margin-right:4px;"></span>Escrito Legal Listo para Enviar</span>
           <span class="preview-law-cite"><span data-icon="scale" data-icon-size="13" style="vertical-align:middle;margin-right:4px;"></span>RDL 1/2007 · RDL 7/2021 (BOE)</span>
         </div>
-        <textarea id="claim-text-preview" class="claim-textarea" readonly spellcheck="false"></textarea>
+        <textarea id="claim-text-preview" class="claim-textarea" readonly spellcheck="false" aria-label="Vista previa del escrito"></textarea>
       </div>
 
       <!-- Barra de acciones -->
@@ -873,7 +887,7 @@
         </button>
         <button type="button" class="btn-claim-action btn-download-claim" id="btn-download-claim">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Descargar escrito (.txt)
+          Descargar en PDF
         </button>
       </div>
     </div>
@@ -923,7 +937,7 @@
      aria-labelledby="ai-settings-heading" hidden>
   <div class="modal-panel modal-panel-legal">
     <div class="modal-header">
-      <h2 class="modal-title" id="ai-settings-heading">Escáner Inteligente con IA (Gemini 2.5 Flash)</h2>
+      <h2 class="modal-title" id="ai-settings-heading">Ajustes del lector de tickets</h2>
       <button class="modal-close" id="ai-settings-close" aria-label="Cerrar">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -1106,10 +1120,12 @@
 <script src="icons.js"></script>
 <script src="pwa.js"></script>
 <script src="session.js"></script>
+<script src="i18n.js"></script>
 <script src="app.js"></script>
 <script src="push.js"></script>
 <script src="urgent-alert.js"></script>
 <script src="cookies.js"></script>
 <script src="tour.js"></script>
+<script src="claim-pdf.js"></script>
 </body>
 </html>

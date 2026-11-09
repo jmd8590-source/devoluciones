@@ -176,3 +176,28 @@ test('tipografías propias: no se carga nada de Google Fonts', async ({ page }) 
   const fam = await page.evaluate(() => getComputedStyle(document.querySelector('.auth-title')).fontFamily);
   expect(fam).toContain('Bricolage');
 });
+
+test('reclamación: descarga un PDF con los datos de la compra', async ({ page }) => {
+  await page.addInitScript(`localStorage.setItem('gp_tour_done_v1','1');`);
+  await page.goto('/auth.html');
+  await page.click('#btn-demo');
+  await page.waitForURL('**/index.html');
+  await page.click('#next-up-open');
+  await page.click('.btn-detail-claim');
+  await page.fill('#claim-buyer-name', 'Ana García');
+  const [download] = await Promise.all([page.waitForEvent('download'), page.click('#btn-download-claim')]);
+  expect(download.suggestedFilename()).toBe('reclamacion-sony-wh-1000xm5.pdf');
+  const path = await download.path();
+  const head = (await import('node:fs')).readFileSync(path).subarray(0, 5).toString();
+  expect(head).toBe('%PDF-');
+});
+
+test('«Tu año»: muestra cifras calculadas con las compras', async ({ page }) => {
+  await page.addInitScript(`localStorage.setItem('gp_tour_done_v1','1');`);
+  await page.goto('/auth.html');
+  await page.click('#btn-demo');
+  await page.waitForURL('**/index.html');
+  await expect(page.locator('#year-card')).toBeVisible();
+  await expect(page.locator('#year-protected')).toHaveText(/\d.*€/);
+  await expect(page.locator('#year-watch')).not.toHaveText('0');
+});

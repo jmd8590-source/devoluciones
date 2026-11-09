@@ -10,338 +10,7 @@
 /* ══════════════════════════════════════════════════════════════
    1. INTERNATIONALISATION (i18n)
 ══════════════════════════════════════════════════════════════ */
-const TRANSLATIONS = {
-  es: {
-    'nav.dashboard':  'Inicio',
-    'tour.btn': 'Guía', 'a11y.skip': 'Saltar al contenido',
-    'next.eyebrow': 'Lo próximo que vence', 'next.ret.sub': 'Devolución en {store}', 'next.war.sub': 'Garantía · {store}',
-    'next.unit.ret': 'para devolver', 'next.unit.war': 'de garantía', 'next.today': 'Hoy', 'next.today.unit': 'último día para devolver',
-    'next.today.war': 'último día de garantía', 'next.btn.ret': 'Preparar devolución', 'next.btn.war': 'Ver garantía', 'next.cal': 'Añadir al calendario',
-    'unit.day': 'día', 'unit.days': 'días', 'unit.month': 'mes', 'unit.months': 'meses', 'unit.year': 'año', 'unit.years': 'años',
-    'nav.products':   'Productos',
-    'nav.alerts':     'Alertas',
-    'btn.addProduct': 'Nuevo producto',
-    'btn.cancel':     'Cancelar',
-    'btn.save':       'Guardar producto',
-    'btn.save.edit':  'Guardar cambios',
-    'dashboard.title':  'Tu resumen',
-    'dashboard.urgent': 'Urgentes',
-    'dashboard.recent': 'Recientes',
-    'stat.total':    'Productos',
-    'stat.return':   'En periodo devolución',
-    'stat.warranty': 'Garantías activas',
-    'stat.expired':  'Próximas a vencer',
-    'products.title':    'Mis productos',
-    'products.subtitle': 'Gestiona tus garantías y devoluciones',
-    'alerts.title':       'Alertas',
-    'alerts.subtitle':    'Productos que requieren tu atención',
-    'alerts.empty.title': 'Todo en orden',
-    'alerts.empty.sub':   'No tienes alertas pendientes',
-    'search.placeholder': 'Buscar producto…',
-    'filter.all':      'Todos',
-    'filter.return':   'Devolución',
-    'filter.warranty': 'Garantía',
-    'filter.expired':  'Vencido',
-    'empty.title': 'Sin productos aún',
-    'empty.sub':   'Pulsa "Nuevo producto" para empezar',
-    'modal.title.add':  'Nuevo producto',
-    'modal.title.edit': 'Editar producto',
-    'form.ticket.section': 'Ticket de compra',
-    'form.ticket.drag':    'Arrastra la foto o pulsa aquí',
-    'form.ticket.formats': 'JPG, PNG, WEBP — máx. 5 MB',
-    'form.ticket.remove':  'Eliminar foto',
-    'form.info.section':   'Información del producto',
-    'form.name.label':       'Nombre del producto',
-    'form.name.placeholder': 'Ej: iPhone 15 Pro',
-    'form.brand.label':       'Marca',
-    'form.brand.placeholder': 'Ej: Apple',
-    'form.price.label':  'Precio (€)',
-    'form.store.label':       'Tienda / Vendedor',
-    'form.store.placeholder': 'Ej: El Corte Inglés',
-    'form.purchase.label': 'Fecha de compra',
-    'form.notes.label':       'Notas adicionales',
-    'form.notes.placeholder': 'Número de serie, color, etc.',
-    'form.return.section':              'Periodo de devolución',
-    'form.ret.days.label':              'Días para devolver',
-    'form.ret.start.label':             'Fecha inicio',
-    'form.ret.conditions.label':        'Condiciones de devolución',
-    'form.ret.conditions.placeholder':  'Debe estar sin abrir, con ticket original…',
-    'form.warranty.section':            'Garantía',
-    'form.war.start.label':             'Inicio garantía',
-    'form.war.years.label':             'Años de garantía',
-    'form.war.covers.label':            'Qué cubre',
-    'form.war.covers.placeholder':      'Defectos de fabricación, fallos de hardware…',
-    'form.war.nocovers.label':          'Qué NO cubre',
-    'form.war.nocovers.placeholder':    'Daños por agua, roturas accidentales, mal uso…',
-    'confirm.title':  '¿Eliminar producto?',
-    'confirm.text':   'Esta acción no se puede deshacer.',
-    'confirm.delete': 'Eliminar',
-    'toast.saved':    'Producto guardado',
-    'toast.updated':  'Producto actualizado',
-    'toast.deleted':  'Producto eliminado',
-    'toast.error':    'Completa los campos obligatorios',
-    'toast.photo.big':'La foto supera los 5 MB',
-    'toast.photo.err':'Formato no permitido',
-    'toast.load.err': 'Error al cargar productos de la base de datos',
-    'toast.save.err': 'No se pudo guardar el producto. Inténtalo de nuevo.',
-    'detail.purchaseDate':   'Fecha de compra',
-    'detail.store':          'Tienda',
-    'detail.brand':          'Marca',
-    'detail.price':          'Precio',
-    'detail.notes':          'Notas',
-    'detail.return.title':   'Periodo de devolución',
-    'detail.return.start':   'Inicio',
-    'detail.return.end':     'Fin',
-    'detail.return.left':    'Días restantes',
-    'detail.return.cond':    'Condiciones',
-    'detail.warranty.title': 'Garantía',
-    'detail.warranty.start': 'Inicio',
-    'detail.warranty.end':   'Fin',
-    'detail.warranty.years': 'Años cubiertos',
-    'detail.warranty.covers':'Cubre',
-    'detail.warranty.nocovers':'No cubre',
-    'label.days.left':  'días restantes',
-    'label.days.left.singular': 'día restante',
-    'label.expired.return':   'Devolución expirada',
-    'label.expired.warranty': 'Garantía expirada',
-    'label.return.active':    'Devolución activa',
-    'label.warranty.active':  'Garantía activa',
-    'label.no.return':        'Sin devolución',
-    'label.no.warranty':      'Sin garantía',
-    'label.no.data':          'No indicado',
-    'label.of':               'de',
-    'label.years':            'años',
-    'label.days':             'días',
-    'label.day':              'día',
-    'alert.return.urgent':   'Devolución: quedan {d} día(s)',
-    'alert.warranty.urgent': 'Garantía: quedan {d} día(s)',
-    'alert.return.expiring': 'Devolución vence pronto',
-    'alert.warranty.expiring':'Garantía vence pronto',
-    'no.ticket': 'Sin foto de ticket',
-    'dashboard.no.urgent': '— Sin urgencias —',
-    'detail.total':        'Total',
-    'btn.account':         'Mi cuenta',
-    'btn.logout':          'Salir',
-    'demo.banner':         'Modo demo — los datos se borran al cerrar la pestaña.',
-    'demo.register':       'Crear cuenta gratis →',
-    'session.greeting':    'Hola,',
-    'hero.eyebrow':        'GarantíasPro · Tu gestor de compras, devoluciones y garantías',
-    'hero.title':          'No vuelvas a perder el dinero de una devolución ni una garantía',
-    'hero.desc':           'Guarda tus compras y tickets con total seguridad en la nube. Te avisamos con tiempo antes de que caduquen tus <strong>14 o 30 días de devolución</strong> y los <strong>3 años de garantía legal</strong> en España.',
-    'hero.feat1.title':    'Avisos a 3 días y Calendario',
-    'hero.feat1.desc':     'Notificaciones push en navegador o móvil y alarmas automáticas directas a tu Google Calendar, Apple Calendar o WhatsApp.',
-    'hero.feat2.title':    'Sincronización en la Nube (UE)',
-    'hero.feat2.desc':     'Tus facturas y tickets se guardan en servidores seguros en la Unión Europea con cifrado avanzado. No se pierden si cambias de móvil o limpias caché.',
-    'hero.feat3.title':    'Adaptado a la Ley Española',
-    'hero.feat3.desc':     'Cálculo automático de plazos de desistimiento de comercios y los 3 años de garantía obligatorios en España.',
-    'hero.btn.add':        'Añadir mi primer producto',
-    'hero.btn.sample':     'Probar con datos de muestra',
-    'hero.btn.cloud':      'Crear cuenta en la nube',
-    'tools.export':        'Exportar copia de seguridad (JSON)',
-    'tools.import':        'Importar',
-    'alerts.cal.title':         'Alarmas en tu Calendario Móvil',
-    'alerts.cal.desc':          'No necesitas entrar a la web todos los días. Guarda alarmas automáticas en Google Calendar, Apple Calendar o WhatsApp 3 días antes de que venza cualquier plazo de devolución o garantía.',
-    'alerts.cal.channel.title': 'Alarmas Automáticas (.ics / Google / Apple)',
-    'alerts.cal.channel.sub':   'Genera avisos con alarma a 3 días en cada producto con 1 solo clic',
-    'alerts.cal.btn':           'Ver cómo funciona',
-    'footer.owner':             'GarantíasPro · Responsable: Jesús Mendoza Domínguez',
-    'ticket.vault.tag':         'Custodia permanente',
-    'ticket.thermal.tip':       '<strong>El papel térmico se borra a los 6 meses:</strong> Sube una foto o factura en PDF. El lector extraerá todos los datos del ticket automáticamente y tu copia quedará custodiada para siempre.',
-    'ticket.scanning':          'Analizando todos los detalles del ticket (cabecera, productos y letra pequeña)...',
-    'ticket.analyzed.title':    '¡Ticket analizado con éxito!',
-    'ticket.raw.show':          'Ver texto leído en el ticket',
-    'ticket.raw.hide':          'Ocultar texto leído en el ticket',
-    'ticket.btn.camera':        'Foto con cámara',
-    'ticket.btn.file':          'Subir archivo / PDF',
-    'ticket.btn.rescan':        'Re-escanear ticket',
-    'ticket.btn.settings':      'Ajustes IA / OCR',
-    'claim.modal.title':        'Reclamación Formal con 1 Clic',
-    'claim.modal.sub':          'Redacción legal conforme al RDL 1/2007 (Ley de Consumidores y Usuarios y 3 años de garantía en España).',
-    'viewer.title':             'Ticket Custodiado en el Cofre Digital',
-    'viewer.subtitle':          'Copia Digital Permanente · Válida para Reclamaciones Legales en España',
-    'acc.modal.title':          'Mi Cuenta y Ajustes',
-    'acc.modal.sub':            'Gestiona tu perfil, seguridad y preferencias',
-    'acc.pwd.title':            'Cambiar contraseña',
-    'acc.pwd.desc':             'Actualiza tu contraseña para mantener tu cuenta protegida en la nube.',
-    'acc.pwd.current.label':    'Contraseña actual (para verificar tu identidad)',
-    'acc.pwd.current.ph':       'Introduce tu contraseña actual',
-    'acc.pwd.new.label':        'Nueva contraseña',
-    'acc.pwd.new.ph':           'Mínimo 8 caracteres',
-    'acc.pwd.confirm.label':    'Confirmar nueva contraseña',
-    'acc.pwd.confirm.ph':       'Repite la nueva contraseña',
-    'acc.pwd.btn':              'Actualizar contraseña',
-    'acc.install.desc':         'Ábrela desde el icono de tu móvil u ordenador, como una app.',
-    'acc.sec.label1':           'Seguridad de cuenta',
-    'acc.sec.val1':             'Cifrado de extremo a extremo (TLS / AES-256)',
-    'acc.sec.label2':           'Protección de tickets',
-    'acc.sec.val2':             'Aislamiento por usuario y custodia antiborrado',
-  },
-  en: {
-    'nav.dashboard':  'Home',
-    'tour.btn': 'Guide', 'a11y.skip': 'Skip to content',
-    'next.eyebrow': 'Next deadline', 'next.ret.sub': 'Return at {store}', 'next.war.sub': 'Warranty · {store}',
-    'next.unit.ret': 'left to return', 'next.unit.war': 'of warranty left', 'next.today': 'Today', 'next.today.unit': 'last day to return',
-    'next.today.war': 'last day of warranty', 'next.btn.ret': 'Prepare return', 'next.btn.war': 'View warranty', 'next.cal': 'Add to calendar',
-    'unit.day': 'day', 'unit.days': 'days', 'unit.month': 'month', 'unit.months': 'months', 'unit.year': 'year', 'unit.years': 'years',
-    'nav.products':   'Products',
-    'nav.alerts':     'Alerts',
-    'btn.addProduct': 'New product',
-    'btn.cancel':     'Cancel',
-    'btn.save':       'Save product',
-    'btn.save.edit':  'Save changes',
-    'dashboard.title':  'Your summary',
-    'dashboard.urgent': 'Urgent',
-    'dashboard.recent': 'Recent',
-    'stat.total':    'Products',
-    'stat.return':   'In return period',
-    'stat.warranty': 'Active warranties',
-    'stat.expired':  'Expiring soon',
-    'products.title':    'My products',
-    'products.subtitle': 'Manage your warranties and returns',
-    'alerts.title':       'Alerts',
-    'alerts.subtitle':    'Products that need your attention',
-    'alerts.empty.title': 'All clear',
-    'alerts.empty.sub':   'No pending alerts',
-    'search.placeholder': 'Search product…',
-    'filter.all':      'All',
-    'filter.return':   'Return',
-    'filter.warranty': 'Warranty',
-    'filter.expired':  'Expired',
-    'empty.title': 'No products yet',
-    'empty.sub':   'Press "New product" to get started',
-    'modal.title.add':  'New product',
-    'modal.title.edit': 'Edit product',
-    'form.ticket.section': 'Purchase receipt',
-    'form.ticket.drag':    'Drag photo or click here',
-    'form.ticket.formats': 'JPG, PNG, WEBP — max 5 MB',
-    'form.ticket.remove':  'Remove photo',
-    'form.info.section':   'Product information',
-    'form.name.label':       'Product name',
-    'form.name.placeholder': 'e.g. iPhone 15 Pro',
-    'form.brand.label':       'Brand',
-    'form.brand.placeholder': 'e.g. Apple',
-    'form.price.label':  'Price (€)',
-    'form.store.label':       'Store / Seller',
-    'form.store.placeholder': 'e.g. Amazon',
-    'form.purchase.label': 'Purchase date',
-    'form.notes.label':       'Additional notes',
-    'form.notes.placeholder': 'Serial number, colour, etc.',
-    'form.return.section':              'Return period',
-    'form.ret.days.label':              'Days to return',
-    'form.ret.start.label':             'Start date',
-    'form.ret.conditions.label':        'Return conditions',
-    'form.ret.conditions.placeholder':  'Must be unopened, with original receipt…',
-    'form.warranty.section':            'Warranty',
-    'form.war.start.label':             'Warranty start',
-    'form.war.years.label':             'Years of warranty',
-    'form.war.covers.label':            'What it covers',
-    'form.war.covers.placeholder':      'Manufacturing defects, hardware failures…',
-    'form.war.nocovers.label':          'What it does NOT cover',
-    'form.war.nocovers.placeholder':    'Water damage, accidental breakage, misuse…',
-    'confirm.title':  'Delete product?',
-    'confirm.text':   'This action cannot be undone.',
-    'confirm.delete': 'Delete',
-    'toast.saved':    'Product saved',
-    'toast.updated':  'Product updated',
-    'toast.deleted':  'Product deleted',
-    'toast.error':    'Fill in required fields',
-    'toast.photo.big':'Photo exceeds 5 MB',
-    'toast.photo.err':'Format not allowed',
-    'toast.load.err': 'Error loading products from database',
-    'toast.save.err': 'Could not save product. Please try again.',
-    'detail.purchaseDate':   'Purchase date',
-    'detail.store':          'Store',
-    'detail.brand':          'Brand',
-    'detail.price':          'Price',
-    'detail.notes':          'Notes',
-    'detail.return.title':   'Return period',
-    'detail.return.start':   'Start',
-    'detail.return.end':     'End',
-    'detail.return.left':    'Days remaining',
-    'detail.return.cond':    'Conditions',
-    'detail.warranty.title': 'Warranty',
-    'detail.warranty.start': 'Start',
-    'detail.warranty.end':   'End',
-    'detail.warranty.years': 'Years covered',
-    'detail.warranty.covers':'Covers',
-    'detail.warranty.nocovers':'Does not cover',
-    'label.days.left':  'days remaining',
-    'label.days.left.singular': 'day remaining',
-    'label.expired.return':   'Return expired',
-    'label.expired.warranty': 'Warranty expired',
-    'label.return.active':    'Return active',
-    'label.warranty.active':  'Warranty active',
-    'label.no.return':        'No return',
-    'label.no.warranty':      'No warranty',
-    'label.no.data':          'Not specified',
-    'label.of':               'of',
-    'label.years':            'years',
-    'label.days':             'days',
-    'label.day':              'day',
-    'alert.return.urgent':   'Return: {d} day(s) left',
-    'alert.warranty.urgent': 'Warranty: {d} day(s) left',
-    'alert.return.expiring': 'Return expiring soon',
-    'alert.warranty.expiring':'Warranty expiring soon',
-    'no.ticket': 'No receipt photo',
-    'dashboard.no.urgent': '— No urgent items —',
-    'detail.total':        'Total',
-    'btn.account':         'My account',
-    'btn.logout':          'Sign out',
-    'demo.banner':         'Demo mode — data is deleted when you close the tab.',
-    'demo.register':       'Create free account →',
-    'session.greeting':    'Hello,',
-    'hero.eyebrow':        'GarantíasPro · Your purchase, return & warranty manager',
-    'hero.title':          'Never lose money on an expired return or warranty again',
-    'hero.desc':           'Store your purchases and receipts safely in the cloud. We alert you ahead of time before your <strong>14 or 30-day return period</strong> and <strong>3-year legal warranty</strong> expire.',
-    'hero.feat1.title':    '3-Day Alerts & Calendar',
-    'hero.feat1.desc':     'Browser or phone push notifications and direct alarms for Google Calendar, Apple Calendar, or WhatsApp.',
-    'hero.feat2.title':    'EU Cloud Sync',
-    'hero.feat2.desc':     'Your invoices and receipts are stored on encrypted European Union servers. Never lose them if you switch phones or clear cache.',
-    'hero.feat3.title':    'Adapted to Consumer Law',
-    'hero.feat3.desc':     'Automatic calculation of store return deadlines and mandatory 3-year legal warranties.',
-    'hero.btn.add':        'Add my first product',
-    'hero.btn.sample':     'Try with sample data',
-    'hero.btn.cloud':      'Create cloud account',
-    'tools.export':        'Export backup copy (JSON)',
-    'tools.import':        'Import',
-    'alerts.cal.title':         'Alarms on your Mobile Calendar',
-    'alerts.cal.desc':          'No need to check the app every day. Save automatic alarms in Google Calendar, Apple Calendar, or WhatsApp 3 days before any return or warranty deadline expires.',
-    'alerts.cal.channel.title': 'Automatic Alarms (.ics / Google / Apple)',
-    'alerts.cal.channel.sub':   'Generate 3-day advance alerts for each product with 1 click',
-    'alerts.cal.btn':           'See how it works',
-    'footer.owner':             'GarantíasPro · Owner: Jesús Mendoza Domínguez',
-    'ticket.vault.tag':         'Permanent vault',
-    'ticket.thermal.tip':       '<strong>Thermal paper fades in 6 months:</strong> Upload a receipt photo or PDF invoice. The scanner extracts all details automatically and keeps your receipt safe forever.',
-    'ticket.scanning':          'Analyzing all receipt details (header, items, and fine print)...',
-    'ticket.analyzed.title':    'Receipt analyzed successfully!',
-    'ticket.raw.show':          'View text read from receipt',
-    'ticket.raw.hide':          'Hide text read from receipt',
-    'ticket.btn.camera':        'Take photo',
-    'ticket.btn.file':          'Upload file / PDF',
-    'ticket.btn.rescan':        'Re-scan receipt',
-    'ticket.btn.settings':      'AI / OCR Settings',
-    'claim.modal.title':        '1-Click Formal Legal Claim',
-    'claim.modal.sub':          'Formal legal notice drafted under Consumer Law (RDL 1/2007 and 3-year legal warranty).',
-    'viewer.title':             'Receipt Stored in Digital Vault',
-    'viewer.subtitle':          'Permanent Digital Copy · Valid for Legal Warranty Claims',
-    'acc.modal.title':          'My Account & Settings',
-    'acc.modal.sub':            'Manage your profile, security, and preferences',
-    'acc.pwd.title':            'Change password',
-    'acc.pwd.desc':             'Update your password to keep your cloud account protected.',
-    'acc.pwd.current.label':    'Current password (to verify your identity)',
-    'acc.pwd.current.ph':       'Enter your current password',
-    'acc.pwd.new.label':        'New password',
-    'acc.pwd.new.ph':           'Minimum 8 characters',
-    'acc.pwd.confirm.label':    'Confirm new password',
-    'acc.pwd.confirm.ph':       'Repeat your new password',
-    'acc.pwd.btn':              'Update password',
-    'acc.install.desc':         'Open it from your phone or computer home screen like a native app.',
-    'acc.sec.label1':           'Account security',
-    'acc.sec.val1':             'End-to-end encryption (TLS / AES-256)',
-    'acc.sec.label2':           'Receipt protection',
-    'acc.sec.val2':             'Per-user isolation and anti-fade digital vault',
-  }
-};
+// Los textos de la interfaz están en i18n.js (TRANSLATIONS)
 
 let currentLang = localStorage.getItem('gp_lang') || 'es';
 
@@ -724,6 +393,7 @@ function renderDashboard() {
   }
 
   renderNextUp(products);
+  renderYearSummary(products);
 
   const urgentList = document.getElementById('urgent-list');
   if (urgentList) {
@@ -777,6 +447,47 @@ function humanCount(days) {
 }
 
 let nextUpCurrent = null;
+
+/* ── «Tu año»: cifras reales calculadas con los datos del usuario ── */
+let yearSummaryCache = null;
+
+function renderYearSummary(products) {
+  const box = document.getElementById('year-card');
+  if (!box) return;
+  if (!products.length) { box.hidden = true; return; }
+  const year = new Date().getFullYear();
+  const isActive = (s) => s.type === 'ok' || s.type === 'warn' || s.type === 'danger';
+  let protectedValue = 0, watch = 0;
+  products.forEach(p => {
+    const r = isActive(getReturnStatus(p)), w = isActive(getWarrantyStatus(p));
+    if (r) watch++;
+    if (w) watch++;
+    if ((r || w) && p.price) protectedValue += Number(p.price) || 0;
+  });
+  const bought = products.filter(p => (p.purchaseDate || '').startsWith(String(year))).length;
+  const tickets = products.filter(p => p.ticketImage || p.ticketPath).length;
+  const fmt = (n) => n.toLocaleString(currentLang === 'en' ? 'en-GB' : 'es-ES', { maximumFractionDigits: 0 }) + ' €';
+  yearSummaryCache = { value: fmt(protectedValue), watch };
+  box.hidden = false;
+  setEl('year-eyebrow', t('year.eyebrow', { year }));
+  setEl('year-protected', fmt(protectedValue));
+  setEl('year-bought', String(bought));
+  setEl('year-watch', String(watch));
+  setEl('year-tickets', String(tickets));
+}
+
+async function shareYearSummary() {
+  if (!yearSummaryCache) return;
+  const text = t('year.share.text', yearSummaryCache);
+  const url = 'https://devoluciones.jmd8590.workers.dev/';
+  try {
+    if (navigator.share) { await navigator.share({ title: 'GarantíasPro', text, url }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  try {
+    await navigator.clipboard.writeText(text + ' ' + url);
+    showToast(t('year.copied'), 'ok');
+  } catch { /* sin portapapeles */ }
+}
 
 function renderNextUp(products) {
   const box = document.getElementById('next-up');
@@ -2433,7 +2144,7 @@ function updateAiQuotaBadgeDOM(usage) {
   const personalKey = (localStorage.getItem('gp_gemini_api_key') || '').trim();
   if (personalKey) {
     badge.className = 'ai-quota-badge is-pro';
-    textEl.textContent = isEn ? 'Gemini Flash AI · Unlimited key' : 'IA Gemini Flash · Clave propia ilimitada';
+    textEl.textContent = isEn ? 'Smart reader · Your own key' : 'Lector inteligente · Clave propia';
     return;
   }
 
@@ -2528,7 +2239,7 @@ async function scanTicketWithAI(file, dataUrl) {
 
     // ── ESTRATEGIA 1A: ESCANEO CON IA EN SERVIDOR (OPCIONAL SI ESTÁ HABILITADO EN CLOUD) ──
     if (!extracted && aiPayload && activeSession && !activeSession.isDemo && typeof sb !== 'undefined' && localStorage.getItem('gp_server_ai_enabled') === '1') {
-      if (scanText) scanText.textContent = 'Analizando ticket con IA Gemini Vision en la nube...';
+      if (scanText) scanText.textContent = (currentLang === 'en' ? 'Reading your receipt…' : 'Leyendo tu ticket…');
       try {
         const { data: srvRes, error: srvErr } = await sb.functions.invoke('scan-ticket', {
           body: {
@@ -2560,7 +2271,7 @@ async function scanTicketWithAI(file, dataUrl) {
 
     // ── ESTRATEGIA 1B: GOOGLE GEMINI VISION CON CLAVE PROPIA DEL USUARIO (HASTA 1.500/DÍA GRATIS) ──
     if (!extracted && geminiKey && aiPayload) {
-      if (scanText) scanText.textContent = 'Extrayendo todos los detalles del ticket con Gemini Vision...';
+      if (scanText) scanText.textContent = (currentLang === 'en' ? 'Getting the details from your receipt…' : 'Sacando los datos de tu ticket…');
       try {
         for (const model of GEMINI_VISION_MODELS) {
           try {
@@ -2942,7 +2653,7 @@ function updateClaimTextPreview() {
 function buildClaimLetter(p, type, defect, buyerName) {
   const todayFormatted = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
   const storeName = p.store || 'Departamento de Atención al Cliente / Posventa';
-  const priceFormatted = p.price ? `${Number(p.price).toFixed(2)} €` : 'según justificante adjunto';
+  const priceFormatted = p.price ? `${Number(p.price).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €` : 'según justificante adjunto';
   const purchaseDateFmt = p.purchaseDate ? fmtDate(p.purchaseDate) : 'fecha de compra';
   const custId = `CUST-${p.id.slice(0, 8).toUpperCase()}`;
 
@@ -2984,8 +2695,8 @@ Yo, ${buyerName}, pongo en su conocimiento mediante la presente comunicación mi
 MOTIVO:
 ${defect ? defect : 'Devolución dentro del plazo de desistimiento estipulado en las condiciones generales de venta del comercio, encontrándose el artículo en perfecto estado de conservación y con su comprobante de compra acreditado.'}
 
-FUNDAMENTOS DE DERECHO:
-Conforme a los artículos 68 a 79 y 102 a 108 del TRLGDCU (Real Decreto Legislativo 1/2007), el ejercicio del desistimiento no requiere justificación y comporta la obligación del empresario de reintegrar la totalidad de las cantidades abonadas por el consumidor antes de que hayan transcurrido 14 días naturales mediante el mismo medio de pago empleado en la transacción.
+FUNDAMENTOS:
+La devolución se solicita dentro del plazo indicado en la política de devoluciones del establecimiento. Si la compra se realizó a distancia (por internet o teléfono) o fuera del establecimiento, se ejerce además el derecho de desistimiento de los artículos 102 a 108 del TRLGDCU (Real Decreto Legislativo 1/2007), que no requiere justificación y obliga a reembolsar las cantidades abonadas en un plazo máximo de 14 días naturales por el mismo medio de pago.
 
 PETICIÓN:
 Ruego confirmen la aceptación de la devolución y el procedimiento de entrega para hacer efectivo el REEMBOLSO ÍNTEGRO de la cantidad abonada (${priceFormatted}).`;
@@ -3628,6 +3339,7 @@ async function init() {
 
   // ── Onboarding hero actions
   document.getElementById('btn-hero-add')?.addEventListener('click', openAdd);
+  document.getElementById('year-share')?.addEventListener('click', shareYearSummary);
   document.getElementById('next-up-open')?.addEventListener('click', () => {
     if (nextUpCurrent) openDetail(nextUpCurrent.p.id);
   });
@@ -3848,19 +3560,35 @@ async function init() {
     showToast('Abriendo gestor de correo...');
   });
 
-  document.getElementById('btn-download-claim')?.addEventListener('click', () => {
+  document.getElementById('btn-download-claim')?.addEventListener('click', async (e) => {
     const text = document.getElementById('claim-text-preview')?.value || '';
-    if (!text) return;
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    const prodSlug = (currentClaimProduct?.name || 'producto').toLowerCase().replace(/[^a-z0-9]/g, '_');
-    a.download = `escrito_reclamacion_${currentClaimType}_${prodSlug}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    showToast('Escrito legal descargado (.txt)');
+    if (!text || !currentClaimProduct || !window.GPClaimPDF) return;
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+    try {
+      const p = currentClaimProduct;
+      await window.GPClaimPDF.generate({
+        text,
+        type: currentClaimType,
+        lang: currentLang,
+        buyerName: document.getElementById('claim-buyer-name')?.value.trim() || '',
+        product: {
+          name: p.name,
+          store: p.store,
+          ticketImage: p.ticketImage || null,
+          purchaseDateFmt: p.purchaseDate ? fmtDate(p.purchaseDate) : '',
+          priceFmt: p.price ? Number(p.price).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €' : '',
+        },
+      });
+      showToast(currentLang === 'en' ? 'Claim downloaded as PDF' : 'Reclamación descargada en PDF', 'ok');
+    } catch (err) {
+      console.error(err);
+      showToast(currentLang === 'en' ? 'The PDF could not be created. Try again.' : 'No se pudo crear el PDF. Inténtalo de nuevo.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.removeAttribute('aria-busy');
+    }
   });
 
   // ── Visor de Ticket Custodiado (Cofre Digital)

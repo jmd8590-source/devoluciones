@@ -188,6 +188,7 @@ function applyAuthLang() {
   document.querySelectorAll('label[for="contact-subject"]').forEach(l => { l.textContent = at('contact.subject'); });
   document.querySelectorAll('label[for="contact-msg"]').forEach(l => { l.textContent = at('contact.msg'); });
 
+  document.querySelectorAll('.js-lang-label').forEach(el => { el.textContent = currentLang === 'es' ? 'Idioma:' : 'Language:'; });
   document.querySelectorAll('.js-lang-code').forEach(el => {
     el.textContent = currentLang === 'es' ? 'ES' : 'EN';
   });
